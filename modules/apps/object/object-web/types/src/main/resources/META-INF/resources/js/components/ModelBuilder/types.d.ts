@@ -34,6 +34,7 @@ export declare type TAction =
 	| {
 			payload: {
 				newObjectDefinition: ObjectDefinition;
+				nodes: Node<ObjectDefinitionNodeData>[];
 				selectedObjectFolderName: string;
 			};
 			type: TYPES.ADD_OBJECT_DEFINITION_TO_OBJECT_FOLDER;
@@ -49,14 +50,18 @@ export declare type TAction =
 	  }
 	| {
 			payload: {
+				edges: Edge<ObjectRelationshipEdgeData>[];
 				hiddenObjectFolderObjectDefinitionNodes: boolean;
 				leftSidebarItem: LeftSidebarItem;
+				nodes: Node<ObjectDefinitionNodeData>[];
 			};
 			type: TYPES.BULK_CHANGE_NODE_VIEW;
 	  }
 	| {
 			payload: {
+				edges: Edge<ObjectRelationshipEdgeData>[];
 				hiddenObjectDefinitionNode: boolean;
+				nodes: Node<ObjectDefinitionNodeData>[];
 				objectDefinitionId: number;
 				objectDefinitionName: string;
 				selectedSidebarItem: LeftSidebarItem;
@@ -66,20 +71,17 @@ export declare type TAction =
 	| {
 			payload: {
 				objectFolders: ObjectFolder[];
+				rightSidebarType?: RightSidebarType;
 				selectedObjectFolder: ObjectFolder;
+				selectedObjectRelationshipEdgeId?: number;
 			};
-			type: TYPES.CREATE_MODEL_BUILDER_STRUCTURE;
+			type: TYPES.UPDATE_MODEL_BUILDER_STRUCTURE;
 	  }
 	| {
 			payload: {
-				currentObjectFolderName: string;
-				deletedObjectDefinitionName: string;
-			};
-			type: TYPES.DELETE_OBJECT_DEFINITION;
-	  }
-	| {
-			payload: {
-				newElements: any;
+				newElements: Elements<
+					ObjectDefinitionNodeData | ObjectRelationshipEdgeData
+				>;
 			};
 			type: TYPES.SET_ELEMENTS;
 	  }
@@ -123,6 +125,13 @@ export declare type TAction =
 				updatedObjectDefinitionNode: Partial<ObjectDefinition>;
 			};
 			type: TYPES.UPDATE_OBJECT_DEFINITION_NODE;
+	  }
+	| {
+			payload: {
+				objectFolders: ObjectFolder[];
+				selectedObjectFolder: ObjectFolder;
+			};
+			type: TYPES.ADD_NEW_OBJECT_RELATIONSHIP;
 	  };
 export declare type TState = {
 	baseResourceURL: string;
@@ -150,6 +159,7 @@ export interface LeftSidebarItem {
 	type: 'objectFolder' | 'objectDefinition';
 }
 export interface LeftSidebarObjectDefinitionItem {
+	externalReferenceCode?: string;
 	hiddenObjectDefinitionNode: boolean;
 	id: number;
 	label: string;

@@ -12,15 +12,10 @@ import {API, getLocalizableLabel} from '@liferay/object-js-components-web';
 import classNames from 'classnames';
 import {openToast, sub} from 'frontend-js-web';
 import React from 'react';
-import {
-	FlowElement,
-	Node,
-	isNode,
-	useStore,
-	useZoomPanHelper,
-} from 'react-flow-renderer';
+import {Node, useStoreState, useZoomPanHelper} from 'react-flow-renderer';
 
 import './LeftSidebar.scss';
+import {getUpdatedModelBuilderStructurePayload} from '../../ViewObjectDefinitions/objectDefinitionUtil';
 import {useObjectFolderContext} from '../ModelBuilderContext/objectFolderContext';
 import {TYPES} from '../ModelBuilderContext/typesEnum';
 import {LeftSidebarItem, LeftSidebarObjectDefinitionItem} from '../types';
@@ -44,12 +39,10 @@ export default function LeftSidebarTreeView({
 	setExpandedKeys: React.Dispatch<React.SetStateAction<Set<React.Key>>>;
 	showActions?: boolean;
 }) {
-	const [
-		{elements, selectedObjectFolder},
-		dispatch,
-	] = useObjectFolderContext();
-	const store = useStore();
+	const [{selectedObjectFolder}, dispatch] = useObjectFolderContext();
 	const {setCenter} = useZoomPanHelper();
+
+	const {edges, nodes} = useStoreState((state) => state);
 
 	const changeObjectDefinitionNodeViewButton = (
 		hiddenObjectDefinitionNode: boolean,
@@ -100,46 +93,30 @@ export default function LeftSidebarTreeView({
 			};
 
 			try {
-				const movedObjectDefinition = (await API.save({
+				(await API.save({
 					item: objectDefinitionToBeMoved,
 					method: 'PATCH',
 					returnValue: true,
 					url: `/o/object-admin/v1.0/object-definitions/${objectDefinitionToBeMoved?.id}`,
 				})) as ObjectDefinition;
 
-				dispatch({
-					payload: {
-						newObjectDefinition: movedObjectDefinition,
-						selectedObjectFolderName: selectedObjectFolder.name,
-					},
-					type: TYPES.ADD_OBJECT_DEFINITION_TO_OBJECT_FOLDER,
-				});
+				setTimeout(async () => {
+					const payload = await getUpdatedModelBuilderStructurePayload(
+						selectedObjectFolder.name
+					);
 
-				const objectDefinitionNodeToBeMoved = elements.find(
-					(element) =>
-						isNode(element) &&
-						element.id === objectDefinitionToBeMoved!.id.toString()
-				) as FlowElement<ObjectDefinitionNodeData>;
-
-				if (
-					!objectDefinitionNodeToBeMoved.data?.linkedObjectDefinition
-				) {
 					dispatch({
-						payload: {
-							currentObjectFolderName: currentObjectFolder!.name,
-							deletedObjectDefinitionName:
-								movedObjectDefinition.name,
-						},
-						type: TYPES.DELETE_OBJECT_DEFINITION,
+						payload,
+						type: TYPES.UPDATE_MODEL_BUILDER_STRUCTURE,
 					});
-				}
+				}, 200);
 
 				openToast({
 					message: sub(
 						Liferay.Language.get('x-was-moved-successfully'),
 						`<strong>${getLocalizableLabel(
-							movedObjectDefinition.defaultLanguageId,
-							movedObjectDefinition.label
+							objectDefinitionToBeMoved.defaultLanguageId,
+							objectDefinitionToBeMoved.label
 						)}</strong>`
 					),
 					type: 'success',
@@ -203,14 +180,14 @@ export default function LeftSidebarTreeView({
 			onExpandedChange={setExpandedKeys}
 			onSelect={(item) => {
 				if (
-					selectedObjectFolder.objectDefinitions?.find(
-						(objectDefinition) =>
-							objectDefinition.id ===
-							(item as LeftSidebarObjectDefinitionItem).id
+					!showActions &&
+					selectedObjectFolder.objectFolderItems?.find(
+						(objectFolderItem) =>
+							objectFolderItem.objectDefinitionExternalReferenceCode ===
+							(item as LeftSidebarObjectDefinitionItem)
+								.externalReferenceCode
 					)
 				) {
-					const {edges, nodes} = store.getState();
-
 					dispatch({
 						payload: {
 							edges,
@@ -289,9 +266,11 @@ export default function LeftSidebarTreeView({
 									() =>
 										dispatch({
 											payload: {
+												edges,
 												hiddenObjectFolderObjectDefinitionNodes:
 													leftSidebarItem.hiddenObjectFolderObjectDefinitionNodes,
 												leftSidebarItem,
+												nodes,
 											},
 											type: TYPES.BULK_CHANGE_NODE_VIEW,
 										})
@@ -351,7 +330,9 @@ export default function LeftSidebarTreeView({
 											() =>
 												dispatch({
 													payload: {
+														edges,
 														hiddenObjectDefinitionNode,
+														nodes,
 														objectDefinitionId: id,
 														objectDefinitionName: name,
 														selectedSidebarItem: leftSidebarItem,

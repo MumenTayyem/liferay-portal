@@ -289,11 +289,13 @@ public class FDSViewsPortlet extends MVCPortlet {
 					ObjectFieldUtil.createObjectField(
 						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 						ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
-						_language.get(locale, "name"), "name", true),
-					ObjectFieldUtil.createObjectField(
-						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-						ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
 						_language.get(locale, "type"), "type", false)));
+
+		_enableLocalization(fdsDateFilterObjectDefinition);
+
+		_addLocalizedCustomObjectField(
+			_language.get(locale, "label"), "label",
+			fdsDateFilterObjectDefinition, userId);
 
 		_objectDefinitionLocalService.publishSystemObjectDefinition(
 			userId, fdsDateFilterObjectDefinition.getObjectDefinitionId());
@@ -328,18 +330,14 @@ public class FDSViewsPortlet extends MVCPortlet {
 						ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
 						_language.get(locale, "field-name"), "fieldName", true),
 					ObjectFieldUtil.createObjectField(
-						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
-						ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
-						_language.get(locale, "name"), "name", true),
-					ObjectFieldUtil.createObjectField(
 						ObjectFieldConstants.BUSINESS_TYPE_BOOLEAN,
 						ObjectFieldConstants.DB_TYPE_BOOLEAN, true, false, null,
 						_language.get(locale, "include"), "include", false),
 					ObjectFieldUtil.createObjectField(
 						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
 						ObjectFieldConstants.DB_TYPE_STRING, true, false, null,
-						_language.get(locale, "list-type-definition-id"),
-						"listTypeDefinitionId", false),
+						_language.get(locale, "list-type-definition-erc"),
+						"listTypeDefinitionERC", false),
 					ObjectFieldUtil.createObjectField(
 						ObjectFieldConstants.BUSINESS_TYPE_BOOLEAN,
 						ObjectFieldConstants.DB_TYPE_BOOLEAN, true, false, null,
@@ -349,6 +347,12 @@ public class FDSViewsPortlet extends MVCPortlet {
 						ObjectFieldConstants.DB_TYPE_CLOB, true, false, null,
 						_language.get(locale, "preselected-values"),
 						"preselectedValues", false)));
+
+		_enableLocalization(fdsDynamicFilterObjectDefinition);
+
+		_addLocalizedCustomObjectField(
+			_language.get(locale, "label"), "label",
+			fdsDynamicFilterObjectDefinition, userId);
 
 		_objectDefinitionLocalService.publishSystemObjectDefinition(
 			userId, fdsDynamicFilterObjectDefinition.getObjectDefinitionId());
