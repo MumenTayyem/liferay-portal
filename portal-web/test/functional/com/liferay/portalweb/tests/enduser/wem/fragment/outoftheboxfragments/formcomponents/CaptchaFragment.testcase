@@ -309,9 +309,9 @@ definition {
 
 			Button.clickSubmitButton();
 
-			AssertTextEquals(
-				locator1 = "//div[contains(@class,'lfr-layout-structure-item-inputs-captcha')]//p[contains(@class,'text-danger')]",
-				value1 = "CAPTCHA verification failed. Please try again.");
+			Alert.viewFieldErrorMessage(
+				errorMessage = "CAPTCHA verification failed. Please try again.",
+				fieldLabel = "Text Verification");
 		}
 	}
 

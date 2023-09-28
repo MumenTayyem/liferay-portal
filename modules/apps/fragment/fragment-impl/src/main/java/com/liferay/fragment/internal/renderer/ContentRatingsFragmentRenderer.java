@@ -51,13 +51,7 @@ public class ContentRatingsFragmentRenderer
 							"name", "itemSelector"
 						).put(
 							"type", "itemSelector"
-						))
-				).put(
-					"label",
-					_language.format(
-						fragmentRendererContext.getLocale(), "x-options",
-						"content-ratings", true)
-				))
+						))))
 		).toString();
 	}
 

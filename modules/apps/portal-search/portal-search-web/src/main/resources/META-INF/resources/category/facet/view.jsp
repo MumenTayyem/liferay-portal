@@ -15,6 +15,7 @@ taglib uri="http://liferay.com/tld/ddm" prefix="liferay-ddm" %><%@
 taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %>
 
 <%@ page import="com.liferay.petra.string.StringPool" %><%@
+page import="com.liferay.portal.kernel.language.LanguageUtil" %><%@
 page import="com.liferay.portal.kernel.util.HashMapBuilder" %><%@
 page import="com.liferay.portal.kernel.util.HtmlUtil" %><%@
 page import="com.liferay.portal.kernel.util.WebKeys" %><%@
@@ -58,19 +59,11 @@ CategoryFacetPortletInstanceConfiguration categoryFacetPortletInstanceConfigurat
 				displayStyleGroupId="<%= assetCategoriesSearchFacetDisplayContext.getDisplayStyleGroupId() %>"
 				entries="<%= assetCategoriesSearchFacetDisplayContext.getBucketDisplayContexts() %>"
 			>
-				<liferay-ui:panel-container
-					extended="<%= true %>"
-					id='<%= liferayPortletResponse.getNamespace() + "facetAssetCategoriesPanelContainer" %>'
-					markupView="lexicon"
-					persistState="<%= true %>"
-				>
-					<liferay-ui:panel
-						collapsible="<%= true %>"
-						cssClass="search-facet"
-						id='<%= liferayPortletResponse.getNamespace() + "facetAssetCategoriesPanel" %>'
-						markupView="lexicon"
-						persistState="<%= true %>"
-						title="category"
+				<clay:panel-group>
+					<clay:panel
+						collapseClassNames="search-facet"
+						displayTitle='<%= LanguageUtil.get(request, "category") %>'
+						expanded="<%= true %>"
 					>
 						<div class="panel-body">
 							<c:if test="<%= !assetCategoriesSearchFacetDisplayContext.isNothingSelected() %>">
@@ -133,16 +126,17 @@ CategoryFacetPortletInstanceConfiguration categoryFacetPortletInstanceConfigurat
 								}
 								%>
 
-						</ul>
-					</liferay-ui:panel>
-				</liferay-ui:panel-container>
+							</ul>
+
+							<aui:script use="liferay-search-facet-util">
+								Liferay.Search.FacetUtil.enableInputs(
+									document.querySelectorAll('#<portlet:namespace />fm .facet-term')
+								);
+							</aui:script>
+						</div>
+					</clay:panel>
+				</clay:panel-group>
 			</liferay-ddm:template-renderer>
 		</aui:form>
 	</c:otherwise>
 </c:choose>
-
-<aui:script use="liferay-search-facet-util">
-	Liferay.Search.FacetUtil.enableInputs(
-		document.querySelectorAll('#<portlet:namespace />fm .facet-term')
-	);
-</aui:script>

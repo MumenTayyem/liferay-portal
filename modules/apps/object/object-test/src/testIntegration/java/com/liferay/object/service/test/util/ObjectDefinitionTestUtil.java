@@ -27,25 +27,30 @@ import java.util.Map;
  */
 public class ObjectDefinitionTestUtil {
 
-	public static ObjectDefinition addCustomObjectDefinition(
+	public static ObjectDefinition addModifiableSystemObjectDefinition(
+			long userId, String dbTableName, Map<Locale, String> labelMap,
+			String name, String pkObjectFieldDBColumnName,
+			String pkObjectFieldName, Map<Locale, String> pluralLabelMap,
+			String scope, String titleObjectFieldName, int version,
+			ObjectDefinitionLocalService objectDefinitionLocalService,
+			List<ObjectField> objectFields)
+		throws Exception {
+
+		return objectDefinitionLocalService.addSystemObjectDefinition(
+			null, userId, 0, null, dbTableName, false, labelMap, true, name,
+			null, null, pkObjectFieldDBColumnName, pkObjectFieldName,
+			pluralLabelMap, scope, titleObjectFieldName, version,
+			WorkflowConstants.STATUS_DRAFT, objectFields);
+	}
+
+	public static ObjectDefinition addObjectDefinition(
 			boolean enableLocalization,
 			ObjectDefinitionLocalService objectDefinitionLocalService,
 			List<ObjectField> objectFields)
 		throws Exception {
 
-		return addCustomObjectDefinition(
-			0, enableLocalization, objectDefinitionLocalService, objectFields);
-	}
-
-	public static ObjectDefinition addCustomObjectDefinition(
-			long objectFolderId, boolean enableLocalization,
-			ObjectDefinitionLocalService objectDefinitionLocalService,
-			List<ObjectField> objectFields)
-		throws Exception {
-
 		return objectDefinitionLocalService.addCustomObjectDefinition(
-			TestPropsValues.getUserId(), objectFolderId, false,
-			enableLocalization, false,
+			TestPropsValues.getUserId(), 0, false, enableLocalization, false,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			"A" + RandomTestUtil.randomString(), null, null,
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
@@ -53,24 +58,14 @@ public class ObjectDefinitionTestUtil {
 			ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT, objectFields);
 	}
 
-	public static ObjectDefinition addCustomObjectDefinition(
-			long objectFolderId,
+	public static ObjectDefinition addObjectDefinition(
 			ObjectDefinitionLocalService objectDefinitionLocalService)
 		throws Exception {
 
-		return addCustomObjectDefinition(
-			objectFolderId, false, objectDefinitionLocalService, null);
+		return addObjectDefinition(false, objectDefinitionLocalService, null);
 	}
 
-	public static ObjectDefinition addCustomObjectDefinition(
-			ObjectDefinitionLocalService objectDefinitionLocalService)
-		throws Exception {
-
-		return addCustomObjectDefinition(
-			false, objectDefinitionLocalService, null);
-	}
-
-	public static ObjectDefinition addCustomObjectDefinition(
+	public static ObjectDefinition addObjectDefinition(
 			String name,
 			ObjectDefinitionLocalService objectDefinitionLocalService)
 		throws PortalException {
@@ -91,22 +86,6 @@ public class ObjectDefinitionTestUtil {
 				).name(
 					"able"
 				).build()));
-	}
-
-	public static ObjectDefinition addModifiableSystemObjectDefinition(
-			long userId, String dbTableName, Map<Locale, String> labelMap,
-			String name, String pkObjectFieldDBColumnName,
-			String pkObjectFieldName, Map<Locale, String> pluralLabelMap,
-			String scope, String titleObjectFieldName, int version,
-			ObjectDefinitionLocalService objectDefinitionLocalService,
-			List<ObjectField> objectFields)
-		throws Exception {
-
-		return objectDefinitionLocalService.addSystemObjectDefinition(
-			null, userId, 0, null, dbTableName, false, labelMap, true, name,
-			null, null, pkObjectFieldDBColumnName, pkObjectFieldName,
-			pluralLabelMap, scope, titleObjectFieldName, version,
-			WorkflowConstants.STATUS_DRAFT, objectFields);
 	}
 
 	public static ObjectDefinition addUnmodifiableSystemObjectDefinition(

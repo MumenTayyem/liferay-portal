@@ -72,7 +72,14 @@ public class EndpointMatcher {
 
 		endpointPath = endpointPath + StringPool.FORWARD_SLASH;
 
-		return endpointPath + "[^\\/]+";
+		if (Objects.equals(
+				endpoint.getPathParameter(),
+				APIApplication.Endpoint.PathParameter.ID)) {
+
+			return endpointPath + "\\d+";
+		}
+
+		return endpointPath + "\\S+";
 	}
 
 	private final List<APIApplication.Endpoint> _endpoints;

@@ -15,12 +15,10 @@ import getKebabCase from '../../../../../../common/utils/getKebabCase';
 import {useCustomerPortal} from '../../../../../../routes/customer-portal/context';
 import {
 	HIGH_PRIORITY_CONTACT_CATEGORIES,
-	actLiferayContact,
-	actRaysourceContact,
-	associateContactRoleLiferay,
-	associateContactRoleRaysource,
-	removeContactRoleLiferay,
-	removeContactRoleRaysource,
+	addHighPriorityContactsList,
+	associateContactRole,
+	removeContactRole,
+	removeHighPriorityContactsList,
 } from '../../../../utils/getHighPriorityContacts';
 
 const IncidentContactEditModal = ({
@@ -33,17 +31,28 @@ const IncidentContactEditModal = ({
 }) => {
 	const [{project, sessionId}] = useCustomerPortal();
 
-	const [addHighPriorityContact, setAddHighPriorityContacts] = useState([]);
-
 	const [
-		removeHighPriorityContacts,
-		setRemoveHighPriorityContacts,
+		addHighPriorityContactList,
+		setAddHighPriorityContactList,
 	] = useState([]);
-
+	const [
+		removeHighPriorityContactList,
+		setRemoveHighPriorityContactList,
+	] = useState([]);
 	const [isMultiSelectEmpty, setIsMultiSelectEmpty] = useState(false);
 
 	const {client, provisioningServerAPI} = useAppPropertiesContext();
 	const [isLoadingSaveButton, setIsLoadingSaveButton] = useState(false);
+
+	const addHighPriorityContacts = (contactList) => {
+		const contactsList = contactList.map((item) => item);
+
+		setAddHighPriorityContactList(contactsList);
+	};
+	const removeHighPriorityContacts = (contactList) => {
+		const contactsList = contactList.map((item) => item);
+		setRemoveHighPriorityContactList(contactsList);
+	};
 
 	const updateMultiSelectEmpty = (error) => {
 		setIsMultiSelectEmpty(error);
@@ -52,42 +61,50 @@ const IncidentContactEditModal = ({
 	const handleSubmit = async () => {
 		try {
 			setIsLoadingSaveButton(true);
-			await actRaysourceContact(
-				removeContactRoleRaysource,
-				removeHighPriorityContacts,
-				project,
-				sessionId,
-				provisioningServerAPI
-			);
-			await actRaysourceContact(
-				associateContactRoleRaysource,
-				addHighPriorityContact,
-				project,
-				sessionId,
-				provisioningServerAPI
-			);
-			await actLiferayContact(
-				addHighPriorityContact,
-				associateContactRoleLiferay,
-				project,
-				client
-			);
-			await actLiferayContact(
-				removeHighPriorityContacts,
-				removeContactRoleLiferay,
-				project,
-				client
+
+			await Promise.all(
+				addHighPriorityContactList?.map(async (item) => {
+					return associateContactRole(
+						item,
+						project,
+						sessionId,
+						provisioningServerAPI
+					);
+				})
 			);
 
-			removeHighPriorityContacts?.map((item) => {
+			await Promise.all(
+				removeHighPriorityContactList?.map(async (item) => {
+					return removeContactRole(
+						item,
+						project,
+						sessionId,
+						provisioningServerAPI
+					);
+				})
+			);
+
+			await Promise.all(
+				addHighPriorityContactList?.map((item) => {
+					return addHighPriorityContactsList(client, item, project);
+				})
+			);
+
+			await Promise.all(
+				removeHighPriorityContactList?.map((item) => {
+					return removeHighPriorityContactsList(client, item);
+				})
+			);
+
+			removeHighPriorityContactList?.map((item) => {
 				openToast(
 					`${item.label}`,
 					`${i18n.translate('high-priority-contact-removed')} 
-					<b>${i18n.translate(`${getKebabCase(item.labelRole)}-contact`)}</b>`
+					<b>${i18n.translate(`${getKebabCase(item.filter.name)}-contact`)}</b>`
 				);
 			});
 
-			addHighPriorityContact?.map((item) => {
+			addHighPriorityContactList?.map((item) => {
 				openToast(
 					`${item.label}`,
 					`${i18n.translate('high-priority-contact-added')} 
@@ -167,11 +184,11 @@ const IncidentContactEditModal = ({
 			}}
 		>
 			<SetupHighPriorityContactForm
-				addContactList={setAddHighPriorityContacts}
+				addContactList={addHighPriorityContacts}
 				disableSubmit={updateMultiSelectEmpty}
 				filter={modalFilter}
 				isCriticalIncidentCard
-				removedContactList={setRemoveHighPriorityContacts}
+				removedContactList={removeHighPriorityContacts}
 			/>
 		</Layout>
 	);

@@ -60,10 +60,10 @@ public class ObjectFolderLocalServiceUtil {
 			externalReferenceCode, userId, labelMap, name);
 	}
 
-	public static ObjectFolder addUncategorizedObjectFolder(long companyId)
+	public static ObjectFolder addOrGetUncategorizedObjectFolder(long companyId)
 		throws PortalException {
 
-		return getService().addUncategorizedObjectFolder(companyId);
+		return getService().addOrGetUncategorizedObjectFolder(companyId);
 	}
 
 	/**
@@ -250,10 +250,6 @@ public class ObjectFolderLocalServiceUtil {
 			uuid, companyId);
 	}
 
-	public static ObjectFolder fetchUncategorizedObjectFolder(long companyId) {
-		return getService().fetchUncategorizedObjectFolder(companyId);
-	}
-
 	public static com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
@@ -357,12 +353,6 @@ public class ObjectFolderLocalServiceUtil {
 		throws PortalException {
 
 		return getService().getPersistedModel(primaryKeyObj);
-	}
-
-	public static ObjectFolder getUncategorizedObjectFolder(long companyId)
-		throws PortalException {
-
-		return getService().getUncategorizedObjectFolder(companyId);
 	}
 
 	/**

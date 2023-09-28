@@ -9,7 +9,6 @@ import com.liferay.jethr0.entity.repository.BaseEntityRepository;
 import com.liferay.jethr0.jenkins.cohort.JenkinsCohortEntity;
 import com.liferay.jethr0.jenkins.dalo.JenkinsCohortEntityDALO;
 import com.liferay.jethr0.jenkins.dalo.JenkinsCohortToJenkinsServersEntityRelationshipDALO;
-import com.liferay.jethr0.jenkins.server.JenkinsServerEntity;
 import com.liferay.jethr0.util.StringUtil;
 
 import java.util.Objects;
@@ -57,57 +56,25 @@ public class JenkinsCohortEntityRepository
 
 	@Override
 	public void initializeRelationships() {
-	}
+		for (JenkinsCohortEntity jenkinsCohortEntity : getAll()) {
+			for (long jenkinsServerId :
+					_jenkinsCohortToJenkinsServersEntityRelationshipDALO.
+						getChildEntityIds(jenkinsCohortEntity)) {
 
-	public void relateJenkinsCohortToJenkinsServer(
-		JenkinsCohortEntity jenkinsCohortEntity,
-		JenkinsServerEntity jenkinsServerEntity) {
+				if (jenkinsServerId == 0) {
+					continue;
+				}
 
-		jenkinsCohortEntity.addJenkinsServerEntity(jenkinsServerEntity);
-
-		jenkinsServerEntity.setJenkinsCohortEntity(jenkinsCohortEntity);
+				jenkinsCohortEntity.addJenkinsServerEntity(
+					_jenkinsServerEntityRepository.getById(jenkinsServerId));
+			}
+		}
 	}
 
 	public void setJenkinsServerEntityRepository(
 		JenkinsServerEntityRepository jenkinsServerEntityRepository) {
 
 		_jenkinsServerEntityRepository = jenkinsServerEntityRepository;
-	}
-
-	@Override
-	protected JenkinsCohortEntity updateRelationshipsFromDALO(
-		JenkinsCohortEntity jenkinsCohortEntity) {
-
-		return _updateJenkinsCohortToJenkinsServerRelationshipsFromDALO(
-			jenkinsCohortEntity);
-	}
-
-	@Override
-	protected JenkinsCohortEntity updateRelationshipsToDALO(
-		JenkinsCohortEntity jenkinsCohortEntity) {
-
-		_jenkinsCohortToJenkinsServersEntityRelationshipDALO.
-			updateChildEntities(jenkinsCohortEntity);
-
-		return jenkinsCohortEntity;
-	}
-
-	private JenkinsCohortEntity
-		_updateJenkinsCohortToJenkinsServerRelationshipsFromDALO(
-			JenkinsCohortEntity parentJenkinsCohortEntity) {
-
-		return updateParentToChildRelationshipsFromDALO(
-			parentJenkinsCohortEntity,
-			_jenkinsCohortToJenkinsServersEntityRelationshipDALO,
-			_jenkinsServerEntityRepository,
-			(jenkinsCohortEntity, jenkinsServerEntity) ->
-				relateJenkinsCohortToJenkinsServer(
-					jenkinsCohortEntity, jenkinsServerEntity),
-			jenkinsCohortEntity ->
-				jenkinsCohortEntity.getJenkinsServerEntities(),
-			(jenkinsCohortEntity, jenkinsServerEntity) ->
-				jenkinsCohortEntity.removeJenkinsServerEntity(
-					jenkinsServerEntity));
 	}
 
 	@Autowired

@@ -371,19 +371,9 @@ public abstract class BaseEntityRelationshipDALO
 		}
 
 		if (_log.isDebugEnabled()) {
-			EntityFactory<U> childEntityFactory = getChildEntityFactory();
-
-			int entityCount = jsonObjects.size();
-
-			String entityLabel = childEntityFactory.getEntityPluralLabel();
-
-			if (entityCount == 0) {
-				entityLabel = childEntityFactory.getEntityLabel();
-			}
-
 			_log.debug(
 				StringUtil.combine(
-					"Retrieved ", entityCount, " ", entityLabel));
+					"Retrieved ", jsonObjects.size(), " objects"));
 		}
 
 		return jsonObjects;

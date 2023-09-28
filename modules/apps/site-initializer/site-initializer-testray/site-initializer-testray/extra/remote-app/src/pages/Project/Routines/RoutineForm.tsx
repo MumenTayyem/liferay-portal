@@ -21,7 +21,7 @@ import {
 	testrayRoutineImpl,
 } from '../../../services/rest';
 
-type RoutineForm = typeof yupSchema.routine.__outputType;
+type RoutineFormType = typeof yupSchema.routine.__outputType;
 
 type OutletContext = {
 	mutateTestrayRoutine: KeyedMutator<TestrayRoutine>;
@@ -44,7 +44,7 @@ const RoutineForm = () => {
 		register,
 		setValue,
 		watch,
-	} = useForm<RoutineForm>({
+	} = useForm<RoutineFormType>({
 		defaultValues: {autoanalyze: false, ...testrayRoutine},
 		resolver: yupResolver(yupSchema.routine),
 	});
@@ -53,7 +53,7 @@ const RoutineForm = () => {
 		form: {onClose, onError, onSave, onSubmit},
 	} = useFormActions();
 
-	const _onSubmit = (form: RoutineForm) =>
+	const _onSubmit = (form: RoutineFormType) =>
 		onSubmit(
 			{
 				...form,

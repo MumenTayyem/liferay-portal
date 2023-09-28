@@ -6,10 +6,6 @@
 export default function ({namespace: portletNamespace}) {
 	const form = document.getElementById(`${portletNamespace}fm`);
 
-	if (!form) {
-		return;
-	}
-
 	const emptySearchInput = form.querySelector(
 		'.search-bar-empty-search-input'
 	);

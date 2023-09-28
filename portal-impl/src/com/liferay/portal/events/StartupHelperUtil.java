@@ -43,12 +43,7 @@ import java.util.List;
 public class StartupHelperUtil {
 
 	public static void initResourceActions() {
-		try {
-			ResourceActionLocalServiceUtil.checkResourceActions();
-		}
-		catch (Exception exception) {
-			ReflectionUtil.throwException(exception);
-		}
+		ResourceActionLocalServiceUtil.checkResourceActions();
 
 		try (LoggingTimer loggingTimer = new LoggingTimer()) {
 			ResourceActionsUtil.populateModelResources(

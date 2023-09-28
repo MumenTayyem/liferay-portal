@@ -69,9 +69,9 @@ public class EndpointMatcherTest {
 			}
 
 			@Override
-			public String getPathParameter() {
+			public PathParameter getPathParameter() {
 				if (singleElement) {
-					return "id";
+					return PathParameter.ID;
 				}
 
 				return null;

@@ -9,21 +9,13 @@ import './ModalAddObjectRelationship.scss';
 interface ModalAddObjectRelationshipProps {
 	baseResourceURL: string;
 	handleOnClose: () => void;
-	hasDefinedObjectDefinitionTarget?: boolean;
-	objectDefinitionExternalReferenceCode1: string;
-	objectDefinitionExternalReferenceCode2?: string;
-	objectRelationshipParameterRequired: boolean;
-	onAfterSubmit?: (objectRelationshipId: number) => void;
-	reload?: boolean;
+	objectDefinitionExternalReferenceCode: string;
+	parameterRequired: boolean;
 }
 export declare function ModalAddObjectRelationship({
 	baseResourceURL,
 	handleOnClose,
-	hasDefinedObjectDefinitionTarget,
-	objectDefinitionExternalReferenceCode1,
-	objectDefinitionExternalReferenceCode2,
-	objectRelationshipParameterRequired,
-	onAfterSubmit,
-	reload,
+	objectDefinitionExternalReferenceCode,
+	parameterRequired,
 }: ModalAddObjectRelationshipProps): JSX.Element;
 export {};

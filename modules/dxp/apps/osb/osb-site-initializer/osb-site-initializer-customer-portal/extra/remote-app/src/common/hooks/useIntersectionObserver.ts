@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {useCallback, useEffect, useRef, useState} from 'react';
+import {useCallback, useEffect, useState} from 'react';
 
 const INTERSECTION_OPTIONS = {
 	root: null,
@@ -11,7 +11,7 @@ const INTERSECTION_OPTIONS = {
 };
 
 export default function useIntersectionObserver() {
-	const trackedRefCurrent = useRef(null);
+	const [trackedRefCurrent, setTrackedRefCurrent] = useState();
 	const [isIntersecting, setIsIntersecting] = useState(false);
 
 	const memoizedSetIntersecting = useCallback((entities: any[]) => {
@@ -26,17 +26,16 @@ export default function useIntersectionObserver() {
 			INTERSECTION_OPTIONS
 		);
 
-		if (trackedRefCurrent.current) {
-			observer.observe(trackedRefCurrent.current);
+		if (trackedRefCurrent) {
+			observer.observe(trackedRefCurrent);
 		}
 
 		return () => {
-			if (trackedRefCurrent.current) {
-				// eslint-disable-next-line react-hooks/exhaustive-deps
-				observer.unobserve(trackedRefCurrent.current);
+			if (trackedRefCurrent) {
+				observer.unobserve(trackedRefCurrent);
 			}
 		};
-	}, [memoizedSetIntersecting]);
+	}, [memoizedSetIntersecting, trackedRefCurrent]);
 
-	return [trackedRefCurrent, isIntersecting];
+	return [setTrackedRefCurrent, isIntersecting];
 }

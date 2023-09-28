@@ -14,12 +14,10 @@ import SearchBuilder from '~/common/core/SearchBuilder';
 import NotificationQueueService from '~/common/services/actions/notificationAction';
 import {
 	HIGH_PRIORITY_CONTACT_CATEGORIES,
-	actLiferayContact,
-	actRaysourceContact,
-	associateContactRoleLiferay,
-	associateContactRoleRaysource,
-	removeContactRoleLiferay,
-	removeContactRoleRaysource,
+	addHighPriorityContactsList,
+	associateContactRole,
+	removeContactRole,
+	removeHighPriorityContactsList,
 } from '~/routes/customer-portal/utils/getHighPriorityContacts';
 import {useOnboarding} from '~/routes/onboarding/context';
 import {
@@ -80,10 +78,14 @@ const SetupDXPCloudPage = ({
 	const sessionId =
 		customerPortalContext?.[0].sessionId ||
 		onboardingContext?.[0].sessionId;
-	const [addHighPriorityContact, setAddHighPriorityContact] = useState([]);
-	const [removeHighPriorityContact, setRemoveHighPriorityContact] = useState(
-		[]
-	);
+	const [
+		addHighPriorityContactList,
+		setAddHighPriorityContactList,
+	] = useState([]);
+	const [
+		removeHighPriorityContactList,
+		setRemoveHighPriorityContactList,
+	] = useState([]);
 	const [isMultiSelectEmpty, setIsMultiSelectEmpty] = useState(false);
 
 	const [step, setStep] = useState(1);
@@ -190,31 +192,26 @@ const SetupDXPCloudPage = ({
 		if (!alreadySubmitted && dxp) {
 			try {
 				if (featureFlags.includes('LPS-159127')) {
-					await actRaysourceContact(
-						removeContactRoleRaysource,
-						removeHighPriorityContact,
-						project,
-						sessionId,
-						provisioningServerAPI
+					await Promise.all(
+						removeHighPriorityContactList?.map(async (item) => {
+							removeContactRole(
+								item,
+								project,
+								sessionId,
+								provisioningServerAPI
+							);
+						})
 					);
-					await actRaysourceContact(
-						associateContactRoleRaysource,
-						addHighPriorityContact,
-						project,
-						sessionId,
-						provisioningServerAPI
-					);
-					await actLiferayContact(
-						addHighPriorityContact,
-						associateContactRoleLiferay,
-						project,
-						client
-					);
-					await actLiferayContact(
-						removeHighPriorityContact,
-						removeContactRoleLiferay,
-						project,
-						client
+
+					await Promise.all(
+						addHighPriorityContactList?.map(async (item) => {
+							return associateContactRole(
+								item,
+								project,
+								sessionId,
+								provisioningServerAPI
+							);
+						})
 					);
 				}
 				const {
@@ -282,7 +279,27 @@ const SetupDXPCloudPage = ({
 							id: subscriptionGroupId,
 						},
 					});
+					if (featureFlags.includes('LPS-159127')) {
+						await Promise.all(
+							removeHighPriorityContactList?.map((item) => {
+								return removeHighPriorityContactsList(
+									client,
+									item,
+									project
+								);
+							})
+						);
 
+						await Promise.all(
+							addHighPriorityContactList?.map((item) => {
+								return addHighPriorityContactsList(
+									client,
+									item,
+									project
+								);
+							})
+						);
+					}
 					if (featureFlags.includes('LPS-187767')) {
 						const notificationTemplateService = new NotificationQueueService(
 							client
@@ -330,6 +347,14 @@ const SetupDXPCloudPage = ({
 		}
 	};
 
+	const addHighPriorityContacts = (contactList) => {
+		const contactsList = contactList.map((item) => item);
+		setAddHighPriorityContactList(contactsList);
+	};
+	const removeHighPriorityContacts = (contactList) => {
+		const contactsList = contactList.map(({objectId}) => objectId);
+		setRemoveHighPriorityContactList(contactsList);
+	};
 	const updateMultiSelectEmpty = (error) => {
 		setIsMultiSelectEmpty(error);
 	};
@@ -536,12 +561,12 @@ const SetupDXPCloudPage = ({
 			{step === 2 && (
 				<div>
 					<SetupHighPriorityContactForm
-						addContactList={setAddHighPriorityContact}
+						addContactList={addHighPriorityContacts}
 						disableSubmit={updateMultiSelectEmpty}
 						filter={
 							HIGH_PRIORITY_CONTACT_CATEGORIES.criticalIncident
 						}
-						removedContactList={setRemoveHighPriorityContact}
+						removedContactList={removeHighPriorityContacts}
 					/>
 				</div>
 			)}

@@ -85,13 +85,7 @@ definition {
 
 		MenuItem.clickNoError(menuItem = "Delete");
 
-		AssertTextEquals.assertPartialText(
-			locator1 = "Modal#BODY",
-			value1 = "Are you sure you want to delete this? It will be deleted immediately.");
-
-		Click(
-			key_text = "Delete",
-			locator1 = "Modal#MODAL_FOOTER_BUTTON");
+		AssertConfirm.assertConfirmationNoError(value1 = "Are you sure you want to delete this? It will be deleted immediately.");
 
 		Alert.viewSuccessMessage();
 	}
@@ -115,13 +109,7 @@ definition {
 
 		MenuItem.clickNoError(menuItem = "Delete");
 
-		AssertTextEquals.assertPartialText(
-			locator1 = "Modal#BODY",
-			value1 = "Are you sure you want to delete this? It will be deleted immediately.");
-
-		Click(
-			key_text = "Delete",
-			locator1 = "Modal#MODAL_FOOTER_BUTTON");
+		AssertConfirm.assertConfirmationNoError(value1 = "Are you sure you want to delete this? It will be deleted immediately.");
 
 		Alert.viewSuccessMessage();
 	}
@@ -276,13 +264,7 @@ definition {
 			Button.clickNoError(button = "Terminate Test");
 		}
 
-		AssertTextEquals(
-			locator1 = "Modal#BODY",
-			value1 = "Are you sure you want to terminate this test?");
-
-		Click(
-			key_text = "Terminate",
-			locator1 = "Modal#MODAL_FOOTER_BUTTON");
+		AssertConfirm.assertConfirmationNoError(value1 = "Are you sure you want to terminate this test?");
 
 		Alert.viewSuccessMessage();
 	}

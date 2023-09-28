@@ -128,19 +128,18 @@ public class SXPBlueprintServiceImpl extends SXPBlueprintServiceBaseImpl {
 
 	@Override
 	public SXPBlueprint updateSXPBlueprint(
-			String externalReferenceCode, long sxpBlueprintId,
-			String configurationJSON, Map<Locale, String> descriptionMap,
-			String elementInstancesJSON, String schemaVersion,
-			Map<Locale, String> titleMap, ServiceContext serviceContext)
+			long sxpBlueprintId, String configurationJSON,
+			Map<Locale, String> descriptionMap, String elementInstancesJSON,
+			String schemaVersion, Map<Locale, String> titleMap,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		_sxpBlueprintModelResourcePermission.check(
 			getPermissionChecker(), sxpBlueprintId, ActionKeys.UPDATE);
 
 		return sxpBlueprintLocalService.updateSXPBlueprint(
-			externalReferenceCode, getUserId(), sxpBlueprintId,
-			configurationJSON, descriptionMap, elementInstancesJSON,
-			schemaVersion, titleMap, serviceContext);
+			getUserId(), sxpBlueprintId, configurationJSON, descriptionMap,
+			elementInstancesJSON, schemaVersion, titleMap, serviceContext);
 	}
 
 	@Reference(target = "(resource.name=" + SXPConstants.RESOURCE_NAME + ")")

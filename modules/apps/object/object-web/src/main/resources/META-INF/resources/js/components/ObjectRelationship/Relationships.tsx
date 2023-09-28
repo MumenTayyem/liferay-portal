@@ -32,7 +32,6 @@ interface ItemData {
 interface RelationshipsProps extends IFDSTableProps {
 	baseResourceURL: string;
 	isApproved: boolean;
-	objectDefinitionExternalReferenceCode: string;
 	objectRelationshipTypes: string[];
 	parameterRequired: boolean;
 }
@@ -223,10 +222,10 @@ export default function Relationships({
 				<ModalAddObjectRelationship
 					baseResourceURL={baseResourceURL}
 					handleOnClose={() => setShowAddModal(false)}
-					objectDefinitionExternalReferenceCode1={
+					objectDefinitionExternalReferenceCode={
 						objectDefinitionExternalReferenceCode
 					}
-					objectRelationshipParameterRequired={parameterRequired}
+					parameterRequired={parameterRequired}
 				/>
 			)}
 

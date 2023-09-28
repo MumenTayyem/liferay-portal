@@ -9,7 +9,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.OSDetector;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -22,19 +21,6 @@ import org.im4java.process.ProcessTask;
  * @author Ivica Cardic
  */
 public class LiferayConvertCmd extends ConvertCmd {
-
-	@Override
-	public LinkedList<String> getCommand() {
-		if (OSDetector.isWindows()) {
-			LinkedList<String> commands = new LinkedList<>();
-
-			commands.add("magick");
-
-			return commands;
-		}
-
-		return super.getCommand();
-	}
 
 	public ProcessTask getProcessTask(
 			String globalSearchPath, List<String> resourceLimits,

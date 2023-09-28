@@ -92,11 +92,5 @@ export declare function getObjectFolderActions(
 			type?: undefined;
 	  }
 )[];
-export declare function getUpdatedModelBuilderStructurePayload(
-	currentObjectFolderName: string
-): Promise<{
-	objectFolders: ObjectFolder[];
-	selectedObjectFolder: ObjectFolder;
-}>;
 export declare function normalizeName(str: string): string;
 export {};

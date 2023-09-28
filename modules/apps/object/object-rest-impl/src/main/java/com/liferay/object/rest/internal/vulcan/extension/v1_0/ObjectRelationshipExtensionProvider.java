@@ -11,7 +11,6 @@ import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.related.models.ObjectRelatedModelsProviderRegistry;
 import com.liferay.object.relationship.util.ObjectRelationshipUtil;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
-import com.liferay.object.rest.internal.util.ServiceContextUtil;
 import com.liferay.object.rest.manager.v1_0.DefaultObjectEntryManager;
 import com.liferay.object.rest.manager.v1_0.DefaultObjectEntryManagerProvider;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
@@ -23,12 +22,9 @@ import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.ObjectRelationshipService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.portal.vulcan.extension.ExtensionProvider;
@@ -105,7 +101,7 @@ public class ObjectRelationshipExtensionProvider
 					return defaultObjectEntryManager.
 						fetchRelatedManyToOneObjectEntry(
 							_getDefaultDTOConverterContext(
-								objectDefinition, primaryKey, null, null),
+								objectDefinition, primaryKey, null),
 							objectDefinition, primaryKey,
 							objectRelationship.getName());
 				}
@@ -119,7 +115,7 @@ public class ObjectRelationshipExtensionProvider
 					defaultObjectEntryManager.
 						getObjectEntryRelatedObjectEntries(
 							_getDefaultDTOConverterContext(
-								objectDefinition, primaryKey, null, null),
+								objectDefinition, primaryKey, null),
 							objectDefinition, primaryKey,
 							objectRelationship.getName(),
 							Pagination.of(
@@ -229,7 +225,7 @@ public class ObjectRelationshipExtensionProvider
 
 			defaultObjectEntryManager.disassociateRelatedModels(
 				_getDefaultDTOConverterContext(
-					objectDefinition, primaryKey, null, userId),
+					objectDefinition, primaryKey, null),
 				objectDefinition, objectRelationship, primaryKey,
 				relatedObjectDefinition, userId);
 
@@ -237,16 +233,14 @@ public class ObjectRelationshipExtensionProvider
 				nestedObjectEntry = objectEntryManager.updateObjectEntry(
 					objectDefinition.getCompanyId(),
 					_getDefaultDTOConverterContext(
-						objectDefinition, primaryKey, null, userId),
+						objectDefinition, primaryKey, null),
 					nestedObjectEntry.getExternalReferenceCode(),
 					relatedObjectDefinition, nestedObjectEntry,
 					relatedObjectDefinition.getScope());
 
 				_relateNestedObjectEntry(
 					objectDefinition, objectRelationship, primaryKey,
-					nestedObjectEntry.getId(),
-					ServiceContextUtil.createServiceContext(
-						nestedObjectEntry, userId));
+					nestedObjectEntry.getId());
 			}
 
 			NestedFieldsSupplier.addFieldName(entry.getKey());
@@ -254,22 +248,15 @@ public class ObjectRelationshipExtensionProvider
 	}
 
 	private DefaultDTOConverterContext _getDefaultDTOConverterContext(
-			ObjectDefinition objectDefinition, Long objectEntryId,
-			UriInfo uriInfo, Long userId)
-		throws Exception {
-
-		User user = null;
-
-		if (Validator.isNotNull(userId)) {
-			user = _userLocalService.getUser(userId);
-		}
+		ObjectDefinition objectDefinition, Long objectEntryId,
+		UriInfo uriInfo) {
 
 		DefaultDTOConverterContext defaultDTOConverterContext =
 			new DefaultDTOConverterContext(
 				false, null, _dtoConverterRegistry, objectEntryId,
 				LocaleUtil.fromLanguageId(
 					objectDefinition.getDefaultLanguageId(), true, false),
-				uriInfo, user);
+				uriInfo, null);
 
 		defaultDTOConverterContext.setAttribute("addActions", Boolean.FALSE);
 
@@ -314,7 +301,7 @@ public class ObjectRelationshipExtensionProvider
 	private void _relateNestedObjectEntry(
 			ObjectDefinition objectDefinition,
 			ObjectRelationship objectRelationship, long primaryKey,
-			long relatedPrimaryKey, ServiceContext serviceContext)
+			long relatedPrimaryKey)
 		throws Exception {
 
 		long primaryKey1 = relatedPrimaryKey;
@@ -329,7 +316,7 @@ public class ObjectRelationshipExtensionProvider
 
 		_objectRelationshipService.addObjectRelationshipMappingTableValues(
 			objectRelationship.getObjectRelationshipId(), primaryKey1,
-			primaryKey2, serviceContext);
+			primaryKey2, new ServiceContext());
 	}
 
 	@Reference
@@ -354,8 +341,5 @@ public class ObjectRelationshipExtensionProvider
 
 	@Reference
 	private ObjectRelationshipService _objectRelationshipService;
-
-	@Reference
-	private UserLocalService _userLocalService;
 
 }

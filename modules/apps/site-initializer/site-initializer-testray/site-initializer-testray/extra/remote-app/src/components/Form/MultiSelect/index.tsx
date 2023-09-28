@@ -4,7 +4,5 @@
  */
 
 import MultiSelect from './MultiSelect';
-import MultiSelectCreatable from './MultiSelectCreatable';
 
 export default MultiSelect;
-export {MultiSelectCreatable};

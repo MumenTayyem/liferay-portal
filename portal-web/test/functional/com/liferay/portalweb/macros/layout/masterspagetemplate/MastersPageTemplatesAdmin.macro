@@ -45,31 +45,19 @@ definition {
 
 		MenuItem.click(menuItem = "Import");
 
-		WaitForPageLoad();
+		SelectFrame(locator1 = "IFrame#MODAL_BODY");
 
 		var mastersZipFileName = TestCase.getDownloadedTempFileName(fileNamePattern = "master-page-*.zip");
 
-		UploadTempFile.uploadTempFileHiddenNoMouseOver(
+		UploadTempFile(
 			locator1 = "TextInput#FILE",
 			value1 = ${mastersZipFileName});
 
 		Button.clickImport();
 
-		if (isSet(importOption)) {
-			WaitForVisible(locator1 = "Modal#HEADER");
+		Alert.viewSuccessMessage();
 
-			Check.checkNotVisible(
-				locator1 = "Radio#ANY",
-				radioLabel = ${importOption});
-
-			Click(
-				key_text = "Import",
-				locator1 = "Modal#MODAL_FOOTER_BUTTON");
-		}
-
-		AssertVisible(locator1 = "Message#SUCCESS_IMPORT");
-
-		Button.clickDone();
+		IFrame.closeFrame();
 	}
 
 	macro openMastersAdmin {

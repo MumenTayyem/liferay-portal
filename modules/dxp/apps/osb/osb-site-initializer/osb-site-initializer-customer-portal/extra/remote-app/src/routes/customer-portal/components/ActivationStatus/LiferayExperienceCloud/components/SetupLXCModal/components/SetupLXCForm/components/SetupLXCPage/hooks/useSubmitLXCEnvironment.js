@@ -6,12 +6,10 @@
 import {useMutation} from '@apollo/client';
 import SearchBuilder from '~/common/core/SearchBuilder';
 import {
-	actLiferayContact,
-	actRaysourceContact,
-	associateContactRoleLiferay,
-	associateContactRoleRaysource,
-	removeContactRoleLiferay,
-	removeContactRoleRaysource,
+	addHighPriorityContactsList,
+	associateContactRole,
+	removeContactRole,
+	removeHighPriorityContactsList,
 } from '~/routes/customer-portal/utils/getHighPriorityContacts';
 import {useOnboarding} from '~/routes/onboarding/context';
 import NotificationQueueService from '../../../../../../../../../../../../../src/common/services/actions/notificationAction';
@@ -89,33 +87,26 @@ export default function useSubmitLXCEnvironment(
 		if (!alreadySubmitted) {
 			try {
 				handleLoadingSubmitButton(true);
-
 				if (featureFlags.includes('LPS-159127')) {
-					await actRaysourceContact(
-						removeContactRoleRaysource,
-						removeHighPriorityContactList,
-						project,
-						sessionId,
-						provisioningServerAPI
+					await Promise.all(
+						removeHighPriorityContactList?.map(async (item) => {
+							removeContactRole(
+								item,
+								project,
+								sessionId,
+								provisioningServerAPI
+							);
+						})
 					);
-					await actRaysourceContact(
-						associateContactRoleRaysource,
-						addHighPriorityContactList,
-						project,
-						sessionId,
-						provisioningServerAPI
-					);
-					await actLiferayContact(
-						addHighPriorityContactList,
-						associateContactRoleLiferay,
-						project,
-						client
-					);
-					await actLiferayContact(
-						removeHighPriorityContactList,
-						removeContactRoleLiferay,
-						project,
-						client
+					await Promise.all(
+						addHighPriorityContactList?.map(async (item) => {
+							return associateContactRole(
+								item,
+								project,
+								sessionId,
+								provisioningServerAPI
+							);
+						})
 					);
 				}
 				const {data} = await createLiferayExperienceCloudEnvironment({
@@ -169,7 +160,26 @@ export default function useSubmitLXCEnvironment(
 							}
 						)
 					);
-
+					if (featureFlags.includes('LPS-159127')) {
+						await Promise.all(
+							removeHighPriorityContactList?.map((item) => {
+								return removeHighPriorityContactsList(
+									client,
+									item,
+									project
+								);
+							})
+						);
+						await Promise.all(
+							addHighPriorityContactList?.map((item) => {
+								return addHighPriorityContactsList(
+									client,
+									item,
+									project
+								);
+							})
+						);
+					}
 					if (featureFlags.includes('LPS-181031')) {
 						const adminInfo = lxcActivationFields?.admins?.map(
 							({email, fullName}) => {

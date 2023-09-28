@@ -10,9 +10,10 @@ import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
-import com.liferay.portal.kernel.service.permission.RolePermissionUtil;
+import com.liferay.portal.kernel.service.permission.RolePermission;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Bruno Queiroz
@@ -29,7 +30,7 @@ public class RoleModelResourcePermission
 			PermissionChecker permissionChecker, long roleId, String actionId)
 		throws PortalException {
 
-		RolePermissionUtil.check(permissionChecker, roleId, actionId);
+		_rolePermission.check(permissionChecker, roleId, actionId);
 	}
 
 	@Override
@@ -37,7 +38,7 @@ public class RoleModelResourcePermission
 			PermissionChecker permissionChecker, Role role, String actionId)
 		throws PortalException {
 
-		RolePermissionUtil.check(permissionChecker, role.getRoleId(), actionId);
+		_rolePermission.check(permissionChecker, role.getRoleId(), actionId);
 	}
 
 	@Override
@@ -45,7 +46,7 @@ public class RoleModelResourcePermission
 			PermissionChecker permissionChecker, long roleId, String actionId)
 		throws PortalException {
 
-		return RolePermissionUtil.contains(permissionChecker, roleId, actionId);
+		return _rolePermission.contains(permissionChecker, roleId, actionId);
 	}
 
 	@Override
@@ -53,7 +54,7 @@ public class RoleModelResourcePermission
 			PermissionChecker permissionChecker, Role role, String actionId)
 		throws PortalException {
 
-		return RolePermissionUtil.contains(
+		return _rolePermission.contains(
 			permissionChecker, role.getRoleId(), actionId);
 	}
 
@@ -66,5 +67,8 @@ public class RoleModelResourcePermission
 	public PortletResourcePermission getPortletResourcePermission() {
 		return null;
 	}
+
+	@Reference
+	private RolePermission _rolePermission;
 
 }

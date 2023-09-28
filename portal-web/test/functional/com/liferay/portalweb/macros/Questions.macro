@@ -740,14 +740,6 @@ definition {
 		}
 	}
 
-	macro subscribeFromQuestion {
-		Click.waitForMenuToggleJSClick(
-			key_questionTitle = ${questionTitle},
-			locator1 = "Questions#QUESTIONS_ELLIPSIS_ICON");
-
-		MenuItem.clickNoError(menuItem = "Subscribe");
-	}
-
 	macro subscribeFromTag {
 		Click(locator1 = "Questions#QUESTIONS_BELL_BUTTON");
 
@@ -1042,9 +1034,10 @@ definition {
 
 	macro viewSubscribedTag {
 		if (isSet(subscribedTag)) {
-			AssertElementPresent(
+			AssertTextEquals(
 				key_subscribedTag = ${subscribedTag},
-				locator1 = "Questions#SUBSCRIBED_TAG");
+				locator1 = "Questions#SUBSCRIBED_TAG",
+				value1 = ${subscribedTag});
 		}
 		else if (isSet(noSubscribedTag)) {
 			AssertTextEquals(

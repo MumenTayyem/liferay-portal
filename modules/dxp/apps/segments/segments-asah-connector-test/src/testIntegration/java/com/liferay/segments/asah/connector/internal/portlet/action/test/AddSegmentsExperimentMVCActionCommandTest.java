@@ -87,8 +87,7 @@ public class AddSegmentsExperimentMVCActionCommandTest {
 		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
 			_getMockLiferayPortletActionRequest(
 				RandomTestUtil.randomString(), goal.getLabel(),
-				RandomTestUtil.randomString(), segmentsExperience.getPlid(),
-				segmentsExperience.getSegmentsExperienceId());
+				RandomTestUtil.randomString(), segmentsExperience);
 
 		try (CompanyConfigurationTemporarySwapper
 				companyConfigurationTemporarySwapper =
@@ -124,9 +123,7 @@ public class AddSegmentsExperimentMVCActionCommandTest {
 
 		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
 			_getMockLiferayPortletActionRequest(
-				description, goal.getLabel(), name,
-				segmentsExperience.getPlid(),
-				segmentsExperience.getSegmentsExperienceId());
+				description, goal.getLabel(), name, segmentsExperience);
 
 		try (CompanyConfigurationTemporarySwapper
 				companyConfigurationTemporarySwapper =
@@ -230,8 +227,7 @@ public class AddSegmentsExperimentMVCActionCommandTest {
 		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
 			_getMockLiferayPortletActionRequest(
 				RandomTestUtil.randomString(), goal.getLabel(), name,
-				segmentsExperience.getPlid(),
-				segmentsExperience.getSegmentsExperienceId());
+				segmentsExperience);
 
 		try (CompanyConfigurationTemporarySwapper
 				companyConfigurationTemporarySwapper =
@@ -278,97 +274,6 @@ public class AddSegmentsExperimentMVCActionCommandTest {
 		}
 	}
 
-	@Test
-	public void testAddSegmentsExperimentWithSecondarySegmentsExperienceSelected()
-		throws Exception {
-
-		String liferayAnalyticsURL = "http://localhost:8080/";
-
-		String description = RandomTestUtil.randomString();
-
-		SegmentsExperimentConstants.Goal goal =
-			SegmentsExperimentConstants.Goal.BOUNCE_RATE;
-
-		String name = RandomTestUtil.randomString();
-
-		String segmentsEntryName = RandomTestUtil.randomString();
-
-		SegmentsExperience segmentsExperience = _addSegmentsExperience(
-			segmentsEntryName);
-
-		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
-			_getMockLiferayPortletActionRequest(
-				description, goal.getLabel(), name,
-				segmentsExperience.getPlid(), RandomTestUtil.nextLong());
-
-		try (CompanyConfigurationTemporarySwapper
-				companyConfigurationTemporarySwapper =
-					new CompanyConfigurationTemporarySwapper(
-						TestPropsValues.getCompanyId(),
-						AnalyticsConfiguration.class.getName(),
-						HashMapDictionaryBuilder.<String, Object>put(
-							"liferayAnalyticsFaroBackendURL",
-							"http://localhost:8086"
-						).put(
-							"liferayAnalyticsURL", liferayAnalyticsURL
-						).build())) {
-
-			JSONObject jsonObject = ReflectionTestUtil.invoke(
-				_mvcActionCommand, "_addSegmentsExperiment",
-				new Class<?>[] {ActionRequest.class},
-				mockLiferayPortletActionRequest);
-
-			JSONObject segmentsExperimentJSONObject =
-				(JSONObject)jsonObject.get("segmentsExperiment");
-
-			Assert.assertEquals(
-				0.0, segmentsExperimentJSONObject.getDouble("confidenceLevel"),
-				0);
-			Assert.assertEquals(
-				description,
-				segmentsExperimentJSONObject.getString("description"));
-
-			SegmentsExperiment segmentsExperiment =
-				_segmentsExperimentLocalService.fetchSegmentsExperiment(
-					_group.getGroupId(),
-					segmentsExperimentJSONObject.getLong(
-						"segmentsExperienceId"),
-					_layout.getPlid());
-
-			Assert.assertEquals(
-				liferayAnalyticsURL + "/tests/overview/" +
-					segmentsExperiment.getSegmentsExperimentKey(),
-				segmentsExperimentJSONObject.getString("detailsURL"));
-
-			Assert.assertTrue(
-				segmentsExperimentJSONObject.getBoolean("editable"));
-			Assert.assertEquals(
-				String.valueOf(
-					JSONUtil.put(
-						"label", "Bounce Rate"
-					).put(
-						"value", goal.getLabel()
-					)),
-				String.valueOf(
-					segmentsExperimentJSONObject.getJSONObject("goal")));
-			Assert.assertEquals(
-				name, segmentsExperimentJSONObject.getString("name"));
-			Assert.assertEquals(
-				String.valueOf(segmentsExperiment.getSegmentsExperimentId()),
-				segmentsExperimentJSONObject.getString("segmentsExperimentId"));
-			Assert.assertEquals(
-				String.valueOf(
-					JSONUtil.put(
-						"label", "Draft"
-					).put(
-						"value",
-						SegmentsExperimentConstants.Status.DRAFT.getValue()
-					)),
-				String.valueOf(
-					segmentsExperimentJSONObject.getJSONObject("status")));
-		}
-	}
-
 	private SegmentsExperience _addSegmentsExperience(String segmentsEntryName)
 		throws Exception {
 
@@ -383,8 +288,8 @@ public class AddSegmentsExperimentMVCActionCommandTest {
 	}
 
 	private MockLiferayPortletActionRequest _getMockLiferayPortletActionRequest(
-			String description, String goal, String name, long plid,
-			long segmentsExperienceId)
+			String description, String goal, String name,
+			SegmentsExperience segmentsExperience)
 		throws Exception {
 
 		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
@@ -394,13 +299,14 @@ public class AddSegmentsExperimentMVCActionCommandTest {
 			WebKeys.THEME_DISPLAY, _getThemeDisplay());
 
 		mockLiferayPortletActionRequest.setParameter(
-			"plid", String.valueOf(plid));
+			"plid", String.valueOf(segmentsExperience.getPlid()));
 		mockLiferayPortletActionRequest.setParameter(
 			"description", description);
 		mockLiferayPortletActionRequest.setParameter("goal", goal);
 		mockLiferayPortletActionRequest.setParameter("name", name);
 		mockLiferayPortletActionRequest.setParameter(
-			"segmentsExperienceId", String.valueOf(segmentsExperienceId));
+			"segmentsExperienceId",
+			String.valueOf(segmentsExperience.getSegmentsExperienceId()));
 
 		return mockLiferayPortletActionRequest;
 	}

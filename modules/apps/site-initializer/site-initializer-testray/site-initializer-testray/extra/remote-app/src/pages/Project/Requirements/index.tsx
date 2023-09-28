@@ -6,7 +6,6 @@
 import ClayIcon from '@clayui/icon';
 import ClayManagementToolbar from '@clayui/management-toolbar';
 import {useNavigate, useParams} from 'react-router-dom';
-import useFormModal from '~/hooks/useFormModal';
 import {testrayRequirementsImpl} from '~/services/rest';
 
 import Button from '../../../components/Button';
@@ -17,12 +16,10 @@ import {ListViewContextProviderProps} from '../../../context/ListViewContext';
 import SearchBuilder from '../../../core/SearchBuilder';
 import i18n from '../../../i18n';
 import {Action} from '../../../types';
-import ImportJiraIssuesFormModal from './ImportJiraIssuesFormModal';
 import useRequirementActions from './useRequirementActions';
 
 type RequirementListViewProps = {
 	actions?: Action[];
-	formModal?: any;
 	projectId?: number | string;
 	variables?: any;
 } & {
@@ -34,7 +31,6 @@ type RequirementListViewProps = {
 
 const RequirementListView: React.FC<RequirementListViewProps> = ({
 	actions,
-	formModal,
 	listViewProps,
 	tableProps,
 	variables,
@@ -43,7 +39,6 @@ const RequirementListView: React.FC<RequirementListViewProps> = ({
 
 	return (
 		<ListView
-			forceRefetch={formModal?.forceRefetch}
 			managementToolbarProps={{
 				addButton: () => navigate('create'),
 				buttons: (actions) =>
@@ -51,7 +46,6 @@ const RequirementListView: React.FC<RequirementListViewProps> = ({
 						<>
 							<Button
 								displayType="secondary"
-								onClick={() => formModal.modal.open()}
 								symbol="redo"
 								toolbar
 							>
@@ -132,24 +126,16 @@ const RequirementListView: React.FC<RequirementListViewProps> = ({
 };
 
 const Requirements = () => {
-	const {actions, forceRefetch} = useRequirementActions();
+	const {actions} = useRequirementActions();
 	const {projectId} = useParams();
-	const formModal = useFormModal();
 
 	return (
 		<Container>
 			<RequirementListView
 				actions={actions}
-				formModal={formModal}
-				listViewProps={{forceRefetch}}
 				variables={{
 					filter: SearchBuilder.eq('projectId', projectId as string),
 				}}
-			/>
-
-			<ImportJiraIssuesFormModal
-				forceRefetch={formModal.forceRefetch}
-				modal={formModal.modal}
 			/>
 		</Container>
 	);

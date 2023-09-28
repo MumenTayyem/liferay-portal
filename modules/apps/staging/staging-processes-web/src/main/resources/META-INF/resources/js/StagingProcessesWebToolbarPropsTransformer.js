@@ -12,8 +12,6 @@ import {
 export default function propsTransformer({portletNamespace, ...otherProps}) {
 	return {
 		...otherProps,
-		itemsTotal: document.getElementsByName(`${portletNamespace}rowIds`)
-			.length,
 		onActionButtonClick: (event, {item}) => {
 			if (item?.data?.action === 'deleteEntries') {
 				openConfirmModal({

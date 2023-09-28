@@ -360,8 +360,7 @@ public class SXPBlueprintLocalServiceUtil {
 	}
 
 	public static SXPBlueprint updateSXPBlueprint(
-			String externalReferenceCode, long userId, long sxpBlueprintId,
-			String configurationJSON,
+			long userId, long sxpBlueprintId, String configurationJSON,
 			Map<java.util.Locale, String> descriptionMap,
 			String elementInstancesJSON, String schemaVersion,
 			Map<java.util.Locale, String> titleMap,
@@ -369,9 +368,8 @@ public class SXPBlueprintLocalServiceUtil {
 		throws PortalException {
 
 		return getService().updateSXPBlueprint(
-			externalReferenceCode, userId, sxpBlueprintId, configurationJSON,
-			descriptionMap, elementInstancesJSON, schemaVersion, titleMap,
-			serviceContext);
+			userId, sxpBlueprintId, configurationJSON, descriptionMap,
+			elementInstancesJSON, schemaVersion, titleMap, serviceContext);
 	}
 
 	/**

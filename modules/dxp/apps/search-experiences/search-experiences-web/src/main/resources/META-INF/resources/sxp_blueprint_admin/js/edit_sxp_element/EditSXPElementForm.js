@@ -173,7 +173,6 @@ const validateConfigKeys = (
 function EditSXPElementForm({
 	initialDescription = '',
 	initialElementJSONEditorValue = {},
-	initialExternalReferenceCode,
 	initialTitle = '',
 	predefinedVariables = [],
 	readOnly,
@@ -205,9 +204,6 @@ function EditSXPElementForm({
 	] = useState(false);
 	const [elementJSONEditorValue, setElementJSONEditorValue] = useState(
 		initialElementJSONEditorValueString
-	);
-	const [externalReferenceCode, setExternalReferenceCode] = useState(
-		initialExternalReferenceCode
 	);
 
 	/**
@@ -453,7 +449,6 @@ function EditSXPElementForm({
 							sxpElementJSONObjectNew.description_i18n,
 						elementDefinition:
 							sxpElementJSONObjectNew.elementDefinition,
-						externalReferenceCode,
 						title_i18n: sxpElementJSONObjectNew.title_i18n,
 						type,
 					}),
@@ -570,11 +565,8 @@ function EditSXPElementForm({
 						formatLocaleWithDashes
 					)}
 					disableTitleAndDescriptionModal={isSXPElementJSONInvalid}
-					entityId={sxpElementId}
-					externalReferenceCode={externalReferenceCode}
 					isSubmitting={isSubmitting}
 					onCancel={redirectURL}
-					onExternalReferenceCodeChange={setExternalReferenceCode}
 					onSubmit={_handleSubmit}
 					onTitleAndDescriptionChange={
 						_handleTitleAndDescriptionChange
@@ -815,7 +807,6 @@ EditSXPElementForm.propTypes = {
 	initialTitle: PropTypes.string,
 	predefinedVariables: PropTypes.arrayOf(PropTypes.object),
 	readOnly: PropTypes.bool,
-	sxpElementExternalReferenceCode: PropTypes.string,
 	sxpElementId: PropTypes.string,
 	type: PropTypes.number,
 };

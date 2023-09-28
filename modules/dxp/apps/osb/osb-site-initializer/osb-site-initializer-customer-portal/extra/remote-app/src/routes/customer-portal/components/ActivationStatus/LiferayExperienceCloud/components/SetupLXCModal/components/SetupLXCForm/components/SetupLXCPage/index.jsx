@@ -39,10 +39,14 @@ const SetupLiferayExperienceCloudPage = ({
 	const {featureFlags} = useAppPropertiesContext();
 	const [isLoadingSubmitButton, setIsLoadingSubmitButton] = useState(false);
 	const [baseButtonDisabled, setBaseButtonDisabled] = useState(true);
-	const [addHighPriorityContact, setAddHighPriorityContact] = useState([]);
-	const [removeHighPriorityContact, setRemoveHighPriorityContact] = useState(
-		[]
-	);
+	const [
+		addHighPriorityContactList,
+		setAddHighPriorityContactList,
+	] = useState([]);
+	const [
+		removeHighPriorityContactList,
+		setRemoveHighPriorityContactList,
+	] = useState([]);
 	const [inputErrors, setInputErrors] = useState({});
 	const [step, setStep] = useState(1);
 
@@ -64,16 +68,13 @@ const SetupLiferayExperienceCloudPage = ({
 	};
 
 	const addHighPriorityContacts = (contactList) => {
-		setAddHighPriorityContact((prevHighPriorityContacts) => {
+		setAddHighPriorityContactList((oldList) => {
 			const uniqueContacts = [
-				...prevHighPriorityContacts,
+				...oldList,
 				...contactList.filter(
 					(contact) =>
-						!prevHighPriorityContacts.some(
-							(prevContact) =>
-								prevContact.category?.role ===
-									contact.category?.role &&
-								prevContact?.id === contact?.id
+						!oldList.some(
+							(oldContact) => oldContact.id === contact.id
 						)
 				),
 			];
@@ -83,16 +84,13 @@ const SetupLiferayExperienceCloudPage = ({
 	};
 
 	const removeHighPriorityContacts = (contactList) => {
-		setRemoveHighPriorityContact((prevHighPriorityContacts) => {
+		setRemoveHighPriorityContactList((oldList) => {
 			const uniqueContacts = [
-				...prevHighPriorityContacts,
+				...oldList,
 				...contactList.filter(
 					(contact) =>
-						!prevHighPriorityContacts.some(
-							(prevContact) =>
-								prevContact.category?.role ===
-									contact.category?.role &&
-								prevContact?.id === contact?.id
+						!oldList.some(
+							(oldContact) => oldContact.id === contact.id
 						)
 				),
 			];
@@ -124,8 +122,8 @@ const SetupLiferayExperienceCloudPage = ({
 		handleChangeForm,
 		project,
 		setFormAlreadySubmitted,
-		addHighPriorityContact,
-		removeHighPriorityContact,
+		addHighPriorityContactList,
+		removeHighPriorityContactList,
 		subscriptionGroupLxcId,
 		handleLoadingSubmitButton,
 		values

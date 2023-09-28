@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.security.permission.resource.PortletResourcePer
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.UserGroupRoleLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
+import com.liferay.portal.kernel.workflow.permission.WorkflowPermission;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -43,7 +44,7 @@ public class CommerceOrderModelResourcePermissionWrapper
 			(modelResourcePermission, consumer) -> {
 				consumer.accept(
 					new CommerceOrderWorkflowedModelPermissionLogic(
-						modelResourcePermission,
+						_workflowPermission, modelResourcePermission,
 						CommerceOrder::getCommerceOrderId));
 
 				consumer.accept(
@@ -81,5 +82,8 @@ public class CommerceOrderModelResourcePermissionWrapper
 	@Reference
 	private WorkflowDefinitionLinkLocalService
 		_workflowDefinitionLinkLocalService;
+
+	@Reference
+	private WorkflowPermission _workflowPermission;
 
 }

@@ -5,11 +5,10 @@
 
 package com.liferay.message.boards.web.internal.portlet.action;
 
-import com.liferay.document.library.kernel.util.DLValidator;
 import com.liferay.message.boards.constants.MBMessageConstants;
 import com.liferay.message.boards.constants.MBPortletKeys;
 import com.liferay.message.boards.service.MBMessageService;
-import com.liferay.message.boards.web.internal.upload.BaseMBUploadFileEntryHandler;
+import com.liferay.message.boards.web.internal.upload.TempAttachmentMBUploadFileEntryHandler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -33,7 +32,6 @@ import com.liferay.upload.UploadResponseHandler;
 import javax.portlet.ActionRequest;
 import javax.portlet.ActionResponse;
 
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -50,13 +48,6 @@ import org.osgi.service.component.annotations.Reference;
 )
 public class EditMessageAttachmentsMVCActionCommand
 	extends BaseMVCActionCommand {
-
-	@Activate
-	protected void activate() {
-		_tempAttachmentMBUploadFileEntryHandler =
-			new TempAttachmentMBUploadFileEntryHandler(
-				_dlValidator, _mbMessageService);
-	}
 
 	@Override
 	protected void doProcessAction(
@@ -183,9 +174,6 @@ public class EditMessageAttachmentsMVCActionCommand
 		EditMessageAttachmentsMVCActionCommand.class);
 
 	@Reference
-	private DLValidator _dlValidator;
-
-	@Reference
 	private JSONFactory _jsonFactory;
 
 	@Reference
@@ -197,26 +185,11 @@ public class EditMessageAttachmentsMVCActionCommand
 	@Reference
 	private Portal _portal;
 
+	@Reference
 	private TempAttachmentMBUploadFileEntryHandler
 		_tempAttachmentMBUploadFileEntryHandler;
 
 	@Reference
 	private UploadHandler _uploadHandler;
-
-	private static class TempAttachmentMBUploadFileEntryHandler
-		extends BaseMBUploadFileEntryHandler {
-
-		public TempAttachmentMBUploadFileEntryHandler(
-			DLValidator dlValidator, MBMessageService mbMessageService) {
-
-			super(dlValidator, mbMessageService);
-		}
-
-		@Override
-		protected String getParameterName() {
-			return "file";
-		}
-
-	}
 
 }

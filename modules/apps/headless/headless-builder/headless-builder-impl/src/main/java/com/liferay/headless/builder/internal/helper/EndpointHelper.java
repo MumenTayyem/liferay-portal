@@ -6,10 +6,7 @@
 package com.liferay.headless.builder.internal.helper;
 
 import com.liferay.headless.builder.application.APIApplication;
-import com.liferay.headless.builder.constants.HeadlessBuilderConstants;
-import com.liferay.object.exception.NoSuchObjectEntryException;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -38,11 +35,10 @@ import org.osgi.service.component.annotations.Reference;
 public class EndpointHelper {
 
 	public Map<String, Object> getResponseEntityMap(
-			long companyId, String pathParameter, String pathParameterValue,
-			APIApplication.Schema schema, String scopeKey)
+			long companyId, APIApplication.Endpoint.PathParameter pathParameter,
+			String pathParameterValue, APIApplication.Schema schema,
+			String scopeKey)
 		throws Exception {
-
-		ObjectEntry objectEntry = null;
 
 		Set<String> relationshipsNames = new HashSet<>();
 
@@ -51,43 +47,22 @@ public class EndpointHelper {
 		}
 
 		if (Objects.equals(
-				pathParameter,
-				HeadlessBuilderConstants.PATH_PARAMETER_ERC)) {
+				APIApplication.Endpoint.PathParameter.ID, pathParameter)) {
 
-			objectEntry = _objectEntryHelper.getObjectEntry(
+			return _getResponseEntityMap(
+				_objectEntryHelper.getObjectEntry(
+					companyId, ListUtil.fromCollection(relationshipsNames),
+					GetterUtil.getLong(pathParameterValue),
+					schema.getMainObjectDefinitionExternalReferenceCode()),
+				schema);
+		}
+
+		return _getResponseEntityMap(
+			_objectEntryHelper.getObjectEntry(
 				companyId, ListUtil.fromCollection(relationshipsNames),
 				schema.getMainObjectDefinitionExternalReferenceCode(),
-				pathParameterValue, scopeKey);
-		}
-		else if (Objects.equals(
-					pathParameter,
-					HeadlessBuilderConstants.PATH_PARAMETER_ID)) {
-
-			objectEntry = _objectEntryHelper.getObjectEntry(
-				companyId, ListUtil.fromCollection(relationshipsNames),
-				GetterUtil.getLong(pathParameterValue),
-				schema.getMainObjectDefinitionExternalReferenceCode());
-		}
-		else {
-			String filterString = StringBundler.concat(
-				pathParameter, " eq '", pathParameterValue, "'");
-
-			List<ObjectEntry> objectEntries =
-				_objectEntryHelper.getObjectEntries(
-					companyId, filterString,
-					ListUtil.fromCollection(relationshipsNames),
-					schema.getMainObjectDefinitionExternalReferenceCode(),
-					scopeKey);
-
-			if (objectEntries.isEmpty()) {
-				throw new NoSuchObjectEntryException(
-					"No object entry exists with the filter " + filterString);
-			}
-
-			objectEntry = objectEntries.get(0);
-		}
-
-		return _getResponseEntityMap(objectEntry, schema);
+				pathParameterValue, scopeKey),
+			schema);
 	}
 
 	public Page<Map<String, Object>> getResponseEntityMapsPage(
@@ -100,9 +75,11 @@ public class EndpointHelper {
 
 		Set<String> relationshipsNames = new HashSet<>();
 
-		APIApplication.Schema schema = endpoint.getResponseSchema();
+		APIApplication.Schema responseSchema = endpoint.getResponseSchema();
 
-		for (APIApplication.Property property : schema.getProperties()) {
+		for (APIApplication.Property property :
+				responseSchema.getProperties()) {
+
 			relationshipsNames.addAll(property.getObjectRelationshipNames());
 		}
 
@@ -112,12 +89,14 @@ public class EndpointHelper {
 				_filterExpressionHelper.getExpression(
 					companyId, endpoint, filterString),
 				ListUtil.fromCollection(relationshipsNames), pagination,
-				schema.getMainObjectDefinitionExternalReferenceCode(), scopeKey,
+				responseSchema.getMainObjectDefinitionExternalReferenceCode(),
+				scopeKey,
 				_sortsHelper.getSorts(
 					acceptLanguage, companyId, endpoint, sortString));
 
 		for (ObjectEntry objectEntry : objectEntriesPage.getItems()) {
-			responseEntityMaps.add(_getResponseEntityMap(objectEntry, schema));
+			responseEntityMaps.add(
+				_getResponseEntityMap(objectEntry, responseSchema));
 		}
 
 		return Page.of(
@@ -173,14 +152,16 @@ public class EndpointHelper {
 	}
 
 	private Map<String, Object> _getResponseEntityMap(
-		ObjectEntry objectEntry, APIApplication.Schema schema) {
+		ObjectEntry objectEntry, APIApplication.Schema responseSchema) {
 
 		Map<String, Object> responseEntityMap = new HashMap<>();
 
 		Map<String, Object> objectEntryProperties = _getObjectEntryProperties(
 			objectEntry);
 
-		for (APIApplication.Property property : schema.getProperties()) {
+		for (APIApplication.Property property :
+				responseSchema.getProperties()) {
+
 			List<String> objectRelationshipNames =
 				property.getObjectRelationshipNames();
 

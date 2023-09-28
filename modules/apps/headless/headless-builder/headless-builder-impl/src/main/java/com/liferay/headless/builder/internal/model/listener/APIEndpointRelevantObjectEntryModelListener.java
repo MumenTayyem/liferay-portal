@@ -5,8 +5,6 @@
 
 package com.liferay.headless.builder.internal.model.listener;
 
-import com.liferay.headless.builder.application.APIApplication;
-import com.liferay.headless.builder.constants.HeadlessBuilderConstants;
 import com.liferay.headless.builder.internal.helper.ObjectEntryHelper;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.exception.ObjectEntryValuesException;
@@ -67,7 +65,7 @@ public class APIEndpointRelevantObjectEntryModelListener
 
 		if (!_equals(
 				originalObjectEntry.getValues(), objectEntry.getValues(),
-				"httpMethod", "path", "pathParameter",
+				"httpMethod", "path",
 				"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
 				"r_requestAPISchemaToAPIEndpoints_c_apiSchemaId",
 				"r_responseAPISchemaToAPIEndpoints_c_apiSchemaId")) {
@@ -89,68 +87,18 @@ public class APIEndpointRelevantObjectEntryModelListener
 		return true;
 	}
 
-	private boolean _isValidPathParameter(
-			long companyId, String pathParameter, long responseAPISchemaId)
-		throws Exception {
-
-		if (Objects.equals(
-				pathParameter, HeadlessBuilderConstants.PATH_PARAMETER_ERC) ||
-			Objects.equals(
-				pathParameter, HeadlessBuilderConstants.PATH_PARAMETER_ID)) {
-
-			return true;
-		}
-
-		ObjectEntry responseAPISchemaObjectEntry =
-			_objectEntryLocalService.getObjectEntry(responseAPISchemaId);
-
-		Map<String, Serializable> values =
-			responseAPISchemaObjectEntry.getValues();
-
-		List<String> uniqueObjectFields =
-			_objectEntryHelper.getUniqueObjectFieldNames(
-				companyId, (String)values.get("mainObjectDefinitionERC"));
-
-		if (uniqueObjectFields.contains(pathParameter)) {
-			return true;
-		}
-
-		return false;
-	}
-
 	private void _validate(ObjectEntry objectEntry) {
 		try {
 			Map<String, Serializable> values = objectEntry.getValues();
 
 			String pathString = (String)values.get("path");
 
-			long apiApplicationId = (long)values.get(
-				"r_apiApplicationToAPIEndpoints_c_apiApplicationId");
-
-			if (!_objectEntryHelper.isValidObjectEntry(
-					apiApplicationId, "L_API_APPLICATION")) {
-
-				throw new ObjectEntryValuesException.InvalidObjectField(
-					null,
-					"An API endpoint must be related to an API application",
-					"an-api-endpoint-must-be-related-to-an-api-application");
-			}
-
-			long responseAPISchemaId = (long)values.get(
-				"r_responseAPISchemaToAPIEndpoints_c_apiSchemaId");
-
-			if (responseAPISchemaId != 0) {
-				_validateAPISchema(apiApplicationId, responseAPISchemaId);
-			}
-
-			if (Objects.equals(
-					APIApplication.Endpoint.RetrieveType.parse(
-						(String)values.get("retrieveType")),
-					APIApplication.Endpoint.RetrieveType.SINGLE_ELEMENT)) {
+			if (StringUtil.equals(
+					(String)values.get("retrieveType"), "singleElement")) {
 
 				_validateSingleElementPath(
 					objectEntry, (String)values.get("pathParameter"),
-					pathString, responseAPISchemaId);
+					pathString);
 			}
 			else {
 				Matcher matcher = _pathPattern.matcher(pathString);
@@ -217,11 +165,30 @@ public class APIEndpointRelevantObjectEntryModelListener
 						"path");
 			}
 
+			long apiApplicationId = (long)values.get(
+				"r_apiApplicationToAPIEndpoints_c_apiApplicationId");
+
+			if (!_objectEntryHelper.isValidObjectEntry(
+					apiApplicationId, "L_API_APPLICATION")) {
+
+				throw new ObjectEntryValuesException.InvalidObjectField(
+					null,
+					"An API endpoint must be related to an API application",
+					"an-api-endpoint-must-be-related-to-an-api-application");
+			}
+
 			long requestAPISchemaId = (long)values.get(
 				"r_requestAPISchemaToAPIEndpoints_c_apiSchemaId");
 
 			if (requestAPISchemaId != 0) {
 				_validateAPISchema(apiApplicationId, requestAPISchemaId);
+			}
+
+			long responseAPISchemaId = (long)values.get(
+				"r_responseAPISchemaToAPIEndpoints_c_apiSchemaId");
+
+			if (responseAPISchemaId != 0) {
+				_validateAPISchema(apiApplicationId, responseAPISchemaId);
 			}
 		}
 		catch (Exception exception) {
@@ -270,20 +237,15 @@ public class APIEndpointRelevantObjectEntryModelListener
 	}
 
 	private void _validateSingleElementPath(
-			ObjectEntry objectEntry, String pathParameter, String pathString,
-			long responseAPISchemaId)
+			ObjectEntry objectEntry, String pathParameterString,
+			String pathString)
 		throws Exception {
 
-		if (!Validator.isBlank(pathParameter) && (responseAPISchemaId != 0) &&
-			!_isValidPathParameter(
-				objectEntry.getCompanyId(), pathParameter,
-				responseAPISchemaId)) {
-
+		if (Validator.isNull(pathParameterString)) {
 			throw new ObjectEntryValuesException.InvalidObjectField(
 				null,
-				"Path parameter must be an external reference code, ID, or " +
-					"unique field",
-				"path-parameter-must-be-an-external-reference-code,-id,-or-unique-field");
+				"Path parameter cannot be null in a single element endpoint",
+				"path-parameter-cannot-be-null-in-a-single-element-endpoint");
 		}
 
 		ObjectField objectField = _objectFieldLocalService.getObjectField(
@@ -296,21 +258,6 @@ public class APIEndpointRelevantObjectEntryModelListener
 				Arrays.asList(objectField.getLabel(user.getLocale()), "\"/\""),
 				"%s must start with the \"/\" character",
 				"x-must-start-with-the-x-character");
-		}
-
-		Map<String, Serializable> values = objectEntry.getValues();
-
-		if (Objects.equals(
-				APIApplication.Endpoint.Scope.parse(
-					(String)values.get("scope")),
-				APIApplication.Endpoint.Scope.GROUP) &&
-			Objects.equals(
-				pathParameter, HeadlessBuilderConstants.PATH_PARAMETER_ID)) {
-
-			throw new ObjectEntryValuesException.InvalidObjectField(
-				Arrays.asList(objectField.getLabel(user.getLocale())),
-				"Single element ID endpoint cannot be scoped by group",
-				"single-element-id-endpoint-cannot-be-scoped-by-group");
 		}
 
 		Matcher singleElementPathMatcher = _singleElementPathPattern.matcher(

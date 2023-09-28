@@ -5,7 +5,6 @@
 
 package com.liferay.headless.builder.model.listener.test;
 
-import com.liferay.headless.builder.application.APIApplication;
 import com.liferay.headless.builder.test.BaseTestCase;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -48,10 +47,9 @@ public class APISortRelevantObjectEntryModelListenerTest extends BaseTestCase {
 				"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
 				apiApplicationJSONObject.getLong("id")
 			).put(
-				"retrieveType",
-				APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
+				"retrieveType", "collection"
 			).put(
-				"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+				"scope", "company"
 			).toString(),
 			"headless-builder/endpoints", Http.Method.POST);
 

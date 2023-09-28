@@ -57,7 +57,7 @@ public class ObjectValidationRuleServiceTest {
 	public void setUp() throws Exception {
 		_guestUser = _userLocalService.getGuestUser(
 			TestPropsValues.getCompanyId());
-		_objectDefinition = ObjectDefinitionTestUtil.addCustomObjectDefinition(
+		_objectDefinition = ObjectDefinitionTestUtil.addObjectDefinition(
 			false, _objectDefinitionLocalService,
 			Arrays.asList(
 				ObjectFieldUtil.createObjectField(

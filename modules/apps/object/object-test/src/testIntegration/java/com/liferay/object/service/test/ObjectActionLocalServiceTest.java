@@ -132,7 +132,7 @@ public class ObjectActionLocalServiceTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_objectDefinition = ObjectDefinitionTestUtil.addCustomObjectDefinition(
+		_objectDefinition = ObjectDefinitionTestUtil.addObjectDefinition(
 			false, _objectDefinitionLocalService,
 			Arrays.asList(
 				ObjectFieldUtil.createObjectField(

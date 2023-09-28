@@ -6,7 +6,6 @@
 package com.liferay.frontend.data.set.views.web.internal.fragment.renderer;
 
 import com.liferay.client.extension.type.FDSCellRendererCET;
-import com.liferay.client.extension.type.FDSFilterCET;
 import com.liferay.client.extension.type.manager.CETManager;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.renderer.FragmentRenderer;
@@ -376,7 +375,17 @@ public class FDSViewFragmentRenderer implements FragmentRenderer {
 				).put(
 					"fieldName", String.valueOf(fdsFieldProperties.get("name"))
 				).put(
-					"label", _getValue("label", "name", fdsFieldProperties)
+					"label",
+					() -> {
+						String label = String.valueOf(
+							fdsFieldProperties.get("label"));
+
+						if (Validator.isNotNull(label)) {
+							return label;
+						}
+
+						return String.valueOf(fdsFieldProperties.get("name"));
+					}
 				).put(
 					"sortable", (boolean)fdsFieldProperties.get("sortable")
 				);
@@ -445,7 +454,7 @@ public class FDSViewFragmentRenderer implements FragmentRenderer {
 					).put(
 						"id", properties.get("fieldName")
 					).put(
-						"label", _getValue("label", "fieldName", properties)
+						"label", properties.get("name")
 					).put(
 						"max", _getDateJSONObject(properties.get("to"))
 					).put(
@@ -455,10 +464,10 @@ public class FDSViewFragmentRenderer implements FragmentRenderer {
 					);
 				}
 
-				String listTypeDefinitionERC = MapUtil.getString(
-					properties, "listTypeDefinitionERC");
+				String listTypeDefinitionId = MapUtil.getString(
+					properties, "listTypeDefinitionId");
 
-				if (Validator.isNotNull(listTypeDefinitionERC)) {
+				if (Validator.isNotNull(listTypeDefinitionId)) {
 					ThemeDisplay themeDisplay =
 						(ThemeDisplay)httpServletRequest.getAttribute(
 							WebKeys.THEME_DISPLAY);
@@ -466,7 +475,7 @@ public class FDSViewFragmentRenderer implements FragmentRenderer {
 					ListTypeDefinition listTypeDefinition =
 						_listTypeDefinitionLocalService.
 							getListTypeDefinitionByExternalReferenceCode(
-								listTypeDefinitionERC,
+								listTypeDefinitionId,
 								themeDisplay.getCompanyId());
 
 					List<ListTypeEntry> listTypeEntries =
@@ -492,7 +501,7 @@ public class FDSViewFragmentRenderer implements FragmentRenderer {
 								"value", listTypeEntry.getKey()
 							))
 					).put(
-						"label", _getValue("label", "fieldName", properties)
+						"label", properties.get("name")
 					).put(
 						"multiple", properties.get("multiple")
 					).put(
@@ -508,42 +517,6 @@ public class FDSViewFragmentRenderer implements FragmentRenderer {
 						)
 					).put(
 						"type", "selection"
-					);
-				}
-
-				String fdsFilterClientExtensionERC = MapUtil.getString(
-					properties, "fdsFilterClientExtensionERC");
-
-				if (Validator.isNotNull(fdsFilterClientExtensionERC)) {
-					ThemeDisplay themeDisplay =
-						(ThemeDisplay)httpServletRequest.getAttribute(
-							WebKeys.THEME_DISPLAY);
-
-					FDSFilterCET fdsFilterCET =
-						(FDSFilterCET)_cetManager.getCET(
-							themeDisplay.getCompanyId(),
-							fdsFilterClientExtensionERC);
-
-					if (fdsFilterCET == null) {
-						_log.error(
-							StringBundler.concat(
-								"No frontend data set filter client extension ",
-								"exists with the external reference code ",
-								fdsFilterClientExtensionERC));
-
-						return null;
-					}
-
-					return JSONUtil.put(
-						"entityFieldType", FDSEntityFieldTypes.STRING
-					).put(
-						"id", properties.get("fieldName")
-					).put(
-						"label", properties.get("name")
-					).put(
-						"moduleURL", fdsFilterCET.getURL()
-					).put(
-						"type", "clientExtension"
 					);
 				}
 
@@ -678,9 +651,7 @@ public class FDSViewFragmentRenderer implements FragmentRenderer {
 			String key = preselectedValuesJSONArray.getString(i);
 
 			for (ListTypeEntry listTypeEntry : listTypeEntries) {
-				if (Objects.equals(
-						listTypeEntry.getExternalReferenceCode(), key)) {
-
+				if (Objects.equals(listTypeEntry.getKey(), key)) {
 					jsonArray.put(
 						JSONUtil.put(
 							"label", listTypeEntry.getName(locale)
@@ -725,19 +696,6 @@ public class FDSViewFragmentRenderer implements FragmentRenderer {
 		).put(
 			"key", fdsSortingProperties.get("fieldName")
 		);
-	}
-
-	private String _getValue(
-		String defaultKey, String fallbackKey,
-		Map<String, Object> fdsFieldProperties) {
-
-		String value = String.valueOf(fdsFieldProperties.get(defaultKey));
-
-		if (Validator.isNotNull(value)) {
-			return value;
-		}
-
-		return String.valueOf(fdsFieldProperties.get(fallbackKey));
 	}
 
 	private String _interpolateURL(

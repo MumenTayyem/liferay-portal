@@ -12,7 +12,6 @@ import ClayLayout from '@clayui/layout';
 import ClayModal from '@clayui/modal';
 import classNames from 'classnames';
 import {format} from 'date-fns';
-import {InputLocalized} from 'frontend-js-components-web';
 import {IClientExtensionRenderer, fetch, openModal, sub} from 'frontend-js-web';
 import React, {useEffect, useState} from 'react';
 
@@ -81,12 +80,8 @@ function AddFDSFilterModalContent({
 	const [fieldInUseValidationError, setFieldInUseValidationError] = useState<
 		boolean
 	>();
-	const fdsFilterLabelTranslations = filter?.label_i18n ?? {};
 	const [from, setFrom] = useState<string>(
 		(filter as IDateFilter)?.from ?? format(new Date(), 'yyyy-MM-dd')
-	);
-	const [i18nFilterLabels, setI18nFilterLabels] = useState(
-		fdsFilterLabelTranslations
 	);
 	const [includeMode, setIncludeMode] = useState<string>(
 		filter
@@ -100,7 +95,7 @@ function AddFDSFilterModalContent({
 	const [multiple, setMultiple] = useState<boolean>(
 		(filter as ISelectionFilter)?.multiple ?? true
 	);
-	const [label, setLabel] = useState(filter?.label || '');
+	const [name, setName] = useState(filter?.name || '');
 	const [picklists, setPicklists] = useState<IPickList[]>([]);
 	const [preselectedValues, setPreselectedValues] = useState<any[]>([]);
 	const [selectedField, setSelectedField] = useState<IField | null>(
@@ -117,8 +112,7 @@ function AddFDSFilterModalContent({
 
 			const newVal = items.find(
 				(item) =>
-					String(item.externalReferenceCode) ===
-					(filter as any)?.listTypeDefinitionERC
+					String(item.id) === (filter as any)?.listTypeDefinitionId
 			);
 
 			if (newVal) {
@@ -129,7 +123,7 @@ function AddFDSFilterModalContent({
 						JSON.parse(
 							(filter as ISelectionFilter).preselectedValues ||
 								'[]'
-						).includes(item.externalReferenceCode)
+						).includes(item.id)
 					)
 				);
 			}
@@ -147,14 +141,8 @@ function AddFDSFilterModalContent({
 
 		let body: any = {
 			fieldName: selectedField.name,
+			name: name || selectedField.label,
 		};
-
-		if (Liferay.FeatureFlags['LPS-172017']) {
-			body = {...body, label_i18n: i18nFilterLabels};
-		}
-		else {
-			body = {...body, label};
-		}
 
 		let displayType: string = '';
 		let url: string = '';
@@ -180,11 +168,9 @@ function AddFDSFilterModalContent({
 				[OBJECT_RELATIONSHIP.FDS_VIEW_FDS_DYNAMIC_FILTER_ID]:
 					fdsView.id,
 				include: includeMode === 'include',
-				listTypeDefinitionERC: selectedPicklist?.externalReferenceCode,
+				listTypeDefinitionId: selectedPicklist?.id,
 				multiple,
-				preselectedValues: JSON.stringify(
-					preselectedValues.map((item) => item.externalReferenceCode)
-				),
+				preselectedValues: preselectedValues.map((item) => item.id),
 			};
 
 			displayType = Liferay.Language.get('dynamic-filter');
@@ -306,7 +292,7 @@ function AddFDSFilterModalContent({
 		<>
 			<ClayModal.Header>
 				{filter &&
-					sub(Liferay.Language.get('edit-x-filter'), [filter.label])}
+					sub(Liferay.Language.get('edit-x-filter'), [filter.name])}
 
 				{!filter && (
 					<>
@@ -318,51 +304,38 @@ function AddFDSFilterModalContent({
 							<DateRangeFilterModalContent.Header />
 						)}
 
-						{filterType === EFilterType.SELECTION && (
-							<SelectionFilterModalContent.Header />
+						{filterType !== EFilterType.SELECTION && (
+							<DateRangeFilterModalContent.Header />
 						)}
 					</>
 				)}
 			</ClayModal.Header>
 
 			<ClayModal.Body>
-				{Liferay.FeatureFlags['LPS-172017'] ? (
-					<ClayForm.Group>
-						<InputLocalized
-							id={nameFormElementId}
-							label={Liferay.Language.get('label')}
-							name="label"
-							onChange={setI18nFilterLabels}
-							translations={i18nFilterLabels}
-						/>
-					</ClayForm.Group>
-				) : (
-					<ClayForm.Group>
-						<label htmlFor={nameFormElementId}>
-							{Liferay.Language.get('label')}
+				<ClayForm.Group>
+					<label htmlFor={nameFormElementId}>
+						{Liferay.Language.get('name')}
 
-							<span
-								className="label-icon lfr-portal-tooltip ml-2"
-								title={Liferay.Language.get(
-									'if-this-value-is-not-provided,-the-name-will-default-to-the-field-name'
-								)}
-							>
-								<ClayIcon symbol="question-circle-full" />
-							</span>
-						</label>
+						<span
+							className="label-icon lfr-portal-tooltip ml-2"
+							title={Liferay.Language.get(
+								'if-this-value-is-not-provided,-the-name-will-default-to-the-field-name'
+							)}
+						>
+							<ClayIcon symbol="question-circle-full" />
+						</span>
+					</label>
 
-						<ClayInput
-							aria-label={Liferay.Language.get('label')}
-							name={nameFormElementId}
-							onChange={(event) => setLabel(event.target.value)}
-							placeholder={
-								selectedField?.label ||
-								Liferay.Language.get('label')
-							}
-							value={label}
-						/>
-					</ClayForm.Group>
-				)}
+					<ClayInput
+						aria-label={Liferay.Language.get('name')}
+						name={nameFormElementId}
+						onChange={(event) => setName(event.target.value)}
+						placeholder={
+							selectedField?.label || Liferay.Language.get('name')
+						}
+						value={name}
+					/>
+				</ClayForm.Group>
 
 				<ClayForm.Group
 					className={classNames({
@@ -551,14 +524,7 @@ function Filters({fdsFilterClientExtensions, fdsView, namespace}: IProps) {
 				filtersOrdered = [...notOrdered, ...filtersOrdered];
 			}
 
-			setFilters(
-				filtersOrdered.map((filter) => {
-					return {
-						...filter,
-						label: filter.label || '',
-					};
-				})
-			);
+			setFilters(filtersOrdered);
 		};
 
 		getFields(fdsView).then((newFields) => {
@@ -651,12 +617,9 @@ function Filters({fdsFilterClientExtensions, fdsView, namespace}: IProps) {
 						fields={availableFields}
 						filterType={filterType}
 						namespace={namespace}
-						onSave={(newfilter) => {
-							if (newfilter.label === undefined) {
-								newfilter.label = '';
-							}
-							setFilters([...filters, newfilter]);
-						}}
+						onSave={(newfilter) =>
+							setFilters([...filters, newfilter])
+						}
 					/>
 				),
 				disableAutoClose: true,
@@ -780,8 +743,8 @@ function Filters({fdsFilterClientExtensions, fdsView, namespace}: IProps) {
 				]}
 				fields={[
 					{
-						label: Liferay.Language.get('label'),
-						name: 'label',
+						label: Liferay.Language.get('name'),
+						name: 'name',
 					},
 					{
 						label: Liferay.Language.get('Field Name'),

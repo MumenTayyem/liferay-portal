@@ -12,7 +12,7 @@ import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
-import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
+import com.liferay.portal.kernel.service.permission.GroupPermission;
 
 import java.util.List;
 
@@ -68,7 +68,7 @@ public class DepotEntryGroupRelServiceImpl
 			long groupId, int start, int end)
 		throws PortalException {
 
-		GroupPermissionUtil.check(
+		_groupPermission.check(
 			getPermissionChecker(), groupId, ActionKeys.VIEW);
 
 		return depotEntryGroupRelLocalService.getDepotEntryGroupRels(
@@ -91,7 +91,7 @@ public class DepotEntryGroupRelServiceImpl
 	public int getDepotEntryGroupRelsCount(long groupId)
 		throws PortalException {
 
-		GroupPermissionUtil.check(
+		_groupPermission.check(
 			getPermissionChecker(), groupId, ActionKeys.VIEW);
 
 		return depotEntryGroupRelLocalService.getDepotEntryGroupRelsCount(
@@ -139,5 +139,8 @@ public class DepotEntryGroupRelServiceImpl
 	)
 	private volatile ModelResourcePermission<DepotEntry>
 		_depotEntryModelResourcePermission;
+
+	@Reference
+	private GroupPermission _groupPermission;
 
 }

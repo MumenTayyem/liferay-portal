@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.LayoutPrototype;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.service.permission.GroupPermission;
 import com.liferay.portal.kernel.util.Portal;
 
 import java.util.Locale;
@@ -59,6 +60,9 @@ public class LayoutPrototypeCTDisplayRenderer
 
 		return layoutPrototype.getName(locale);
 	}
+
+	@Reference
+	private GroupPermission _groupPermission;
 
 	@Reference
 	private Language _language;

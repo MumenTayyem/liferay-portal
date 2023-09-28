@@ -81,16 +81,28 @@ public class ObjectValidationRuleDTOConverter
 				script = serviceBuilderObjectValidationRule.getScript();
 
 				setObjectValidationRuleSettings(
-					() -> TransformUtil.transformToArray(
-						serviceBuilderObjectValidationRule.
-							getObjectValidationRuleSettings(),
-						objectValidationRuleSetting ->
-							_toObjectValidationRuleSetting(
-								objectValidationRuleSetting),
-						ObjectValidationRuleSetting.class));
+					() -> {
+						if (!FeatureFlagManagerUtil.isEnabled("LPS-187846")) {
+							return null;
+						}
+
+						return TransformUtil.transformToArray(
+							serviceBuilderObjectValidationRule.
+								getObjectValidationRuleSettings(),
+							objectValidationRuleSetting ->
+								_toObjectValidationRuleSetting(
+									objectValidationRuleSetting),
+							ObjectValidationRuleSetting.class);
+					});
 				setOutputType(
-					() -> ObjectValidationRule.OutputType.create(
-						serviceBuilderObjectValidationRule.getOutputType()));
+					() -> {
+						if (!FeatureFlagManagerUtil.isEnabled("LPS-187846")) {
+							return null;
+						}
+
+						return ObjectValidationRule.OutputType.create(
+							serviceBuilderObjectValidationRule.getOutputType());
+					});
 				setSystem(
 					() -> {
 						if (!FeatureFlagManagerUtil.isEnabled("LPS-193355")) {

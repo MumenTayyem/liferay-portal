@@ -11,10 +11,7 @@ import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Julio Camarero
- * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
- *             com.liferay.frontend.taglib.servlet.taglib.LogoSelectorTag}
  */
-@Deprecated
 public class LogoSelectorTag extends IncludeTag {
 
 	public int getAspectRatio() {

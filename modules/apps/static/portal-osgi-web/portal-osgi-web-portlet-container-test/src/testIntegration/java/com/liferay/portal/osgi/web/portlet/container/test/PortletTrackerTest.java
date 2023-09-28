@@ -30,7 +30,6 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.osgi.web.portlet.container.test.util.PortletContainerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.util.WebAppPool;
 
@@ -77,9 +76,7 @@ public class PortletTrackerTest extends BasePortletContainerTestCase {
 	@ClassRule
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
-		new AggregateTestRule(
-			new LiferayIntegrationTestRule(),
-			PermissionCheckerMethodTestRule.INSTANCE);
+		new LiferayIntegrationTestRule();
 
 	@Test
 	public void testLoadGetPortletsByCompany() throws Exception {

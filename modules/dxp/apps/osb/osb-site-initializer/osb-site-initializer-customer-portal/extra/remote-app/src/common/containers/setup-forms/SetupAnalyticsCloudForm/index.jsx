@@ -7,17 +7,14 @@ import ClayForm from '@clayui/form';
 import {FieldArray, Formik} from 'formik';
 import {useEffect, useMemo, useState} from 'react';
 import {useAppPropertiesContext} from '~/common/contexts/AppPropertiesContext';
-import SearchBuilder from '~/common/core/SearchBuilder';
-
 import {
 	HIGH_PRIORITY_CONTACT_CATEGORIES,
-	actLiferayContact,
-	actRaysourceContact,
-	associateContactRoleLiferay,
-	associateContactRoleRaysource,
-	removeContactRoleLiferay,
-	removeContactRoleRaysource,
+	addHighPriorityContactsList,
+	associateContactRole,
+	removeContactRole,
+	removeHighPriorityContactsList,
 } from '~/routes/customer-portal/utils/getHighPriorityContacts';
+
 import {useOnboarding} from '~/routes/onboarding/context';
 import {
 	addAnalyticsCloudWorkspace,
@@ -45,21 +42,11 @@ import getKebabCase from '../../../utils/getKebabCase';
 import Layout from '../Layout';
 import IncidentReportInput from './IncidentReportInput';
 
+const INITIAL_SETUP_ADMIN_COUNT = 1;
+
 const BLANK_TEXT = '< none >';
 const FETCH_DELAY_AFTER_TYPING = 500;
-const INITIAL_SETUP_ADMIN_COUNT = 1;
 const MAX_LENGTH = 255;
-
-const getAnalyticsCloudSubmittedStatus = async (client, accountKey) => {
-	const {data} = await client.query({
-		query: getAnalyticsCloudWorkspace,
-		variables: {
-			filter: SearchBuilder.eq('accountKey', accountKey),
-		},
-	});
-
-	return !!data?.c?.analyticsCloudWorkspaces?.items?.length;
-};
 
 const SetupAnalyticsCloudPage = ({
 	client,
@@ -75,10 +62,14 @@ const SetupAnalyticsCloudPage = ({
 }) => {
 	const [isLoadingSubmitButton, setIsLoadingSubmitButton] = useState(false);
 	const [baseButtonDisabled, setBaseButtonDisabled] = useState(true);
-	const [addHighPriorityContact, setAddHighPriorityContact] = useState([]);
-	const [removeHighPriorityContact, setRemoveHighPriorityContact] = useState(
-		[]
-	);
+	const [
+		addHighPriorityContactList,
+		setAddHighPriorityContactList,
+	] = useState([]);
+	const [
+		removeHighPriorityContactList,
+		setRemoveHighPriorityContactList,
+	] = useState([]);
 	const [step, setStep] = useState(1);
 
 	const handlePreviousStep = () => {
@@ -128,7 +119,6 @@ const SetupAnalyticsCloudPage = ({
 	);
 
 	const hasDisasterRecovery = !!data?.c?.accountSubscriptions?.items?.length;
-
 	useEffect(() => {
 		if (analyticsDataCenterLocations.length) {
 			setFieldValue(
@@ -157,91 +147,102 @@ const SetupAnalyticsCloudPage = ({
 
 		const analyticsCloud = values?.activations;
 
-		const alreadySubmitted = await getAnalyticsCloudSubmittedStatus(
-			client,
-			project.accountKey
-		);
-
-		if (alreadySubmitted) {
-			return setFormAlreadySubmitted(true);
-		}
-
-		try {
-			setIsLoadingSubmitButton(true);
-
-			if (featureFlags.includes('LPS-159127')) {
-				await actRaysourceContact(
-					removeContactRoleRaysource,
-					removeHighPriorityContact,
-					project,
-					sessionId,
-					provisioningServerAPI
-				);
-				await actRaysourceContact(
-					associateContactRoleRaysource,
-					addHighPriorityContact,
-					project,
-					sessionId,
-					provisioningServerAPI
-				);
-				await actLiferayContact(
-					addHighPriorityContact,
-					associateContactRoleLiferay,
-					project,
-					client
-				);
-				await actLiferayContact(
-					removeHighPriorityContact,
-					removeContactRoleLiferay,
-					project,
-					client
-				);
-			}
-
-			const {data} = await client.mutate({
-				context: {
-					displaySuccess: false,
-					type: 'liferay-rest',
-				},
-				mutation: addAnalyticsCloudWorkspace,
+		const getAnalyticsCloudSubmittedStatus = async (accountKey) => {
+			const {data} = await client.query({
+				query: getAnalyticsCloudWorkspace,
 				variables: {
-					analyticsCloudWorkspace: {
-						accountKey: project.accountKey,
-						allowedEmailDomains: analyticsCloud.allowedEmailDomains,
-						dataCenterLocation: analyticsCloud.dataCenterLocation,
-						ownerEmailAddress: analyticsCloud.ownerEmailAddress,
-						r_accountEntryToAnalyticsCloudWorkspace_accountEntryId:
-							project?.id,
-						timeZone: analyticsCloud.timeZone,
-						workspaceFriendlyUrl:
-							analyticsCloud.workspaceFriendlyUrl,
-						workspaceName: analyticsCloud.workspaceName,
-					},
+					filter: `accountKey eq '${accountKey}'`,
 				},
 			});
 
 			if (data) {
-				const analyticsCloudWorkspaceId =
-					data?.createAnalyticsCloudWorkspace?.id;
+				const status = !!data.c?.analyticsCloudWorkspaces?.items
+					?.length;
 
-				await client.mutate({
+				return status;
+			}
+
+			return false;
+		};
+
+		const alreadySubmitted = await getAnalyticsCloudSubmittedStatus(
+			project.accountKey
+		);
+		if (alreadySubmitted) {
+			setFormAlreadySubmitted(true);
+		}
+
+		if (!alreadySubmitted) {
+			try {
+				setIsLoadingSubmitButton(true);
+				if (featureFlags.includes('LPS-159127')) {
+					await Promise.all(
+						removeHighPriorityContactList?.map(async (item) => {
+							removeContactRole(
+								item,
+								project,
+								sessionId,
+								provisioningServerAPI
+							);
+						})
+					);
+					await Promise.all(
+						addHighPriorityContactList?.map(async (item) => {
+							return associateContactRole(
+								item,
+								project,
+								sessionId,
+								provisioningServerAPI
+							);
+						})
+					);
+				}
+				const {data} = await client.mutate({
 					context: {
 						displaySuccess: false,
 						type: 'liferay-rest',
 					},
-					mutation: updateAccountSubscriptionGroups,
+					mutation: addAnalyticsCloudWorkspace,
 					variables: {
-						accountSubscriptionGroup: {
+						analyticsCloudWorkspace: {
 							accountKey: project.accountKey,
-							activationStatus: STATUS_TAG_TYPE_NAMES.inProgress,
-							r_accountEntryToAccountSubscriptionGroup_accountEntryId:
+							allowedEmailDomains:
+								analyticsCloud.allowedEmailDomains,
+							dataCenterLocation:
+								analyticsCloud.dataCenterLocation,
+							ownerEmailAddress: analyticsCloud.ownerEmailAddress,
+							r_accountEntryToAnalyticsCloudWorkspace_accountEntryId:
 								project?.id,
+							timeZone: analyticsCloud.timeZone,
+							workspaceFriendlyUrl:
+								analyticsCloud.workspaceFriendlyUrl,
+							workspaceName: analyticsCloud.workspaceName,
 						},
-						id: subscriptionGroupId,
 					},
 				});
 
-				if (!featureFlags.includes('LPS-159127')) {
+				if (data) {
+					const analyticsCloudWorkspaceId =
+						data?.createAnalyticsCloudWorkspace?.id;
+
+					await client.mutate({
+						context: {
+							displaySuccess: false,
+							type: 'liferay-rest',
+						},
+						mutation: updateAccountSubscriptionGroups,
+						variables: {
+							accountSubscriptionGroup: {
+								accountKey: project.accountKey,
+								activationStatus:
+									STATUS_TAG_TYPE_NAMES.inProgress,
+								r_accountEntryToAccountSubscriptionGroup_accountEntryId:
+									project?.id,
+							},
+							id: subscriptionGroupId,
+						},
+					});
+
 					await Promise.all(
 						analyticsCloud?.incidentReportContact?.map(
 							({email}) => {
@@ -263,53 +264,82 @@ const SetupAnalyticsCloudPage = ({
 							}
 						)
 					);
+
+					if (featureFlags.includes('LPS-159127')) {
+						await Promise.all(
+							removeHighPriorityContactList?.map((item) => {
+								return removeHighPriorityContactsList(
+									client,
+									item,
+									project
+								);
+							})
+						);
+
+						await Promise.all(
+							addHighPriorityContactList?.map((item) => {
+								return addHighPriorityContactsList(
+									client,
+									item,
+									project
+								);
+							})
+						);
+					}
+					if (featureFlags.includes('LPS-181031')) {
+						const emailIncidentReportContact = analyticsCloud?.incidentReportContact
+							?.map(({email}) => email)
+							.join(', ');
+
+						const notificationTemplateService = new NotificationQueueService(
+							client
+						);
+
+						await notificationTemplateService.send(
+							'SETUP-ANALYTICS-CLOUD-ENVIRONMENT-NOTIFICATION-TEMPLATE',
+							{
+								'[%AC_DATA_CENTER_LOCATION]':
+									analyticsCloud.dataCenterLocation,
+								'[%AC_DATA_TIME]': new Date().toUTCString(),
+								'[%AC_EMAIL_DOMAINS]':
+									analyticsCloud.allowedEmailDomains ||
+									BLANK_TEXT,
+
+								'[%AC_INCIDENT_REPORT_CONTACT]': emailIncidentReportContact,
+								'[%AC_OWNER_EMAIL]':
+									analyticsCloud.ownerEmailAddress,
+								'[%AC_TIME_ZONE]':
+									analyticsCloud.timeZone || BLANK_TEXT,
+								'[%AC_WORKSPACE_FRIENDLY_URL]':
+									analyticsCloud.workspaceFriendlyUrl ||
+									BLANK_TEXT,
+								'[%AC_WORKSPACE_NAME]':
+									analyticsCloud.workspaceName,
+								'[%PROJECT_ID]': project?.code,
+							}
+						);
+					}
 				}
+				setIsLoadingSubmitButton(false);
 
-				if (featureFlags.includes('LPS-181031')) {
-					const emailIncidentReportContact = analyticsCloud?.incidentReportContact
-						?.map(({email}) => email)
-						.join(', ');
-
-					const notificationTemplateService = new NotificationQueueService(
-						client
-					);
-
-					await notificationTemplateService.send(
-						'SETUP-ANALYTICS-CLOUD-ENVIRONMENT-NOTIFICATION-TEMPLATE',
-						{
-							'[%AC_DATA_CENTER_LOCATION]':
-								analyticsCloud.dataCenterLocation,
-							'[%AC_DATA_TIME]': new Date().toUTCString(),
-							'[%AC_EMAIL_DOMAINS]':
-								analyticsCloud.allowedEmailDomains ||
-								BLANK_TEXT,
-
-							'[%AC_INCIDENT_REPORT_CONTACT]': emailIncidentReportContact,
-							'[%AC_OWNER_EMAIL]':
-								analyticsCloud.ownerEmailAddress,
-							'[%AC_TIME_ZONE]':
-								analyticsCloud.timeZone || BLANK_TEXT,
-							'[%AC_WORKSPACE_FRIENDLY_URL]':
-								analyticsCloud.workspaceFriendlyUrl ||
-								BLANK_TEXT,
-							'[%AC_WORKSPACE_NAME]':
-								analyticsCloud.workspaceName,
-							'[%PROJECT_ID]': project?.code,
-						}
-					);
-				}
+				handlePage(true);
+			} catch {
+				setIsLoadingSubmitButton(false);
 			}
-			setIsLoadingSubmitButton(false);
-
-			handlePage(true);
-		} catch {
-			setIsLoadingSubmitButton(false);
 		}
 	};
 
 	const handleButtonClick = () => {
 		// eslint-disable-next-line no-unused-expressions
 		step === 1 ? handlePage(false) : handlePreviousStep();
+	};
+	const addHighPriorityContacts = (contactList) => {
+		const contactsList = contactList.map((item) => item);
+		setAddHighPriorityContactList(contactsList);
+	};
+	const removeHighPriorityContacts = (contactList) => {
+		const contactsList = contactList.map((objectId) => objectId);
+		setRemoveHighPriorityContactList(contactsList);
 	};
 
 	const updateMultiSelectEmpty = (error) => {
@@ -498,12 +528,12 @@ const SetupAnalyticsCloudPage = ({
 				{step === 2 && (
 					<div>
 						<SetupHighPriorityContactForm
-							addContactList={setAddHighPriorityContact}
+							addContactList={addHighPriorityContacts}
 							disableSubmit={updateMultiSelectEmpty}
 							filter={
 								HIGH_PRIORITY_CONTACT_CATEGORIES.criticalIncident
 							}
-							removedContactList={setRemoveHighPriorityContact}
+							removedContactList={removeHighPriorityContacts}
 						/>
 					</div>
 				)}

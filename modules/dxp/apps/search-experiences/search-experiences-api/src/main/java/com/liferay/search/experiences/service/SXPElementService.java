@@ -78,10 +78,9 @@ public interface SXPElementService extends BaseService {
 		throws PortalException;
 
 	public SXPElement updateSXPElement(
-			String externalReferenceCode, long sxpElementId,
-			Map<Locale, String> descriptionMap, String elementDefinitionJSON,
-			String schemaVersion, boolean hidden, Map<Locale, String> titleMap,
-			ServiceContext serviceContext)
+			long sxpElementId, Map<Locale, String> descriptionMap,
+			String elementDefinitionJSON, String schemaVersion, boolean hidden,
+			Map<Locale, String> titleMap, ServiceContext serviceContext)
 		throws PortalException;
 
 }

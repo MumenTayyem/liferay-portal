@@ -12,9 +12,10 @@ import com.liferay.portal.kernel.portlet.BaseControlPanelEntry;
 import com.liferay.portal.kernel.portlet.ControlPanelEntry;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
+import com.liferay.portal.kernel.service.permission.GroupPermission;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Eric Min
@@ -32,7 +33,7 @@ public class SiteSettingsControlPanelEntry extends BaseControlPanelEntry {
 		throws Exception {
 
 		if (group.isUser() || group.isLayoutSetPrototype() ||
-			!GroupPermissionUtil.contains(
+			!_groupPermission.contains(
 				permissionChecker, group, ActionKeys.UPDATE)) {
 
 			return true;
@@ -41,5 +42,8 @@ public class SiteSettingsControlPanelEntry extends BaseControlPanelEntry {
 		return super.hasAccessPermissionDenied(
 			permissionChecker, group, portlet);
 	}
+
+	@Reference
+	private GroupPermission _groupPermission;
 
 }

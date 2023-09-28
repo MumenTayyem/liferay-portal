@@ -31,7 +31,6 @@ import java.util.concurrent.Future;
 import javax.portlet.PortletPreferences;
 
 import org.im4java.process.ArrayListOutputConsumer;
-import org.im4java.process.ProcessEvent;
 import org.im4java.process.ProcessExecutor;
 import org.im4java.process.ProcessTask;
 
@@ -227,13 +226,7 @@ public class ImageMagickImpl implements ImageMagick {
 
 			Future<?> future = convert(arguments);
 
-			ProcessEvent processEvent = (ProcessEvent)future.get();
-
-			if (_log.isDebugEnabled() &&
-				(processEvent.getException() != null)) {
-
-				_log.debug(processEvent.getException());
-			}
+			future.get();
 
 			return _file.getBytes(scaledImageFile);
 		}

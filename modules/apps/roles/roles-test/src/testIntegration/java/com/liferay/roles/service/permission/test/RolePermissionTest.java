@@ -15,7 +15,7 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.service.permission.RolePermissionUtil;
+import com.liferay.portal.kernel.service.permission.RolePermission;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -79,12 +79,15 @@ public class RolePermissionTest {
 		PermissionChecker permissionChecker =
 			PermissionCheckerFactoryUtil.create(_user);
 
-		return RolePermissionUtil.contains(
+		return _rolePermission.contains(
 			permissionChecker, role.getRoleId(), ActionKeys.ASSIGN_MEMBERS);
 	}
 
 	@Inject
 	private RoleLocalService _roleLocalService;
+
+	@Inject
+	private RolePermission _rolePermission;
 
 	private User _user;
 

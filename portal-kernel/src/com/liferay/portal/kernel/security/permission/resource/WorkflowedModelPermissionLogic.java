@@ -16,7 +16,7 @@ import com.liferay.portal.kernel.model.WorkflowedModel;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.GroupLocalService;
-import com.liferay.portal.kernel.workflow.permission.WorkflowPermissionUtil;
+import com.liferay.portal.kernel.workflow.permission.WorkflowPermission;
 
 import java.util.Objects;
 import java.util.function.ToLongFunction;
@@ -28,10 +28,12 @@ public class WorkflowedModelPermissionLogic<T extends GroupedModel>
 	implements ModelResourcePermissionLogic<T> {
 
 	public WorkflowedModelPermissionLogic(
+		WorkflowPermission workflowPermission,
 		ModelResourcePermission<T> modelResourcePermission,
 		GroupLocalService groupLocalService,
 		ToLongFunction<T> primKeyToLongFunction) {
 
+		_workflowPermission = Objects.requireNonNull(workflowPermission);
 		_modelResourcePermission = Objects.requireNonNull(
 			modelResourcePermission);
 		_groupLocalService = groupLocalService;
@@ -92,7 +94,7 @@ public class WorkflowedModelPermissionLogic<T extends GroupedModel>
 			return false;
 		}
 		else if (workflowedModel.isPending()) {
-			return WorkflowPermissionUtil.hasPermission(
+			return _workflowPermission.hasPermission(
 				permissionChecker, model.getGroupId(), name,
 				_primKeyToLongFunction.applyAsLong(model), actionId);
 		}
@@ -103,5 +105,6 @@ public class WorkflowedModelPermissionLogic<T extends GroupedModel>
 	private final GroupLocalService _groupLocalService;
 	private final ModelResourcePermission<T> _modelResourcePermission;
 	private final ToLongFunction<T> _primKeyToLongFunction;
+	private final WorkflowPermission _workflowPermission;
 
 }

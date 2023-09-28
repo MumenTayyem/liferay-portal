@@ -63,7 +63,7 @@ public class ObjectFieldServiceTest {
 	public void setUp() throws Exception {
 		_guestUser = _userLocalService.getGuestUser(
 			TestPropsValues.getCompanyId());
-		_objectDefinition = ObjectDefinitionTestUtil.addCustomObjectDefinition(
+		_objectDefinition = ObjectDefinitionTestUtil.addObjectDefinition(
 			_objectDefinitionLocalService);
 		_systemObjectDefinition =
 			ObjectDefinitionTestUtil.addUnmodifiableSystemObjectDefinition(

@@ -7,14 +7,16 @@ import ClayButton from '@clayui/button';
 import DropDown from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
 import {sub} from 'frontend-js-web';
-import React, {SetStateAction} from 'react';
+import React from 'react';
 
 import './ObjectDefinitionNodeFooter.scss';
 
 interface ObjectDefinitionNodeFooterProps {
 	isLinkedObjectDefinition: boolean;
 	setShowAllObjectFields: (value: boolean) => void;
-	setShowModal: (value: SetStateAction<Partial<ModelBuilderModals>>) => void;
+	setShowModal: React.Dispatch<
+		React.SetStateAction<Partial<ViewObjectDefinitionsModals>>
+	>;
 	showAllObjectFields: boolean;
 }
 
@@ -62,20 +64,7 @@ export default function ObjectDefinitionNodeFooter({
 								{Liferay.Language.get('add-field')}
 							</DropDown.Item>
 
-							<DropDown.Item
-								onClick={() => {
-									setShowModal(
-										(
-											previousState: Partial<
-												ModelBuilderModals
-											>
-										) => ({
-											...previousState,
-											addObjectRelationship: true,
-										})
-									);
-								}}
-							>
+							<DropDown.Item>
 								<ClayIcon
 									className="c-mr-3 text-4"
 									symbol="nodes"

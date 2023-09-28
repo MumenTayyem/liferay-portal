@@ -6,33 +6,44 @@
 import ClayAlert from '@clayui/alert';
 import ClayButton from '@clayui/button';
 import ClayDatePicker from '@clayui/date-picker';
-import ClayModal from '@clayui/modal';
 import classnames from 'classnames';
 import {isAfter} from 'date-fns';
+import {getOpener} from 'frontend-js-web';
 import PropTypes from 'prop-types';
 import React, {useEffect, useState} from 'react';
 
-const noop = () => {};
+const SCHEDULE_EVENT_NAME = 'scheduleKBArticle';
 export default function ScheduleModal({
-	callback = noop,
 	displayDate: initialDisplayDate,
-	scheduled,
-	observer,
-	onModalClose = noop,
+	isScheduled,
+	portletNamespace,
 }) {
 	const [displayDate, setDisplayDate] = useState(
-		scheduled ? initialDisplayDate : ''
+		isScheduled ? initialDisplayDate : null
 	);
 	const [invalidDate, setInvalidDate] = useState(false);
 
+	const closeModal = () => {
+		getOpener().Liferay.fire('closeModal', {
+			id: 'scheduleKBArticleDialog',
+		});
+	};
+
 	const handleScheduleButtonOnClick = () => {
-		onModalClose();
-		callback(displayDate);
+		const openerWindow = getOpener();
+
+		const displayDateInput = openerWindow.document.getElementById(
+			`${portletNamespace}displayDate`
+		);
+		displayDateInput.value = displayDate;
+
+		openerWindow.Liferay.fire(SCHEDULE_EVENT_NAME);
+		closeModal();
 	};
 
 	const publisNowButtonOnClick = () => {
-		onModalClose();
-		callback('');
+		getOpener().Liferay.fire(SCHEDULE_EVENT_NAME);
+		closeModal();
 	};
 
 	useEffect(() => {
@@ -45,16 +56,10 @@ export default function ScheduleModal({
 	}, [displayDate]);
 
 	return (
-		<ClayModal observer={observer} size="md">
-			<ClayModal.Header>
-				{scheduled
-					? Liferay.Language.get('edit-scheduled-publication')
-					: Liferay.Language.get('schedule-publication')}
-			</ClayModal.Header>
-
-			<ClayModal.Body>
+		<div className="schedule-modal">
+			<div className="container-fluid p-4">
 				<p className="text-secondary">
-					{scheduled
+					{isScheduled
 						? Liferay.Language.get(
 								'this-article-is-set-to-publish-later'
 						  )
@@ -85,20 +90,20 @@ export default function ScheduleModal({
 						</ClayAlert>
 					</div>
 				)}
-			</ClayModal.Body>
+			</div>
 
-			<ClayModal.Footer
-				last={
+			<div className="modal-footer">
+				<div className="modal-item-last">
 					<ClayButton.Group spaced>
 						<ClayButton
 							borderless="<%= true %>"
 							displayType="secondary"
-							onClick={onModalClose}
+							onClick={closeModal}
 						>
 							{Liferay.Language.get('cancel')}
 						</ClayButton>
 
-						{scheduled && (
+						{isScheduled && (
 							<ClayButton
 								displayType="secondary"
 								onClick={publisNowButtonOnClick}
@@ -115,16 +120,14 @@ export default function ScheduleModal({
 							{Liferay.Language.get('schedule')}
 						</ClayButton>
 					</ClayButton.Group>
-				}
-			/>
-		</ClayModal>
+				</div>
+			</div>
+		</div>
 	);
 }
 
 ScheduleModal.propTypes = {
-	callback: PropTypes.func,
 	displayDate: PropTypes.string,
-	observer: PropTypes.object.isRequired,
-	onModalClose: PropTypes.func,
-	scheduled: PropTypes.bool,
+	isScheduled: PropTypes.bool,
+	portletNamespace: PropTypes.string.isRequired,
 };

@@ -10,9 +10,10 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionLogic;
-import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
+import com.liferay.portal.kernel.service.permission.GroupPermission;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Roberto Díaz
@@ -30,9 +31,12 @@ public class PortletExportBackgroundTaskExecutorModelResourcePermissionLogic
 			BackgroundTask backgroundTask, String actionId)
 		throws PortalException {
 
-		return GroupPermissionUtil.contains(
+		return _groupPermission.contains(
 			permissionChecker, backgroundTask.getGroupId(),
 			ActionKeys.EXPORT_IMPORT_PORTLET_INFO);
 	}
+
+	@Reference
+	private GroupPermission _groupPermission;
 
 }

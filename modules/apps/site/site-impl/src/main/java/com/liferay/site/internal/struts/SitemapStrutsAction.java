@@ -17,7 +17,7 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutSetLocalService;
 import com.liferay.portal.kernel.service.VirtualHostLocalService;
-import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
+import com.liferay.portal.kernel.service.permission.GroupPermission;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.struts.StrutsAction;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -88,7 +88,7 @@ public class SitemapStrutsAction implements StrutsAction {
 					Group group = layoutSet.getGroup();
 
 					if (group.isStagingGroup()) {
-						GroupPermissionUtil.check(
+						_groupPermission.check(
 							themeDisplay.getPermissionChecker(),
 							group.getGroupId(), ActionKeys.VIEW_STAGING);
 					}
@@ -152,6 +152,9 @@ public class SitemapStrutsAction implements StrutsAction {
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private GroupPermission _groupPermission;
 
 	@Reference
 	private LayoutSetLocalService _layoutSetLocalService;

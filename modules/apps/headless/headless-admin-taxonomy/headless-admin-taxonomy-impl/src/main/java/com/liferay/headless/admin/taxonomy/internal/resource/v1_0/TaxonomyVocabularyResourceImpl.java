@@ -15,7 +15,6 @@ import com.liferay.asset.kernel.model.ClassType;
 import com.liferay.asset.kernel.model.ClassTypeReader;
 import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
 import com.liferay.asset.kernel.service.AssetVocabularyService;
-import com.liferay.depot.util.SiteConnectedGroupGroupProviderUtil;
 import com.liferay.headless.admin.taxonomy.dto.v1_0.AssetType;
 import com.liferay.headless.admin.taxonomy.dto.v1_0.TaxonomyVocabulary;
 import com.liferay.headless.admin.taxonomy.internal.dto.v1_0.util.CreatorUtil;
@@ -654,9 +653,7 @@ public class TaxonomyVocabularyResourceImpl
 			searchContext -> {
 				searchContext.addVulcanAggregation(aggregation);
 				searchContext.setCompanyId(contextCompany.getCompanyId());
-				searchContext.setGroupIds(
-					SiteConnectedGroupGroupProviderUtil.
-						getCurrentAndAncestorSiteAndDepotGroupIds(groupId));
+				searchContext.setGroupIds(new long[] {groupId});
 			},
 			sorts,
 			document -> _toTaxonomyVocabulary(

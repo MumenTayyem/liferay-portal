@@ -55,7 +55,7 @@ renderResponse.setTitle(editDisplayContext.getPageTitle());
 							<c:when test="<%= Validator.isNotNull(editDisplayContext.getKey()) %>">
 								<aui:input name="key" type="hidden" value="<%= editDisplayContext.getKey() %>" />
 
-								<span><%= HtmlUtil.escape(editDisplayContext.getKey()) %></span>
+								<span><%= editDisplayContext.getKey() %></span>
 							</c:when>
 							<c:otherwise>
 								<div class="form-group">

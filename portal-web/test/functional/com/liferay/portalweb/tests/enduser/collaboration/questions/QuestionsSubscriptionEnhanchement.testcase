@@ -19,11 +19,6 @@ definition {
 			groupName = "Guest",
 			layoutName = "Questions Page",
 			widgetName = "Questions");
-
-		JSONMBMessage.addCategory(
-			categoryDescription = "Description",
-			categoryName = "Questions Test Topic",
-			userEmailAddress = "test@liferay.com");
 	}
 
 	tearDown {
@@ -48,7 +43,14 @@ definition {
 	@description = "This is a test for LPS-159147. Verify if the user is notified when a followed question has a new answer."
 	@priority = 3
 	test CanBeNotifiedByAnswer {
-		task ("Given there are a question created") {
+		task ("Create a Topic") {
+			JSONMBMessage.addCategory(
+				categoryDescription = "Description",
+				categoryName = "Questions Test Topic",
+				userEmailAddress = "test@liferay.com");
+		}
+
+		task ("Create a Question") {
 			JSONQuestions.addQuestion(
 				bodyField = "Content AddQuestion",
 				categoryName = "Questions Test Topic",
@@ -56,16 +58,7 @@ definition {
 				titleField = "Question1");
 		}
 
-		task ("And the user Subcribes on a Topic") {
-			Questions.openToQuestionsTopic(
-				layoutName = "questions-page",
-				siteURLKey = "guest",
-				topicName = "questions-test-topic");
-
-			Questions.subscribeTopic();
-		}
-
-		task ("When another user with admin role is logged") {
+		task ("Create a new User with an Admin Role") {
 			JSONUser.addUser(
 				userEmailAddress = "test1@liferay.com",
 				userFirstName = "test1",
@@ -80,28 +73,34 @@ definition {
 			JSONRole.assignRoleToUser(
 				roleTitle = "Administrator",
 				userEmailAddress = "test1@liferay.com");
+		}
 
+		task ("Login with a new User") {
 			User.logoutAndLoginPG(
 				userLoginEmailAddress = "test1@liferay.com",
 				userLoginFullName = "test1 test");
 		}
 
-		task ("And Answer the Question") {
+		task ("Answer the Question") {
 			Questions.openToQuestionsTopic(
 				layoutName = "questions-page",
 				siteURLKey = "guest",
 				topicName = "questions-test-topic");
 
-			Questions.gotoDetails(questionTitle = "Question1");
+			Questions.gotoDetails(
+				questionTabField = "Questions",
+				questionTitle = "Questions1");
 
 			Questions.answerQuestion(contentField = "This is my answer");
 		}
 
-		task ("Then the user that was subscribed on the topic can see the notifications") {
+		task ("Login with Test test") {
 			User.logoutAndLoginPG(
 				userLoginEmailAddress = "test@liferay.com",
 				userLoginFullName = "test test");
+		}
 
+		task ("Validate the notifications") {
 			Notifications.viewBadgeCount(notificationCount = 1);
 		}
 	}
@@ -109,7 +108,14 @@ definition {
 	@description = "This is a test for LPS-159156. Verify if the user is notified when a followed topic has a new comment."
 	@priority = 3
 	test CanBeNotifiedByComment {
-		task ("Given there are a question created") {
+		task ("Create a Topic") {
+			JSONMBMessage.addCategory(
+				categoryDescription = "Description",
+				categoryName = "Questions Test Topic",
+				userEmailAddress = "test@liferay.com");
+		}
+
+		task ("Create a Question") {
 			JSONQuestions.addQuestion(
 				bodyField = "Content AddQuestion",
 				categoryName = "Questions Test Topic",
@@ -117,20 +123,17 @@ definition {
 				titleField = "Question1");
 		}
 
-		task ("And a user answer a question on a followed topic") {
-			Questions.openToQuestionsTopic(
-				layoutName = "questions-page",
-				siteURLKey = "guest",
-				topicName = "questions-test-topic");
+		task ("Answer a Question") {
+			Questions.gotoDetails(
+				questionTabField = "Questions",
+				questionTitle = "Questions1");
 
-			Questions.subscribeTopic();
-
-			Questions.gotoDetails(questionTitle = "Question1");
-
-			Questions.answerQuestion(contentField = "This is my answer text.");
+			Questions.answerQuestion(
+				answeredLabel = "true",
+				contentField = "This is my answer text.");
 		}
 
-		task ("When another user with admin role is logged") {
+		task ("Create a new User with an Admin Role") {
 			JSONUser.addUser(
 				userEmailAddress = "test1@liferay.com",
 				userFirstName = "test1",
@@ -145,30 +148,38 @@ definition {
 			JSONRole.assignRoleToUser(
 				roleTitle = "Administrator",
 				userEmailAddress = "test1@liferay.com");
+		}
 
+		task ("Login with a new User") {
 			User.logoutAndLoginPG(
 				userLoginEmailAddress = "test1@liferay.com",
 				userLoginFullName = "test1 test");
 		}
 
-		task ("And Add a comment in an Answer ") {
+		task ("Enter on the Question") {
 			Questions.openToQuestionsTopic(
 				layoutName = "questions-page",
 				siteURLKey = "guest",
 				topicName = "questions-test-topic");
 
-			Questions.gotoDetails(questionTitle = "Question1");
+			Questions.gotoDetails(
+				questionTabField = "Questions",
+				questionTitle = "Questions1");
+		}
 
+		task ("Comment the Answer") {
 			Questions.replyToComment(
 				commentReply = "This is my reply text.",
 				repliedLabel = "true");
 		}
 
-		task ("Then the user that was subscribed on the topic can see the notifications") {
+		task ("Login with Test test") {
 			User.logoutAndLoginPG(
 				userLoginEmailAddress = "test@liferay.com",
 				userLoginFullName = "test test");
+		}
 
+		task ("Validate the notifications") {
 			Notifications.viewBadgeCount(notificationCount = 1);
 		}
 	}
@@ -275,16 +286,23 @@ definition {
 	@description = "This is a test for LPS-159144. Verify if the user is able to subscribe a tag if they want to."
 	@priority = 5
 	test CanSubscribeATag {
-		task ("Given there is a Created Question with a tag") {
+		task ("Create a Topic") {
+			JSONMBMessage.addCategory(
+				categoryDescription = "Description",
+				categoryName = "Questions Test Topic",
+				userEmailAddress = "test@liferay.com");
+		}
+
+		task ("Create a Question with a tag") {
 			JSONQuestions.addQuestionWithTag(
 				bodyField = "Content1",
 				categoryName = "Questions Test Topic",
 				groupName = "Guest",
 				tagField = "new",
-				titleField = "Question2");
+				titleField = "Question1");
 		}
 
-		task ("When the user Subscribe to Tag") {
+		task ("Subscribe to Tag") {
 			Questions.openToTagsTab(
 				layoutName = "questions-page",
 				siteURLKey = "guest");
@@ -292,14 +310,11 @@ definition {
 			Questions.subscribeFromTag();
 		}
 
-		task ("Then he can validate that he is subscribed tag") {
-			Questions.openToQuestionsTopic(
-				layoutName = "questions-page",
-				siteURLKey = "guest",
-				topicName = "questions-test-topic");
-
+		task ("Go to Subscription page") {
 			Questions.gotoTab(questionTabField = "Subscriptions");
+		}
 
+		task ("Validate the subcribed tag") {
 			Questions.viewSubscribedTag(subscribedTag = "new");
 		}
 	}
@@ -307,7 +322,14 @@ definition {
 	@description = "This is a test for LPS-159160. Verify if the user is able to subscribe a topic if they want to."
 	@priority = 5
 	test CanSubscribeATopic {
-		task ("Given there is a Created subtopic") {
+		task ("Create a Topic") {
+			JSONMBMessage.addCategory(
+				categoryDescription = "Description",
+				categoryName = "Questions Test Topic",
+				userEmailAddress = "test@liferay.com");
+		}
+
+		task ("Subcribe to the Topic") {
 			Questions.openToQuestionsTopic(
 				layoutName = "questions-page",
 				siteURLKey = "guest",
@@ -316,13 +338,11 @@ definition {
 			Questions.addSubTopic(
 				subTopicDescription = "Topic Description",
 				subTopicName = "Questions Test Topic");
-		}
 
-		task ("When the user subcribes on a topic") {
 			Questions.subscribeTopic();
 		}
 
-		task ("Then the can see that he is subscribed in a topic on the subscriptions page") {
+		task ("Validate the subcribed topic") {
 			Questions.gotoTab(questionTabField = "Subscriptions");
 
 			Questions.viewSubscribedTopic(subscribedTopic = "Questions Test Topic");
@@ -332,12 +352,14 @@ definition {
 	@description = "This is a test for LPS-159138. Verify if the user is able to unsubscribe a question if they want to."
 	@priority = 5
 	test CanUnsubscribeAQuestion {
-		task ("Given there are a Topic and a question created") {
+		task ("Create a Topic") {
 			JSONMBMessage.addCategory(
 				categoryDescription = "Description",
 				categoryName = "Questions Test Topic",
 				userEmailAddress = "test@liferay.com");
+		}
 
+		task ("Create a Question") {
 			JSONQuestions.addQuestion(
 				bodyField = "Content AddQuestion",
 				categoryName = "Questions Test Topic",
@@ -345,37 +367,30 @@ definition {
 				titleField = "Question1");
 		}
 
-		task ("And the user Subsribes on the Question") {
-			Questions.openToQuestionsTopic(
-				layoutName = "questions-page",
-				siteURLKey = "guest",
-				topicName = "questions-test-topic");
-
-			Questions.gotoDetails(
-				questionTabField = "Questions",
-				questionTitle = "Question1");
-
-			Questions.subscribeFromQuestion(questionTitle = "Question1");
-
+		task ("Go to my subscription page") {
 			Questions.gotoTab(questionTabField = "Subscriptions");
+		}
 
+		task ("Validate the subcribed Question") {
 			Questions.viewSubscribedQuestion(subscribedQuestion = "Question1");
 		}
 
-		task ("When the user goes to Unsubsribes to the Question") {
+		task ("Enter on a Topic") {
 			Questions.openToQuestionsTopic(
 				layoutName = "questions-page",
 				siteURLKey = "guest",
 				topicName = "questions-test-topic");
+		}
 
+		task ("Unsubsribe the Question") {
 			Questions.gotoDetails(
 				questionTabField = "Questions",
-				questionTitle = "Question1");
+				questionTitle = "Questions Title");
 
 			Questions.unsubscribeFromQuestion(questionTitle = "Question1");
 		}
 
-		task ("Then he can see that is possible unsubcribe on a Question") {
+		task ("Validate the unsubcribed Question") {
 			Questions.gotoTab(questionTabField = "Subscriptions");
 
 			Questions.viewSubscribedQuestion(noSubscribedQuestion = "true");
@@ -385,12 +400,14 @@ definition {
 	@description = "This is a test for LPS-159144. Verify if the user is able to unsubscribe a tag if they want to."
 	@priority = 5
 	test CanUnsubscribeATag {
-		task ("Given there are a category and a question with a tag created") {
+		task ("Create a Topic") {
 			JSONMBMessage.addCategory(
 				categoryDescription = "Description",
 				categoryName = "Questions Test Topic",
 				userEmailAddress = "test@liferay.com");
+		}
 
+		task ("Create a Question with a tag") {
 			JSONQuestions.addQuestionWithTag(
 				bodyField = "Content1",
 				categoryName = "Questions Test Topic",
@@ -399,19 +416,23 @@ definition {
 				titleField = "Question1");
 		}
 
-		task ("And the user is Subscribed on a Tag") {
+		task ("Subscribe to Tag") {
 			Questions.openToTagsTab(
 				layoutName = "questions-page",
 				siteURLKey = "guest");
 
 			Questions.subscribeFromTag();
+		}
 
+		task ("Go to Subscription page") {
 			Questions.gotoTab(questionTabField = "Subscriptions");
+		}
 
+		task ("Validate the subcribed tag") {
 			Questions.viewSubscribedTag(subscribedTag = "new");
 		}
 
-		task ("When the user goes to Unsubscribe to Tag") {
+		task ("Unsubscribe to Tag") {
 			Questions.openToTagsTab(
 				layoutName = "questions-page",
 				siteURLKey = "guest");
@@ -419,9 +440,11 @@ definition {
 			Questions.unsubscribeFromTag();
 		}
 
-		task ("Then he can se that is possible unsubscribe on a tag") {
+		task ("Go to Subscription page") {
 			Questions.gotoTab(questionTabField = "Subscriptions");
+		}
 
+		task ("Validate the unsubcribed tag") {
 			Questions.viewSubscribedTag(noSubscribedTag = "true");
 		}
 	}
@@ -429,12 +452,14 @@ definition {
 	@description = "This is a test for LPS-159160. Verify if the user is able to unsubscribe a topic if they want to"
 	@priority = 5
 	test CanUnsubscribeATopic {
-		task ("Given there are a Topic and a subtopic created") {
+		task ("Create a Topic") {
 			JSONMBMessage.addCategory(
 				categoryDescription = "Description",
 				categoryName = "Questions Test Topic",
 				userEmailAddress = "test@liferay.com");
+		}
 
+		task ("Enter on a Topic") {
 			Questions.openToQuestionsTopic(
 				layoutName = "questions-page",
 				siteURLKey = "guest",
@@ -445,19 +470,21 @@ definition {
 				subTopicName = "Questions Test Topic");
 		}
 
-		task ("And the user is subiscribed on this topic") {
+		task ("Subcribe to the Topic") {
 			Questions.subscribeTopic();
+		}
 
+		task ("Validate the subcribed topic") {
 			Questions.gotoTab(questionTabField = "Subscriptions");
 
 			Questions.viewSubscribedTopic(subscribedTopic = "Questions Test Topic");
 		}
 
-		task ("When the user goes to Unsubcribe to the Topic") {
+		task ("Unsubcribe to the Topic") {
 			Questions.unsubscribeFromTopic(topicName = "Questions Test Topic");
 		}
 
-		task ("Then he can see that he was unsubcribed to the topic") {
+		task ("Validate if the unsubcribed topic") {
 			Questions.viewSubscribedTopic(noSubscribedTopic = "true");
 		}
 	}

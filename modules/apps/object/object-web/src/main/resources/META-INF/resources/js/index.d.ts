@@ -89,7 +89,6 @@ interface ModelBuilderModals
 		| 'unbindFromRootObjectDefinition'
 	> {
 	addObjectRelationship: boolean;
-	deleteObjectRelationship: boolean;
 	editObjectDefinitionExternalReferenceCode: boolean;
 	publishObjectDefinitions: boolean;
 	redirectToEditObjectDefinitionDetails: boolean;

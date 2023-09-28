@@ -4,7 +4,7 @@
  */
 
 (function () {
-	const ON_CLICK_POPOVER_CONTENT = `
+	const POPOVER_CONTENT_TEMPLATE = `
 		<div class="arrow"></div>
 		<div class="inline-scroller">
 			<div class="popover-header">
@@ -31,6 +31,15 @@
 			let button = null;
 			let popover = null;
 
+			function debounce(fn, delay) {
+				let timeoutId;
+
+				return () => {
+					clearTimeout(timeoutId);
+					timeoutId = setTimeout(fn, delay);
+				};
+			}
+
 			function hidePopover() {
 				if (popover) {
 					if (document.body.contains(popover)) {
@@ -51,7 +60,7 @@
 				popover = document.createElement('div');
 
 				popover.className = 'clay-popover-top fade popover show';
-				popover.innerHTML = ON_CLICK_POPOVER_CONTENT;
+				popover.innerHTML = POPOVER_CONTENT_TEMPLATE;
 				popover.setAttribute('role', 'alert');
 				popover.setAttribute('tabindex', '0');
 
@@ -133,12 +142,14 @@
 			requestAnimationFrame(() => {
 				button = editor.container.findOne('.cke_button__aicreator').$;
 
-				button.classList.add('lfr-portal-tooltip');
+				if (!editor.config.isAICreatorOpenAIAPIKey) {
+					button.removeAttribute('title');
 
-				button.setAttribute(
-					'data-title',
-					Liferay.Language.get('create-ai-content')
-				);
+					const debouncedShowPopover = debounce(showPopover, 300);
+
+					button.addEventListener('mouseenter', debouncedShowPopover);
+					button.addEventListener('mouseleave', hidePopover);
+				}
 			});
 		},
 	});

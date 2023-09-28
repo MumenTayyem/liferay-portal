@@ -30,6 +30,7 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.dao.search.EmptyOnClickRowChecker;
 import com.liferay.portal.kernel.dao.search.SearchContainer;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -199,14 +200,23 @@ public class FragmentDisplayContext {
 					).add(
 						() -> hasManageFragmentEntriesPermission,
 						dropdownItem -> {
-							dropdownItem.setHref(
-								PortletURLBuilder.createRenderURL(
-									_renderResponse
-								).setMVCRenderCommandName(
-									"/fragment/view_import"
-								).setParameter(
-									"fragmentCollectionId", 0
-								).buildString());
+							if (FeatureFlagManagerUtil.isEnabled(
+									"LPS-174939")) {
+
+								dropdownItem.setHref(
+									PortletURLBuilder.createRenderURL(
+										_renderResponse
+									).setMVCRenderCommandName(
+										"/fragment/view_import"
+									).setParameter(
+										"fragmentCollectionId", 0
+									).buildString());
+							}
+							else {
+								dropdownItem.putData(
+									"action", "openImportView");
+							}
+
 							dropdownItem.setIcon("import");
 							dropdownItem.setLabel(
 								LanguageUtil.get(

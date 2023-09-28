@@ -86,8 +86,7 @@ public class SXPBlueprintServiceUtil {
 	}
 
 	public static SXPBlueprint updateSXPBlueprint(
-			String externalReferenceCode, long sxpBlueprintId,
-			String configurationJSON,
+			long sxpBlueprintId, String configurationJSON,
 			Map<java.util.Locale, String> descriptionMap,
 			String elementInstancesJSON, String schemaVersion,
 			Map<java.util.Locale, String> titleMap,
@@ -95,9 +94,8 @@ public class SXPBlueprintServiceUtil {
 		throws PortalException {
 
 		return getService().updateSXPBlueprint(
-			externalReferenceCode, sxpBlueprintId, configurationJSON,
-			descriptionMap, elementInstancesJSON, schemaVersion, titleMap,
-			serviceContext);
+			sxpBlueprintId, configurationJSON, descriptionMap,
+			elementInstancesJSON, schemaVersion, titleMap, serviceContext);
 	}
 
 	public static SXPBlueprintService getService() {

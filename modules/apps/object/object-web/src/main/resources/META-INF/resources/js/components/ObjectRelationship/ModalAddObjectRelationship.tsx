@@ -17,30 +17,22 @@ import {
 	ObjectRelationshipType,
 	useObjectRelationshipForm,
 } from './ObjectRelationshipFormBase';
-import SelectObjectRelationship from './SelectObjectRelationship';
+import SelectRelationship from './SelectRelationship';
 
 import './ModalAddObjectRelationship.scss';
 
 interface ModalAddObjectRelationshipProps {
 	baseResourceURL: string;
 	handleOnClose: () => void;
-	hasDefinedObjectDefinitionTarget?: boolean;
-	objectDefinitionExternalReferenceCode1: string;
-	objectDefinitionExternalReferenceCode2?: string;
-	objectRelationshipParameterRequired: boolean;
-	onAfterSubmit?: (objectRelationshipId: number) => void;
-	reload?: boolean;
+	objectDefinitionExternalReferenceCode: string;
+	parameterRequired: boolean;
 }
 
 export function ModalAddObjectRelationship({
 	baseResourceURL,
 	handleOnClose,
-	hasDefinedObjectDefinitionTarget,
-	objectDefinitionExternalReferenceCode1,
-	objectDefinitionExternalReferenceCode2,
-	objectRelationshipParameterRequired,
-	onAfterSubmit,
-	reload = true,
+	objectDefinitionExternalReferenceCode,
+	parameterRequired,
 }: ModalAddObjectRelationshipProps) {
 	const {observer, onClose} = useModal({
 		onClose: () => {
@@ -51,8 +43,7 @@ export function ModalAddObjectRelationship({
 	const [error, setError] = useState<string>('');
 
 	const initialValues: Partial<ObjectRelationship> = {
-		objectDefinitionExternalReferenceCode1,
-		objectDefinitionExternalReferenceCode2,
+		objectDefinitionExternalReferenceCode1: objectDefinitionExternalReferenceCode,
 	};
 
 	const onSubmit = async ({
@@ -62,7 +53,7 @@ export function ModalAddObjectRelationship({
 		...others
 	}: ObjectRelationship) => {
 		try {
-			const objectRelationship = await API.save({
+			await API.save({
 				item: {
 					objectDefinitionExternalReferenceCode1,
 					...others,
@@ -70,19 +61,11 @@ export function ModalAddObjectRelationship({
 					name: name ?? toCamelCase(label[defaultLanguageId]!, true),
 				},
 				method: 'POST',
-				returnValue: true,
 				url: `/o/object-admin/v1.0/object-definitions/by-external-reference-code/${objectDefinitionExternalReferenceCode1}/object-relationships`,
 			});
 
 			onClose();
-
-			if (reload) {
-				setTimeout(() => window.location.reload(), 1500);
-			}
-
-			if (onAfterSubmit) {
-				setTimeout(() => onAfterSubmit(objectRelationship.id), 200);
-			}
+			window.location.reload();
 		}
 		catch (error: unknown) {
 			const {message} = error as Error;
@@ -97,11 +80,7 @@ export function ModalAddObjectRelationship({
 		handleSubmit,
 		setValues,
 		values,
-	} = useObjectRelationshipForm({
-		initialValues,
-		onSubmit,
-		parameterRequired: objectRelationshipParameterRequired,
-	});
+	} = useObjectRelationshipForm({initialValues, onSubmit, parameterRequired});
 
 	return (
 		<ClayModalProvider>
@@ -130,14 +109,8 @@ export function ModalAddObjectRelationship({
 							baseResourceURL={baseResourceURL}
 							errors={errors}
 							handleChange={handleChange}
-							hasDefinedObjectDefinitionTarget={
-								hasDefinedObjectDefinitionTarget
-							}
-							objectDefinitionExternalReferenceCode1={
-								objectDefinitionExternalReferenceCode1
-							}
-							objectDefinitionExternalReferenceCode2={
-								objectDefinitionExternalReferenceCode2
+							objectDefinitionExternalReferenceCode={
+								objectDefinitionExternalReferenceCode
 							}
 							setValues={setValues}
 							values={{
@@ -151,12 +124,12 @@ export function ModalAddObjectRelationship({
 							}}
 						/>
 
-						{objectRelationshipParameterRequired &&
+						{parameterRequired &&
 							values.type ===
 								ObjectRelationshipType.ONE_TO_MANY && (
-								<SelectObjectRelationship
+								<SelectRelationship
 									error={errors.parameterObjectFieldName}
-									objectDefinitionExternalReferenceCode1={
+									objectDefinitionExternalReferenceCode={
 										values.objectDefinitionExternalReferenceCode2 as string
 									}
 									onChange={(parameterObjectFieldName) =>

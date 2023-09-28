@@ -102,6 +102,10 @@ public class LinkEditableElementMapper implements EditableElementMapper {
 
 		Element linkElement = new Element("a");
 
+		if (nofollow) {
+			linkElement.attr("rel", "nofollow");
+		}
+
 		Elements elements = element.children();
 
 		Element firstChildElement = elements.first();
@@ -143,10 +147,6 @@ public class LinkEditableElementMapper implements EditableElementMapper {
 		}
 
 		linkElement.attr("href", href);
-
-		if (nofollow) {
-			linkElement.attr("rel", "nofollow");
-		}
 
 		_replaceLinkContent(
 			element, firstChildElement, linkElement, replaceLink);

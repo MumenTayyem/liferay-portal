@@ -15,7 +15,7 @@ import classNames from 'classnames';
 import {useId} from 'frontend-js-components-web';
 import {sub} from 'frontend-js-web';
 import PropTypes from 'prop-types';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {useDrag, useDrop} from 'react-dnd';
 import {getEmptyImage} from 'react-dnd-html5-backend';
 
@@ -24,11 +24,6 @@ import {config} from '../config/index';
 import {useDispatch, useSelector} from '../contexts/StoreContext';
 import selectWidgetFragmentEntryLinks from '../selectors/selectWidgetFragmentEntryLinks';
 import loadWidgets from '../thunks/loadWidgets';
-
-const DRAG_OVER_POSITIONS = {
-	bottom: 'bottom',
-	top: 'top',
-};
 
 const FRAGMENTS_ID = 0;
 const WIDGETS_ID = 1;
@@ -235,31 +230,14 @@ Tabs.propTypes = {
 function Items({items: initialItems, listId, updateLists}) {
 	const [items, setItems] = useState(initialItems);
 
-	const onDropItem = (itemId, nextIndex, dragOverPosition) => {
-		const index = items.findIndex(({id}) => id === itemId);
-		const item = items[index];
+	const onChangeItemPosition = (itemId, newPosition) => {
+		const itemIndex = items.findIndex(({id}) => id === itemId);
+		const item = items[itemIndex];
+
 		const nextItems = [...items];
 
-		let updatedNextIndex = nextIndex;
-
-		if (Liferay.FeatureFlags['LPS-196420']) {
-			if (dragOverPosition === DRAG_OVER_POSITIONS.bottom) {
-				updatedNextIndex =
-					updatedNextIndex < nextItems.length
-						? updatedNextIndex + 1
-						: updatedNextIndex;
-			}
-
-			if (updatedNextIndex > index) {
-				updatedNextIndex =
-					updatedNextIndex > 0
-						? updatedNextIndex - 1
-						: updatedNextIndex;
-			}
-		}
-
-		nextItems.splice(index, 1);
-		nextItems.splice(updatedNextIndex, 0, item);
+		nextItems.splice(itemIndex, 1);
+		nextItems.splice(newPosition, 0, item);
 
 		setItems(nextItems);
 		updateLists(listId, nextItems);
@@ -273,7 +251,7 @@ function Items({items: initialItems, listId, updateLists}) {
 					item={item}
 					key={item.id}
 					numberOfItems={items.length}
-					onDropItem={onDropItem}
+					onChangeItemPosition={onChangeItemPosition}
 				/>
 			))}
 		</div>
@@ -286,28 +264,17 @@ Items.propTypes = {
 	updateLists: PropTypes.func.isRequired,
 };
 
-function CardItem({index, item, numberOfItems, onDropItem}) {
+function CardItem({index, item, numberOfItems, onChangeItemPosition}) {
 	const {name} = item;
 
 	const {handlerRef, isDragging} = useDragItem(item);
-	const {dragOverPosition, targetRef} = useDropTarget(
-		item.id,
-		index,
-		onDropItem
-	);
+	const {targetRef} = useDropTarget(item.id, index, onChangeItemPosition);
 
 	return (
-		<div className="c-pb-3" ref={targetRef}>
+		<div ref={targetRef}>
 			<div ref={handlerRef}>
 				<ClayCard
-					className={classNames('c-mb-0', {
-						dragging: isDragging,
-						draggingOver: dragOverPosition,
-						draggingOverBottom:
-							dragOverPosition === DRAG_OVER_POSITIONS.bottom,
-						draggingOverTop:
-							dragOverPosition === DRAG_OVER_POSITIONS.top,
-					})}
+					className={classNames('mb-3', {dragging: isDragging})}
 				>
 					<ClayCard.Body className="px-0">
 						<ClayCard.Row className="align-items-center">
@@ -328,16 +295,14 @@ function CardItem({index, item, numberOfItems, onDropItem}) {
 								</ClayCard.Description>
 							</ClayLayout.ContentCol>
 
-							{Liferay.FeatureFlags['LPS-196420'] ? null : (
-								<ClayLayout.ContentCol gutters>
-									<ReorderDropdown
-										index={index}
-										item={item}
-										numberOfItems={numberOfItems}
-										onDropItem={onDropItem}
-									/>
-								</ClayLayout.ContentCol>
-							)}
+							<ClayLayout.ContentCol gutters>
+								<ReorderDropdown
+									index={index}
+									item={item}
+									numberOfItems={numberOfItems}
+									onChangeItemPosition={onChangeItemPosition}
+								/>
+							</ClayLayout.ContentCol>
 						</ClayCard.Row>
 					</ClayCard.Body>
 				</ClayCard>
@@ -350,21 +315,21 @@ CardItem.propTypes = {
 	index: PropTypes.number.isRequired,
 	item: PropTypes.object.isRequired,
 	numberOfItems: PropTypes.number.isRequired,
-	onDropItem: PropTypes.func.isRequired,
+	onChangeItemPosition: PropTypes.func.isRequired,
 };
 
-function ReorderDropdown({index, item, numberOfItems, onDropItem}) {
+function ReorderDropdown({index, item, numberOfItems, onChangeItemPosition}) {
 	const items = [
 		{
 			disabled: index === 0,
 			label: Liferay.Language.get('move-up'),
-			onClick: () => onDropItem(item.id, index - 1),
+			onClick: () => onChangeItemPosition(item.id, index - 1),
 			symbolLeft: 'angle-up',
 		},
 		{
 			disabled: index === numberOfItems - 1,
 			label: Liferay.Language.get('move-down'),
-			onClick: () => onDropItem(item.id, index + 1),
+			onClick: () => onChangeItemPosition(item.id, index + 1),
 			symbolLeft: 'angle-down',
 		},
 	];
@@ -389,7 +354,7 @@ ReorderDropdown.propTypes = {
 	index: PropTypes.number.isRequired,
 	item: PropTypes.object.isRequired,
 	numberOfItems: PropTypes.number.isRequired,
-	onDropItem: PropTypes.func.isRequired,
+	onChangeItemPosition: PropTypes.func.isRequired,
 };
 
 function useDragItem(item) {
@@ -415,67 +380,24 @@ function useDragItem(item) {
 	};
 }
 
-export function useDropTarget(itemId, itemIndex, onDropItem) {
-	const [dragOverPosition, setDragOverPosition] = useState(null);
-	const targetRef = useRef(null);
-	const targetRectRef = useRef(null);
-
-	const [{isOver}, internalSetTargetRef] = useDrop({
+export function useDropTarget(itemId, itemIndex, onChangeItemPosition) {
+	const [, targetRef] = useDrop({
 		accept: ACCEPTING_ITEM_TYPE,
-		canDrop(sourceItem, monitor) {
-			return sourceItem.id !== itemId && monitor.isOver();
-		},
-		collect(monitor) {
-			return {
-				isOver: monitor.isOver(),
-			};
-		},
-		drop(source, monitor) {
-			targetRectRef.current = null;
-
-			if (Liferay.FeatureFlags['LPS-196420'] && monitor.canDrop()) {
-				onDropItem(source.id, itemIndex, dragOverPosition);
-			}
+		canDrop(source, monitor) {
+			return monitor.isOver();
 		},
 		hover(source, monitor) {
-			if (!monitor.isOver()) {
-				targetRectRef.current = null;
-
-				return;
-			}
-
-			if (Liferay.FeatureFlags['LPS-196420']) {
-				targetRectRef.current =
-					targetRectRef.current ||
-					targetRef.current.getBoundingClientRect();
-
-				const targetMiddlePosition =
-					targetRectRef.current.top +
-					targetRectRef.current.height / 2;
-
-				if (monitor.getClientOffset().y < targetMiddlePosition) {
-					setDragOverPosition(DRAG_OVER_POSITIONS.top);
+			if (monitor.canDrop(source, monitor)) {
+				if (source.id === itemId) {
+					return;
 				}
-				else {
-					setDragOverPosition(DRAG_OVER_POSITIONS.bottom);
-				}
-			}
-			else if (monitor.canDrop()) {
-				onDropItem(source.id, itemIndex);
+
+				onChangeItemPosition(source.id, itemIndex);
 			}
 		},
 	});
 
-	const setTargetRef = useCallback(
-		(targetElement) => {
-			internalSetTargetRef(targetElement);
-			targetRef.current = targetElement;
-		},
-		[internalSetTargetRef]
-	);
-
 	return {
-		dragOverPosition: isOver ? dragOverPosition : null,
-		targetRef: setTargetRef,
+		targetRef,
 	};
 }

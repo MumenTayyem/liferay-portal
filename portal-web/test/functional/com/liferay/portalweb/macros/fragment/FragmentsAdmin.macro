@@ -175,57 +175,41 @@ definition {
 	macro importCollectionFromDependenciesFolder {
 		FragmentsAdminNavigator.gotoImportCollection();
 
-		WaitForPageLoad();
-
 		UploadDependencyFile.uploadArchiveFile(fileName = ${collectionZipFile});
+
+		SelectFrameTop();
 
 		Button.clickImport();
 
-		if (isSet(importOption)) {
-			WaitForVisible(locator1 = "Modal#HEADER");
+		SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_IFRAME");
 
-			Check.checkNotVisible(
-				locator1 = "Radio#ANY",
-				radioLabel = ${importOption});
+		Alert.viewSuccessMessage();
 
-			Click(
-				key_text = "Import",
-				locator1 = "Modal#MODAL_FOOTER_BUTTON");
-		}
+		SelectFrameTop();
 
-		AssertVisible(locator1 = "Message#SUCCESS_IMPORT");
-
-		Button.clickDone();
+		IFrame.closeFrame();
 	}
 
 	macro importCollectionFromTempFolder {
 		FragmentsAdminNavigator.gotoImportCollection();
 
-		WaitForPageLoad();
-
 		var collectionsZipFileName = TestCase.getDownloadedTempFileName(fileNamePattern = "collections-*.zip");
 
-		UploadTempFile.uploadTempFileHiddenNoMouseOver(
+		UploadTempFile(
 			locator1 = "TextInput#FILE",
 			value1 = ${collectionsZipFileName});
 
+		SelectFrameTop();
+
 		Button.clickImport();
 
-		if (isSet(importOption)) {
-			WaitForVisible(locator1 = "Modal#HEADER");
+		SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_IFRAME");
 
-			Check.checkNotVisible(
-				locator1 = "Radio#ANY",
-				radioLabel = ${importOption});
+		Alert.viewSuccessMessage();
 
-			Click(
-				key_text = "Import",
-				locator1 = "Modal#MODAL_FOOTER_BUTTON");
-		}
+		SelectFrameTop();
 
-		AssertVisible(locator1 = "Message#SUCCESS_IMPORT");
-
-		Button.clickDone();
+		IFrame.closeFrame();
 	}
 
 	macro importFragmentFromTempFolder {
@@ -237,31 +221,25 @@ definition {
 
 		MenuItem.click(menuItem = "Import");
 
-		WaitForPageLoad();
+		SelectFrame(locator1 = "IFrame#MODAL_BODY");
 
 		var entriesZipFileName = TestCase.getDownloadedTempFileName(fileNamePattern = "entries-*.zip");
 
-		UploadTempFile.uploadTempFileHiddenNoMouseOver(
+		UploadTempFile(
 			locator1 = "TextInput#FILE",
 			value1 = ${entriesZipFileName});
 
+		SelectFrameTop();
+
 		Button.clickImport();
 
-		if (isSet(importOption)) {
-			WaitForVisible(locator1 = "Modal#HEADER");
+		SelectFrame.selectFrameNoLoading(locator1 = "IFrame#MODAL_IFRAME");
 
-			Check.checkNotVisible(
-				locator1 = "Radio#ANY",
-				radioLabel = ${importOption});
+		Alert.viewSuccessMessage();
 
-			Click(
-				key_text = "Import",
-				locator1 = "Modal#MODAL_FOOTER_BUTTON");
-		}
+		SelectFrameTop();
 
-		AssertVisible(locator1 = "Message#SUCCESS_IMPORT");
-
-		Button.clickDone();
+		IFrame.closeFrame();
 	}
 
 	macro openFragmentsAdmin {

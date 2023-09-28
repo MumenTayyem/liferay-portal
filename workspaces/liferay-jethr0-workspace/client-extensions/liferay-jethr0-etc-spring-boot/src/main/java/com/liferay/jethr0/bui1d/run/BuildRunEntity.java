@@ -49,7 +49,7 @@ public interface BuildRunEntity extends Entity {
 
 	public enum Result {
 
-		FAILED("failed", "Failed"), PASSED("passed", "Passed");
+		FAILED("failed"), PASSED("passed");
 
 		public static Result get(JSONObject jsonObject) {
 			return getByKey(jsonObject.getString("key"));
@@ -60,24 +60,15 @@ public interface BuildRunEntity extends Entity {
 		}
 
 		public JSONObject getJSONObject() {
-			JSONObject jsonObject = new JSONObject();
-
-			jsonObject.put(
-				"key", _key
-			).put(
-				"name", _name
-			);
-
-			return jsonObject;
+			return new JSONObject("{\"key\": \"" + getKey() + "\"}");
 		}
 
 		public String getKey() {
 			return _key;
 		}
 
-		private Result(String key, String name) {
+		private Result(String key) {
 			_key = key;
-			_name = name;
 		}
 
 		private static final Map<String, Result> _results = new HashMap<>();
@@ -89,15 +80,13 @@ public interface BuildRunEntity extends Entity {
 		}
 
 		private final String _key;
-		private final String _name;
 
 	}
 
 	public enum State {
 
-		BLOCKED("blocked", "Blocked"), COMPLETED("completed", "Completed"),
-		OPENED("opened", "Opened"), QUEUED("queued", "Queued"),
-		RUNNING("running", "Running");
+		BLOCKED("blocked"), COMPLETED("completed"), OPENED("opened"),
+		QUEUED("queued"), RUNNING("running");
 
 		public static State get(JSONObject jsonObject) {
 			return getByKey(jsonObject.getString("key"));
@@ -108,24 +97,15 @@ public interface BuildRunEntity extends Entity {
 		}
 
 		public JSONObject getJSONObject() {
-			JSONObject jsonObject = new JSONObject();
-
-			jsonObject.put(
-				"key", _key
-			).put(
-				"name", _name
-			);
-
-			return jsonObject;
+			return new JSONObject("{\"key\": \"" + getKey() + "\"}");
 		}
 
 		public String getKey() {
 			return _key;
 		}
 
-		private State(String key, String name) {
+		private State(String key) {
 			_key = key;
-			_name = name;
 		}
 
 		private static final Map<String, State> _states = new HashMap<>();
@@ -137,7 +117,6 @@ public interface BuildRunEntity extends Entity {
 		}
 
 		private final String _key;
-		private final String _name;
 
 	}
 

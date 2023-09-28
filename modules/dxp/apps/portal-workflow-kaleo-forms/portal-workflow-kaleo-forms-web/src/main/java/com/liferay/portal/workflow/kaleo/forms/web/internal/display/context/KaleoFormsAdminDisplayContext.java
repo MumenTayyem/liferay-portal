@@ -10,7 +10,7 @@ import com.liferay.dynamic.data.mapping.exception.StorageException;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.storage.DDMStorageEngineManager;
 import com.liferay.dynamic.data.mapping.util.DDMDisplay;
-import com.liferay.dynamic.data.mapping.util.DDMDisplayRegistryUtil;
+import com.liferay.dynamic.data.mapping.util.DDMDisplayRegistry;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
@@ -75,12 +75,14 @@ public class KaleoFormsAdminDisplayContext {
 
 	public KaleoFormsAdminDisplayContext(
 		DDLRecordLocalService ddlRecordLocalService,
+		DDMDisplayRegistry ddmDisplayRegistry,
 		DDMStorageEngineManager ddmStorageEngineManager, HtmlParser htmlParser,
 		KaleoDefinitionVersionLocalService kaleoDefinitionVersionLocalService,
 		KaleoFormsWebConfiguration kaleoFormsWebConfiguration,
 		RenderRequest renderRequest, RenderResponse renderResponse) {
 
 		_ddlRecordLocalService = ddlRecordLocalService;
+		_ddmDisplayRegistry = ddmDisplayRegistry;
 		_ddmStorageEngineManager = ddmStorageEngineManager;
 		_htmlParser = htmlParser;
 		_kaleoDefinitionVersionLocalService =
@@ -138,7 +140,7 @@ public class KaleoFormsAdminDisplayContext {
 	}
 
 	public DDMDisplay getDDMDisplay() {
-		return DDMDisplayRegistryUtil.getDDMDisplay(
+		return _ddmDisplayRegistry.getDDMDisplay(
 			_kaleoFormsAdminRequestHelper.getPortletId());
 	}
 
@@ -617,6 +619,7 @@ public class KaleoFormsAdminDisplayContext {
 	private static final String[] _DISPLAY_VIEWS = {"list"};
 
 	private final DDLRecordLocalService _ddlRecordLocalService;
+	private final DDMDisplayRegistry _ddmDisplayRegistry;
 	private final DDMStorageEngineManager _ddmStorageEngineManager;
 	private final HtmlParser _htmlParser;
 	private final HttpServletRequest _httpServletRequest;

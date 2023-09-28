@@ -138,12 +138,12 @@ describe('Translation', () => {
 	});
 
 	it('dispatches languageId when a language is selected', async () => {
-		const {getByRole, getByText} = renderTranslation({state: defaultState});
+		const {getByRole} = renderTranslation({state: defaultState});
 
 		const button = getByRole('combobox');
 		userEvent.click(button);
 
-		const option = getByText('language-3').parentElement;
+		const option = getByRole('option', {name: /language-3/});
 
 		await waitFor(() => {
 			userEvent.click(option);

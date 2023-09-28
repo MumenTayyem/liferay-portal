@@ -139,7 +139,7 @@ const ProductOptionRadio = ({
 			(productOptionValue) => productOptionValue.key === valueArray[1]
 		)[0];
 
-		let currentSkuOptions = skuOptionsAtomState.skuOptions.slice();
+		let currentSkuOptions = skuOptionsAtomState.skuOptions;
 
 		const currentSkuOption = currentSkuOptions.filter(
 			(skuOption) => skuOption.skuOptionKey === productOption.key

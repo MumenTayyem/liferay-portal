@@ -10,8 +10,7 @@ import {
 	fireEvent,
 	getByText,
 	queryByText,
-	render,
-	screen
+	render
 } from '@testing-library/react';
 import {Provider} from 'react-redux';
 import {StaticRouter} from 'react-router';
@@ -58,11 +57,11 @@ describe('View Channel', () => {
 			Promise.resolve(data.mockChannel(1, 1))
 		);
 
-		const {container} = render(<DefaultComponent />);
+		const {container, getByLabelText} = render(<DefaultComponent />);
 
 		jest.runAllTimers();
 
-		expect(screen.getByLabelText('Select Users').checked).toBeTrue();
+		expect(getByLabelText('Select Users').checked).toBeTrue();
 		expect(container.querySelector('.table-root')).toBeTruthy();
 	});
 
@@ -79,117 +78,8 @@ describe('View Channel', () => {
 		expect(queryByLabelText('Edit')).toBeNull();
 	});
 
-	it('should check if DELETE and CLEAR DATA buttons are displayed', () => {
-		API.user.fetchCurrentUser.mockReturnValueOnce(
-			Promise.resolve(data.mockUser())
-		);
-
-		const {queryByText} = render(<DefaultComponent />);
-
-		jest.runAllTimers();
-
-		expect(queryByText('Delete')).toBeInTheDocument();
-		expect(queryByText('Clear Data')).toBeInTheDocument();
-	});
-
-	it('should check error modal message and hyperlink on deleting property that has CHANNELS synced', async () => {
-		API.user.fetchCurrentUser.mockReturnValueOnce(
-			Promise.resolve(data.mockUser())
-		);
-
-		API.channels.fetch.mockReturnValueOnce(
-			Promise.resolve(
-				data.mockChannel(1, 1, {
-					commerceChannelsCount: 5,
-					groupsCount: 0
-				})
-			)
-		);
-
-		const {container} = render(<DefaultComponent />);
-
-		jest.runAllTimers();
-
-		expect(
-			screen.getByText(
-				'There are 0 Sites and 5 Channels synced to this property.'
-			)
-		).toBeInTheDocument();
-
-		const deleteBtn = screen.getByTestId('delete');
-
-		fireEvent.click(deleteBtn);
-
-		expect(
-			container.querySelector('div.modal-container')
-		).toBeInTheDocument();
-
-		expect(container.querySelector('div.modal-container')).toHaveClass(
-			'show'
-		);
-
-		expect(
-			screen.getByText('Access our documentation to learn more.')
-		).toBeInTheDocument();
-
-		expect(
-			screen.getByText('Access our documentation to learn more.')
-		).toHaveAttribute(
-			'href',
-			'https://learn.liferay.com/en/w/analytics-cloud/workspace-settings/managing-properties#adding-and-removing-users-to-a-property'
-		);
-	});
-
-	it('should check error modal message and hyperlink on deleting property that has SITES synced', async () => {
-		API.user.fetchCurrentUser.mockReturnValueOnce(
-			Promise.resolve(data.mockUser())
-		);
-
-		API.channels.fetch.mockReturnValueOnce(
-			Promise.resolve(
-				data.mockChannel(1, 1, {
-					commerceChannelsCount: 0,
-					groupsCount: 5
-				})
-			)
-		);
-
-		const {container} = render(<DefaultComponent />);
-
-		jest.runAllTimers();
-
-		expect(
-			screen.getByText(
-				'There are 5 Sites and 0 Channels synced to this property.'
-			)
-		).toBeInTheDocument();
-
-		const deleteBtn = screen.getByTestId('delete');
-
-		fireEvent.click(deleteBtn);
-
-		expect(
-			container.querySelector('div.modal-container')
-		).toBeInTheDocument();
-
-		expect(container.querySelector('div.modal-container')).toHaveClass(
-			'show'
-		);
-
-		expect(
-			screen.getByText('Access our documentation to learn more.')
-		).toBeInTheDocument();
-
-		expect(
-			screen.getByText('Access our documentation to learn more.')
-		).toHaveAttribute(
-			'href',
-			'https://learn.liferay.com/en/w/analytics-cloud/workspace-settings/managing-properties#adding-and-removing-users-to-a-property'
-		);
-	});
-
 	it('should render a warning modal when the user toggles from All User to Select User property permissions', () => {
-		const {container} = render(<DefaultComponent />);
+		const {container, getByLabelText} = render(<DefaultComponent />);
 		const modalContainer = container.querySelector('.modal-renderer-root');
 		const customMatcher = content => content === 'Permissions Change';
 
@@ -197,7 +87,7 @@ describe('View Channel', () => {
 
 		expect(queryByText(modalContainer, customMatcher)).toBeNull();
 
-		fireEvent.click(screen.getByLabelText('Select Users'));
+		fireEvent.click(getByLabelText('Select Users'));
 
 		jest.runAllTimers();
 

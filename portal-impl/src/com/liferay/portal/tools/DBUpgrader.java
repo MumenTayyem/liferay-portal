@@ -343,19 +343,17 @@ public class DBUpgrader {
 
 		try {
 			DBPartitionUtil.forEachCompanyId(
-				companyId -> {
-					ClassNameLocalServiceUtil.checkClassNames();
-
-					if (_log.isDebugEnabled()) {
-						_log.debug("Check resource actions");
-					}
-
-					StartupHelperUtil.initResourceActions();
-				});
+				companyId -> ClassNameLocalServiceUtil.checkClassNames());
 		}
 		catch (Exception exception) {
 			throw new RuntimeException(exception);
 		}
+
+		if (_log.isDebugEnabled()) {
+			_log.debug("Check resource actions");
+		}
+
+		StartupHelperUtil.initResourceActions();
 	}
 
 	private static int _getBuildNumber() throws Exception {

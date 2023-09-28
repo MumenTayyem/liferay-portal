@@ -296,8 +296,7 @@ public class SXPElementServiceHttp {
 
 	public static com.liferay.search.experiences.model.SXPElement
 			updateSXPElement(
-				HttpPrincipal httpPrincipal, String externalReferenceCode,
-				long sxpElementId,
+				HttpPrincipal httpPrincipal, long sxpElementId,
 				java.util.Map<java.util.Locale, String> descriptionMap,
 				String elementDefinitionJSON, String schemaVersion,
 				boolean hidden,
@@ -311,9 +310,8 @@ public class SXPElementServiceHttp {
 				_updateSXPElementParameterTypes6);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, externalReferenceCode, sxpElementId, descriptionMap,
-				elementDefinitionJSON, schemaVersion, hidden, titleMap,
-				serviceContext);
+				methodKey, sxpElementId, descriptionMap, elementDefinitionJSON,
+				schemaVersion, hidden, titleMap, serviceContext);
 
 			Object returnObj = null;
 
@@ -368,8 +366,8 @@ public class SXPElementServiceHttp {
 		};
 	private static final Class<?>[] _updateSXPElementParameterTypes6 =
 		new Class[] {
-			String.class, long.class, java.util.Map.class, String.class,
-			String.class, boolean.class, java.util.Map.class,
+			long.class, java.util.Map.class, String.class, String.class,
+			boolean.class, java.util.Map.class,
 			com.liferay.portal.kernel.service.ServiceContext.class
 		};
 

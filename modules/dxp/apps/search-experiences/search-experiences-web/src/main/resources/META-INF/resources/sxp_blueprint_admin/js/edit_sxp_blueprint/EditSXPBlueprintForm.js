@@ -76,7 +76,6 @@ function EditSXPBlueprintForm({
 	initialConfiguration = {},
 	initialDescription = '',
 	initialDescriptionI18n = {},
-	initialExternalReferenceCode,
 	initialSXPElementInstances = [],
 	initialTitle = '',
 	initialTitleI18n = {},
@@ -221,8 +220,6 @@ function EditSXPBlueprintForm({
 							formatLocaleWithUnderscores
 						),
 						elementInstances,
-						externalReferenceCode:
-							formik.values.externalReferenceCode,
 						title_i18n: renameKeys(
 							formik.values.title_i18n,
 							formatLocaleWithUnderscores
@@ -393,7 +390,6 @@ function EditSXPBlueprintForm({
 					id: index,
 				})
 			),
-			externalReferenceCode: initialExternalReferenceCode,
 			frameworkConfig: initialConfiguration.generalConfiguration || {
 				clauseContributorsExcludes: [],
 				clauseContributorsIncludes: [],
@@ -587,6 +583,32 @@ function EditSXPBlueprintForm({
 		formik.setFieldValue('applyIndexerClauses', value);
 	};
 
+	const _handleChangeTab = (tab) => {
+		if (
+			tab !== 'query-builder' &&
+			(openSidebar === SIDEBAR_TYPES.CLAUSE_CONTRIBUTORS ||
+				openSidebar === SIDEBAR_TYPES.INDEXER_CLAUSES)
+		) {
+			setOpenSidebar('');
+		}
+
+		setTab(tab);
+	};
+
+	const _handleChangeTitleAndDescription = ({
+		description_i18n,
+		title_i18n,
+	}) => {
+		formik.setFieldValue('description_i18n', description_i18n);
+		formik.setFieldValue('title_i18n', title_i18n);
+
+		setIsTitleAndDescriptionEdited(true);
+	};
+
+	const _handleCloseSidebar = () => {
+		setOpenSidebar('');
+	};
+
 	const _handleDeleteSXPElement = (id) => {
 		const index = formik.values.elementInstances.findIndex(
 			(item) => item.id === id
@@ -609,10 +631,6 @@ function EditSXPBlueprintForm({
 		openSuccessToast({
 			message: Liferay.Language.get('element-removed'),
 		});
-	};
-
-	const _handleExternalReferenceCodeChange = (externalReferenceCode) => {
-		formik.setFieldValue('externalReferenceCode', externalReferenceCode);
 	};
 
 	/**
@@ -822,10 +840,6 @@ function EditSXPBlueprintForm({
 		[formik]
 	);
 
-	const _handleSidebarClose = () => {
-		setOpenSidebar('');
-	};
-
 	const _handleSubmit = (event) => {
 		event.preventDefault();
 
@@ -838,28 +852,6 @@ function EditSXPBlueprintForm({
 				),
 			});
 		}
-	};
-
-	const _handleTabChange = (tab) => {
-		if (
-			tab !== 'query-builder' &&
-			(openSidebar === SIDEBAR_TYPES.CLAUSE_CONTRIBUTORS ||
-				openSidebar === SIDEBAR_TYPES.INDEXER_CLAUSES)
-		) {
-			setOpenSidebar('');
-		}
-
-		setTab(tab);
-	};
-
-	const _handleTitleAndDescriptionChange = ({
-		description_i18n,
-		title_i18n,
-	}) => {
-		formik.setFieldValue('description_i18n', description_i18n);
-		formik.setFieldValue('title_i18n', title_i18n);
-
-		setIsTitleAndDescriptionEdited(true);
 	};
 
 	const _handleToggleSidebar = (type) => () => {
@@ -901,7 +893,7 @@ function EditSXPBlueprintForm({
 						<AddSXPElementSidebar
 							isIndexCompany={_isIndexCompany()}
 							onAddSXPElement={_handleAddSXPElement}
-							onClose={_handleSidebarClose}
+							onClose={_handleCloseSidebar}
 							visible={
 								openSidebar === SIDEBAR_TYPES.ADD_SXP_ELEMENT
 							}
@@ -923,7 +915,7 @@ function EditSXPBlueprintForm({
 									value: queryPrefilterContributors,
 								},
 							]}
-							onClose={_handleSidebarClose}
+							onClose={_handleCloseSidebar}
 							onFetchContributors={() => {
 								refetchKeywordQueryContributors();
 								refetchModelPrefilterContributors();
@@ -940,7 +932,7 @@ function EditSXPBlueprintForm({
 
 						<Sidebar
 							className="info-sidebar"
-							onClose={_handleSidebarClose}
+							onClose={_handleCloseSidebar}
 							title={Liferay.Language.get(
 								'search-framework-indexer-clauses'
 							)}
@@ -1035,16 +1027,11 @@ function EditSXPBlueprintForm({
 			<PageToolbar
 				description={initialDescription}
 				descriptionI18n={formik.values.description_i18n}
-				entityId={sxpBlueprintId}
-				externalReferenceCode={formik.values.externalReferenceCode}
 				isSubmitting={formik.isSubmitting}
 				onCancel={redirectURL}
-				onChangeTab={_handleTabChange}
-				onExternalReferenceCodeChange={
-					_handleExternalReferenceCodeChange
-				}
+				onChangeTab={_handleChangeTab}
 				onSubmit={_handleSubmit}
-				onTitleAndDescriptionChange={_handleTitleAndDescriptionChange}
+				onTitleAndDescriptionChange={_handleChangeTitleAndDescription}
 				tab={tab}
 				tabs={TABS}
 				title={initialTitle}
@@ -1071,7 +1058,7 @@ function EditSXPBlueprintForm({
 				errors={previewInfo.results.errors}
 				hits={transformToSearchPreviewHits(previewInfo.results)}
 				loading={previewInfo.loading}
-				onClose={_handleSidebarClose}
+				onClose={_handleCloseSidebar}
 				onFetchCancel={_handleFetchPreviewCancel}
 				onFetchResults={_handleFetchPreviewSearch}
 				onFocusSXPElement={_handleFocusSXPElement}
@@ -1100,7 +1087,6 @@ EditSXPBlueprintForm.propTypes = {
 	initialSXPElementInstances: PropTypes.arrayOf(PropTypes.object),
 	initialTitle: PropTypes.string,
 	initialTitleI18n: PropTypes.object,
-	sxpBlueprintExternalReferenceCode: PropTypes.string,
 	sxpBlueprintId: PropTypes.string,
 };
 

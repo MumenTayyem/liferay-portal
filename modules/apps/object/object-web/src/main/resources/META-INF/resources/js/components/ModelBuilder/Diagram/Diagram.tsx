@@ -6,13 +6,12 @@
 import ReactFlow, {
 	Background,
 	Connection,
-	ConnectionLineType,
 	ConnectionMode,
 	Controls,
 	Edge,
 	MiniMap,
 	Node,
-	isNode,
+	addEdge,
 } from 'react-flow-renderer';
 
 import {EmptyNode} from '../ObjectDefinitionNode/EmptyNode';
@@ -21,10 +20,8 @@ import {ObjectDefinitionNode} from '../ObjectDefinitionNode/ObjectDefinitionNode
 import './Diagram.scss';
 
 import {API} from '@liferay/object-js-components-web';
-import React, {MouseEvent, useCallback, useState} from 'react';
+import React, {MouseEvent, useCallback} from 'react';
 
-import {ModalAddObjectRelationship} from '../../ObjectRelationship/ModalAddObjectRelationship';
-import {getUpdatedModelBuilderStructurePayload} from '../../ViewObjectDefinitions/objectDefinitionUtil';
 import DefaultObjectRelationshipEdge from '../Edges/DefaultObjectRelationshipEdge';
 import SelfObjectRelationshipEdge from '../Edges/SelfObjectRelationshipEdge';
 import {useObjectFolderContext} from '../ModelBuilderContext/objectFolderContext';
@@ -43,11 +40,10 @@ const EDGE_TYPES = {
 function DiagramBuilder({
 	setShowModal,
 }: {
-	setShowModal: (value: React.SetStateAction<ModelBuilderModals>) => void;
+	setShowModal: (value: ModelBuilderModals) => void;
 }) {
 	const [
 		{
-			baseResourceURL,
 			elements,
 			isLoadingObjectFolder,
 			selectedObjectFolder,
@@ -55,23 +51,6 @@ function DiagramBuilder({
 		},
 		dispatch,
 	] = useObjectFolderContext();
-
-	const [
-		showAddObjectRelationshipModal,
-		setShowAddObjectRelationshipModal,
-	] = useState(false);
-	const [
-		newObjectRelationshipSourceNodeProps,
-		setNewObjectRelationshipSourceNodeProps,
-	] = useState<{
-		parameterRequired: boolean;
-		sourceNode: {
-			erc: string;
-		};
-		targetNode: {
-			erc: string;
-		};
-	}>();
 
 	const emptyNode = [
 		{
@@ -89,38 +68,14 @@ function DiagramBuilder({
 
 	const onConnect = useCallback(
 		(connection: Connection | Edge) => {
-			const sourceNode = elements.find(
-				(node) => isNode(node) && node.id === connection.source
-			) as Node<ObjectDefinitionNodeData>;
+			const newElements = addEdge(connection, elements);
 
-			const targetNode = elements.find(
-				(node) => isNode(node) && node.id === connection.target
-			) as Node<ObjectDefinitionNodeData>;
-
-			if (
-				(sourceNode.data?.modifiable === false &&
-					targetNode.data?.modifiable === false) ||
-				(sourceNode.data?.system && targetNode.data?.system) ||
-				sourceNode.data?.storageType === 'salesforce' ||
-				targetNode.data?.storageType === 'salesforce' ||
-				targetNode.data?.name === 'Address' ||
-				sourceNode.data?.linkedObjectDefinition
-			) {
-				return;
-			}
-
-			setShowAddObjectRelationshipModal(true);
-			setNewObjectRelationshipSourceNodeProps({
-				parameterRequired: sourceNode?.data?.parameterRequired!,
-				sourceNode: {
-					erc: sourceNode?.data?.externalReferenceCode!,
-				},
-				targetNode: {
-					erc: targetNode?.data?.externalReferenceCode!,
-				},
+			dispatch({
+				payload: {newElements},
+				type: TYPES.SET_ELEMENTS,
 			});
 		},
-		[elements]
+		[dispatch, elements]
 	);
 
 	const onNodeDragStop = async (
@@ -166,51 +121,9 @@ function DiagramBuilder({
 		}
 	};
 
-	const updateModelBuilderStructure = async (
-		newObjectRelationshipId: number
-	) => {
-		const payload = await getUpdatedModelBuilderStructurePayload(
-			selectedObjectFolder.name
-		);
-
-		dispatch({
-			payload: {
-				...payload,
-				rightSidebarType: 'objectRelationshipDetails',
-				selectedObjectRelationshipEdgeId: newObjectRelationshipId,
-			},
-			type: TYPES.UPDATE_MODEL_BUILDER_STRUCTURE,
-		});
-	};
-
 	return (
 		<div className="lfr-objects__model-builder-diagram-area">
-			{showAddObjectRelationshipModal && (
-				<ModalAddObjectRelationship
-					baseResourceURL={baseResourceURL}
-					handleOnClose={() =>
-						setShowAddObjectRelationshipModal(false)
-					}
-					hasDefinedObjectDefinitionTarget
-					objectDefinitionExternalReferenceCode1={
-						newObjectRelationshipSourceNodeProps?.sourceNode.erc!
-					}
-					objectDefinitionExternalReferenceCode2={
-						newObjectRelationshipSourceNodeProps?.targetNode.erc!
-					}
-					objectRelationshipParameterRequired={
-						newObjectRelationshipSourceNodeProps?.parameterRequired!
-					}
-					onAfterSubmit={(newObjectRelationshipId: number) =>
-						updateModelBuilderStructure(newObjectRelationshipId)
-					}
-					reload={false}
-				/>
-			)}
-
 			<ReactFlow
-				connectionLineStyle={{stroke: '#0B5FFF'}}
-				connectionLineType={ConnectionLineType.SmoothStep}
 				connectionMode={ConnectionMode.Loose}
 				edgeTypes={EDGE_TYPES}
 				elements={

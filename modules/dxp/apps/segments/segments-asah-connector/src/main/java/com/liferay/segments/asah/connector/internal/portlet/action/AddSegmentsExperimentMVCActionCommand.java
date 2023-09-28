@@ -37,7 +37,6 @@ import com.liferay.segments.asah.connector.internal.util.SegmentsExperimentUtil;
 import com.liferay.segments.constants.SegmentsExperimentConstants;
 import com.liferay.segments.constants.SegmentsPortletKeys;
 import com.liferay.segments.exception.DuplicateSegmentsExperimentException;
-import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.model.SegmentsExperiment;
 import com.liferay.segments.model.SegmentsExperimentRel;
 import com.liferay.segments.service.SegmentsEntryLocalService;
@@ -45,7 +44,6 @@ import com.liferay.segments.service.SegmentsExperienceLocalService;
 import com.liferay.segments.service.SegmentsExperimentRelService;
 import com.liferay.segments.service.SegmentsExperimentService;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 
@@ -161,17 +159,13 @@ public class AddSegmentsExperimentMVCActionCommand
 				_segmentsExperimentService.deleteSegmentsExperiment(
 					segmentsExperiment, false);
 
-				segmentsExperienceId = _getActiveSegmentsExperienceId(
-					serviceContext.getScopeGroupId(), plid,
-					segmentsExperienceId);
+				segmentsExperienceId =
+					_segmentsExperienceLocalService.
+						fetchDefaultSegmentsExperienceId(plid);
 			}
 			else {
 				throw new DuplicateSegmentsExperimentException();
 			}
-		}
-		else {
-			segmentsExperienceId = _getActiveSegmentsExperienceId(
-				serviceContext.getScopeGroupId(), plid, segmentsExperienceId);
 		}
 
 		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
@@ -199,27 +193,6 @@ public class AddSegmentsExperimentMVCActionCommand
 			SegmentsExperimentUtil.toSegmentsExperimentRelJSONObject(
 				themeDisplay.getLocale(), segmentsExperimentRel)
 		);
-	}
-
-	private long _getActiveSegmentsExperienceId(
-			long groupId, long plid, long segmentsExperienceId)
-		throws Exception {
-
-		SegmentsExperience segmentsExperience =
-			_segmentsExperienceLocalService.fetchSegmentsExperience(
-				segmentsExperienceId);
-
-		if (segmentsExperience != null) {
-			return segmentsExperienceId;
-		}
-
-		List<SegmentsExperience> segmentsExperiences =
-			_segmentsExperienceLocalService.getSegmentsExperiences(
-				groupId, plid, true, 0, 1, null);
-
-		segmentsExperience = segmentsExperiences.get(0);
-
-		return segmentsExperience.getSegmentsExperienceId();
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

@@ -3,12 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {useEffect, useRef, useState} from 'react';
+import {useRef} from 'react';
 import {useNavigate} from 'react-router-dom';
 import useFormModal from '~/hooks/useFormModal';
-import usePusher from '~/hooks/usePusher';
-import {Liferay} from '~/services/liferay';
-import {JiraClientExtensionRestImpl} from '~/services/rest/JiraClientExtension';
 
 import useMutate from '../../../hooks/useMutate';
 import i18n from '../../../i18n';
@@ -21,41 +18,11 @@ import {Action, ActionsHookParameter} from '../../../types';
 const useRequirementActions = ({
 	isHeaderActions = false,
 }: ActionsHookParameter = {}) => {
-	const [forceRefetch, setForceRefetch] = useState(0);
 	const {
 		modal: {onError, onSave},
 	} = useFormModal();
 	const {removeItemFromList} = useMutate();
 	const navigate = useNavigate();
-
-	const resyncWithJira = async (testrayRequirement: TestrayRequirement) => {
-		await JiraClientExtensionRestImpl.resyncWithJira(testrayRequirement);
-	};
-
-	const pusher = usePusher();
-
-	useEffect(() => {
-		if (!pusher) {
-			return;
-		}
-
-		const channel = pusher.subscribe(
-			`${Liferay.ThemeDisplay.getUserId()}-requirements`
-		);
-
-		channel.bind('processed', ({message}: {message: string}) => {
-			setForceRefetch(new Date().getTime());
-
-			Liferay.Util.openToast({
-				message,
-			});
-		});
-
-		return () =>
-			pusher.unsubscribe(
-				`${Liferay.ThemeDisplay.getUserId()}-requirements`
-			);
-	}, [pusher]);
 
 	const actionsRef = useRef([
 		{
@@ -66,12 +33,7 @@ const useRequirementActions = ({
 			permission: 'UPDATE',
 		},
 		{
-			action: (testrayRequirement) =>
-				resyncWithJira(testrayRequirement).then(() => {
-					Liferay.Util.openToast({
-						message: `${testrayRequirement.key} Started Jira Sync Asynchronous`,
-					});
-				}),
+			action: ({id}) => alert(id),
 			icon: 'reload',
 			name: i18n.translate('resync-with-jira'),
 			permission: 'UPDATE',
@@ -104,7 +66,6 @@ const useRequirementActions = ({
 
 	return {
 		actions: actionsRef.current,
-		forceRefetch,
 		navigate,
 	};
 };

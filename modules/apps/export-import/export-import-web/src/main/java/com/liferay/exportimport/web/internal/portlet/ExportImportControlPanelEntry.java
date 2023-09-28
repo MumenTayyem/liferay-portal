@@ -13,9 +13,10 @@ import com.liferay.portal.kernel.portlet.BaseControlPanelEntry;
 import com.liferay.portal.kernel.portlet.ControlPanelEntry;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.service.permission.GroupPermissionUtil;
+import com.liferay.portal.kernel.service.permission.GroupPermission;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Julio Camarero
@@ -44,7 +45,7 @@ public class ExportImportControlPanelEntry extends BaseControlPanelEntry {
 			PermissionChecker permissionChecker, Group group, Portlet portlet)
 		throws PortalException {
 
-		if (GroupPermissionUtil.contains(
+		if (groupPermission.contains(
 				permissionChecker, group, ActionKeys.EXPORT_IMPORT_LAYOUTS)) {
 
 			return true;
@@ -53,5 +54,8 @@ public class ExportImportControlPanelEntry extends BaseControlPanelEntry {
 		return super.hasAccessPermissionExplicitlyGranted(
 			permissionChecker, group, portlet);
 	}
+
+	@Reference
+	protected GroupPermission groupPermission;
 
 }

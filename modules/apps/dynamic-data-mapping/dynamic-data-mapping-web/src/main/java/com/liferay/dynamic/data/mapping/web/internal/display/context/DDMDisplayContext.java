@@ -16,7 +16,7 @@ import com.liferay.dynamic.data.mapping.service.DDMStructureLinkLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureService;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateService;
 import com.liferay.dynamic.data.mapping.util.DDMDisplay;
-import com.liferay.dynamic.data.mapping.util.DDMDisplayRegistryUtil;
+import com.liferay.dynamic.data.mapping.util.DDMDisplayRegistry;
 import com.liferay.dynamic.data.mapping.util.DDMDisplayTabItem;
 import com.liferay.dynamic.data.mapping.util.DDMTemplateHelper;
 import com.liferay.dynamic.data.mapping.util.DDMUtil;
@@ -81,6 +81,7 @@ public class DDMDisplayContext {
 
 	public DDMDisplayContext(
 		RenderRequest renderRequest, RenderResponse renderResponse,
+		DDMDisplayRegistry ddmDisplayRegistry,
 		DDMStructureLinkLocalService ddmStructureLinkLocalService,
 		DDMStructureService ddmStructureService,
 		DDMTemplateHelper ddmTemplateHelper,
@@ -89,6 +90,7 @@ public class DDMDisplayContext {
 
 		_renderRequest = renderRequest;
 		_renderResponse = renderResponse;
+		_ddmDisplayRegistry = ddmDisplayRegistry;
 		_ddmStructureLinkLocalService = ddmStructureLinkLocalService;
 		_ddmStructureService = ddmStructureService;
 		_ddmTemplateHelper = ddmTemplateHelper;
@@ -165,7 +167,7 @@ public class DDMDisplayContext {
 	}
 
 	public DDMDisplay getDDMDisplay() {
-		return DDMDisplayRegistryUtil.getDDMDisplay(getRefererPortletName());
+		return _ddmDisplayRegistry.getDDMDisplay(getRefererPortletName());
 	}
 
 	public SearchContainer<DDMStructure> getDDMStructureSearchContainer()
@@ -1041,6 +1043,7 @@ public class DDMDisplayContext {
 		_portletDisplayTemplateSnapshot = new Snapshot<>(
 			DDMDisplayContext.class, PortletDisplayTemplate.class);
 
+	private final DDMDisplayRegistry _ddmDisplayRegistry;
 	private final DDMStructureLinkLocalService _ddmStructureLinkLocalService;
 	private final DDMStructureService _ddmStructureService;
 	private final DDMTemplateHelper _ddmTemplateHelper;

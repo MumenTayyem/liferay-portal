@@ -92,16 +92,11 @@ definition {
 
 		ScrollWebElementIntoView(locator1 = "Button#SUBMIT");
 
-		if (isSet(saveAsDraft)) {
-			Button.click(button = "Save as Draft");
-		}
-		else {
-			Button.click(button = "Submit");
+		Button.click(button = "Submit");
 
-			WaitForPageLoad();
+		WaitForPageLoad();
 
-			Alert.viewSuccessMessage();
-		}
+		Alert.viewSuccessMessage();
 	}
 
 	macro editActivity {
@@ -340,19 +335,6 @@ definition {
 		return ${nextDayDate};
 	}
 
-	macro getRequestID {
-		var key_index = ${requestIndex};
-		var key_mdfType = ${mdfType};
-
-		WaitForElementPresent(locator1 = "PRMMDFRequest#MDF_ID_BY_INDEX");
-
-		var requestID = selenium.getText("PRMMDFRequest#MDF_ID_BY_INDEX");
-
-		var requestID = StringUtil.extractLast(${requestID}, "-");
-
-		return ${requestID};
-	}
-
 	macro getValueByFieldName {
 		Click.pauseClickAt(
 			key_fieldName = ${fieldName},
@@ -372,17 +354,9 @@ definition {
 	}
 
 	macro goToMDF {
-		if (isSet(campaignName)) {
-			Click(
-				key_campaignName = ${campaignName},
-				locator1 = "PRMMDFRequest#REQUEST_ID");
-		}
-
-		if (isSet(requestID)) {
-			Click(
-				key_requestID = ${requestID},
-				locator1 = "PRMMDFRequest#REQUEST_ID");
-		}
+		Click(
+			key_campaignName = ${campaignName},
+			locator1 = "PRMMDFRequest#REQUEST_ID");
 	}
 
 	macro insertDate {
@@ -835,23 +809,10 @@ definition {
 	}
 
 	macro searchMDF {
-		WaitForElementPresent(
+		Type(
 			key_placeHolder = "Search",
-			locator1 = "TextInput#ANY_PLACEHOLDER");
-
-		if (isSet(campaignName)) {
-			Type(
-				key_placeHolder = "Search",
-				locator1 = "TextInput#ANY_PLACEHOLDER",
-				value1 = ${campaignName});
-		}
-
-		if (isSet(requestID)) {
-			Type(
-				key_placeHolder = "Search",
-				locator1 = "TextInput#ANY_PLACEHOLDER",
-				value1 = ${requestID});
-		}
+			locator1 = "TextInput#ANY_PLACEHOLDER",
+			value1 = ${campaignName});
 
 		KeyPress(
 			key_placeHolder = "Search",

@@ -99,17 +99,6 @@ public class EditSegmentsEntryDisplayContext {
 		return _backURL;
 	}
 
-	public String getBackURLTitle() {
-		String backURLTitle = ParamUtil.getString(
-			_httpServletRequest, "backURLTitle");
-
-		if (Validator.isNotNull(backURLTitle)) {
-			return backURLTitle;
-		}
-
-		return LanguageUtil.get(_httpServletRequest, "segments");
-	}
-
 	public Map<String, Object> getData() throws Exception {
 		if (_data != null) {
 			return _data;

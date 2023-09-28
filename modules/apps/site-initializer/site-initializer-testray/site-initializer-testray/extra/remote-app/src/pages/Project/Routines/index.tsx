@@ -161,7 +161,7 @@ const Routines = () => {
 							width: '300',
 						},
 					],
-					navigateTo: ({id}) => id,
+					navigateTo: ({id}) => id.toString(),
 				}}
 				transformData={(response) =>
 					testrayRoutineImpl.transformDataFromList(response)

@@ -32,19 +32,19 @@ const useSuiteCaseFilter = (testraySuite: TestraySuite) => {
 
 	const searchBuilder = new SearchBuilder();
 
-	if (caseParameters?.testrayCaseTypes?.length) {
+	if (caseParameters?.testrayCaseTypes) {
 		searchBuilder
 			.in('caseTypeId', getCaseValues(caseParameters.testrayCaseTypes))
 			.or();
 	}
 
-	if (caseParameters?.testrayComponents?.length) {
+	if (caseParameters?.testrayComponents) {
 		searchBuilder
 			.in('componentId', getCaseValues(caseParameters.testrayComponents))
 			.or();
 	}
 
-	if (caseParameters?.testrayRequirements?.length) {
+	if (caseParameters?.testrayRequirements) {
 		searchBuilder.in(
 			'requerimentsId',
 			getCaseValues(caseParameters.testrayRequirements)

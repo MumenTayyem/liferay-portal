@@ -14,7 +14,6 @@ type UseKoroneikiAccountsProps = {
 		filter: any;
 		key: string;
 		label: string;
-		pageSize: number;
 	};
 };
 
@@ -37,7 +36,6 @@ export default function useKoroneikiAccounts({
 				}));
 			}
 		},
-		pageSize: selectedFilterCategory.pageSize ?? 20,
 	});
 
 	const getFilter = useMemo(

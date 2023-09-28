@@ -100,8 +100,6 @@ public class GetDataMVCResourceCommand extends BaseMVCResourceCommand {
 
 		try {
 			String backURL = ParamUtil.getString(resourceRequest, "backURL");
-			String backURLTitle = ParamUtil.getString(
-				resourceRequest, "backURLTitle");
 			String redirect = ParamUtil.getString(resourceRequest, "redirect");
 
 			long plid = ParamUtil.getLong(resourceRequest, "plid");
@@ -119,8 +117,8 @@ public class GetDataMVCResourceCommand extends BaseMVCResourceCommand {
 				JSONUtil.put(
 					"context",
 					_getContextJSONObject(
-						backURL, backURLTitle, layout, httpServletRequest,
-						redirect, segmentsExperienceId)
+						backURL, layout, httpServletRequest, redirect,
+						segmentsExperienceId)
 				).put(
 					"props",
 					_getPropsJSONObject(
@@ -205,7 +203,7 @@ public class GetDataMVCResourceCommand extends BaseMVCResourceCommand {
 	}
 
 	private JSONObject _getContextJSONObject(
-			String backURL, String backURLTitle, Layout layout,
+			String backURL, Layout layout,
 			HttpServletRequest httpServletRequest, String redirect,
 			long segmentsExperienceId)
 		throws Exception {
@@ -270,8 +268,7 @@ public class GetDataMVCResourceCommand extends BaseMVCResourceCommand {
 			).put(
 				"editSegmentsVariantLayoutURL",
 				_getEditSegmentsVariantLayoutURL(
-					backURL, backURLTitle, layout, redirect,
-					segmentsExperienceId)
+					backURL, layout, redirect, segmentsExperienceId)
 			).put(
 				"editSegmentsVariantURL",
 				_getSegmentsExperimentActionURL(
@@ -299,7 +296,7 @@ public class GetDataMVCResourceCommand extends BaseMVCResourceCommand {
 	}
 
 	private String _getEditSegmentsVariantLayoutURL(
-		String backURL, String backURLTitle, Layout layout, String redirect,
+		String backURL, Layout layout, String redirect,
 		long segmentsExperienceId) {
 
 		Layout draftLayout = _layoutLocalService.fetchDraftLayout(
@@ -314,9 +311,15 @@ public class GetDataMVCResourceCommand extends BaseMVCResourceCommand {
 				backURL, "segmentsExperienceId", segmentsExperienceId);
 		}
 
-		return HttpComponentsUtil.addParameters(
-			redirect, "p_l_back_url", backURL, "p_l_back_url_title",
-			backURLTitle, "p_l_mode", Constants.EDIT, "redirect", redirect);
+		redirect = HttpComponentsUtil.setParameter(
+			redirect, "p_l_back_url", backURL);
+
+		redirect = HttpComponentsUtil.setParameter(
+			redirect, "p_l_mode", Constants.EDIT);
+		redirect = HttpComponentsUtil.setParameter(
+			redirect, "redirect", redirect);
+
+		return redirect;
 	}
 
 	private long _getLiveGroupId(long groupId) throws Exception {

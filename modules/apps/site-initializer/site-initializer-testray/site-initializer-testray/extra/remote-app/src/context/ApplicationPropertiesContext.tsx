@@ -5,13 +5,11 @@
 
 import React, {createContext} from 'react';
 
+type DefaultProperties = {jiraBaseURL: string};
+
 const defaultProperties = {
 	jiraBaseURL: '',
-	pusherKey: '',
-	pusherRegion: '',
 };
-
-type DefaultProperties = typeof defaultProperties;
 
 type ApplicationContextProviderProps = {
 	children: JSX.Element;

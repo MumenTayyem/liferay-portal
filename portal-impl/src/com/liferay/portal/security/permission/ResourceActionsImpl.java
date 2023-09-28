@@ -11,8 +11,6 @@ import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.db.partition.DBPartitionUtil;
-import com.liferay.portal.events.StartupHelperUtil;
 import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.ResourceActionsException;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -457,9 +455,9 @@ public class ResourceActionsImpl implements ResourceActions {
 
 		if (checkResourceActions) {
 			for (String modelResourceName : modelResourceNames) {
-				_checkResourceActions(
-					getModelResourceActions(modelResourceName),
-					modelResourceName);
+				resourceActionLocalService.checkResourceActions(
+					modelResourceName,
+					getModelResourceActions(modelResourceName));
 			}
 		}
 	}
@@ -485,8 +483,8 @@ public class ResourceActionsImpl implements ResourceActions {
 		_readModelResources(document.getRootElement(), modelResourceNames);
 
 		for (String modelResourceName : modelResourceNames) {
-			_checkResourceActions(
-				getModelResourceActions(modelResourceName), modelResourceName);
+			resourceActionLocalService.checkResourceActions(
+				modelResourceName, getModelResourceActions(modelResourceName));
 		}
 	}
 
@@ -504,9 +502,9 @@ public class ResourceActionsImpl implements ResourceActions {
 		String portletResourceName = PortletIdCodec.decodePortletName(
 			portlet.getPortletId());
 
-		_checkResourceActions(
-			_getPortletResourceActions(portletResourceName, portlet),
-			portletResourceName);
+		resourceActionLocalService.checkResourceActions(
+			portletResourceName,
+			_getPortletResourceActions(portletResourceName, portlet));
 	}
 
 	@Override
@@ -531,9 +529,9 @@ public class ResourceActionsImpl implements ResourceActions {
 		String portletResourceName = PortletIdCodec.decodePortletName(
 			portlet.getPortletId());
 
-		_checkResourceActions(
-			_getPortletResourceActions(portletResourceName, portlet),
-			portletResourceName);
+		resourceActionLocalService.checkResourceActions(
+			portletResourceName,
+			_getPortletResourceActions(portletResourceName, portlet));
 	}
 
 	@Override
@@ -567,9 +565,9 @@ public class ResourceActionsImpl implements ResourceActions {
 
 		if (checkResourceActions) {
 			for (String portletResourceName : portletResourceNames) {
-				_checkResourceActions(
-					getPortletResourceActions(portletResourceName),
-					portletResourceName);
+				resourceActionLocalService.checkResourceActions(
+					portletResourceName,
+					getPortletResourceActions(portletResourceName));
 			}
 		}
 	}
@@ -614,22 +612,12 @@ public class ResourceActionsImpl implements ResourceActions {
 	private void _check(
 		String portletName, List<String> portletResourceActions) {
 
-		try {
-			DBPartitionUtil.forEachCompanyId(
-				companyId -> {
-					ResourceActionLocalServiceUtil.checkResourceActions(
-						portletName, portletResourceActions);
+		ResourceActionLocalServiceUtil.checkResourceActions(
+			portletName, portletResourceActions);
 
-					for (String modelName :
-							getPortletModelResources(portletName)) {
-
-						ResourceActionLocalServiceUtil.checkResourceActions(
-							modelName, getModelResourceActions(modelName));
-					}
-				});
-		}
-		catch (Exception exception) {
-			throw new RuntimeException(exception);
+		for (String modelName : getPortletModelResources(portletName)) {
+			ResourceActionLocalServiceUtil.checkResourceActions(
+				modelName, getModelResourceActions(modelName));
 		}
 	}
 
@@ -663,23 +651,6 @@ public class ResourceActionsImpl implements ResourceActions {
 		actions.add(ActionKeys.PERMISSIONS);
 		actions.add(ActionKeys.PREFERENCES);
 		actions.add(ActionKeys.VIEW);
-	}
-
-	private void _checkResourceActions(List<String> actionIds, String name) {
-		if (StartupHelperUtil.isDBNew()) {
-			resourceActionLocalService.checkResourceActions(name, actionIds);
-		}
-		else {
-			try {
-				DBPartitionUtil.forEachCompanyId(
-					companyId ->
-						resourceActionLocalService.checkResourceActions(
-							name, actionIds));
-			}
-			catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		}
 	}
 
 	private String _getCompositeModelName(Element compositeModelNameElement) {

@@ -4,7 +4,7 @@
  */
 
 import {getLocalizableLabel} from '@liferay/object-js-components-web';
-import {Edge, Node} from 'react-flow-renderer';
+import {Edge, Node, useStore} from 'react-flow-renderer';
 
 import {defaultLanguageId} from '../../../utils/constants';
 import {manyMarkerId} from '../Edges/ManyMarker';
@@ -25,6 +25,8 @@ import {
 import {TYPES} from './typesEnum';
 
 export function ObjectFolderReducer(state: TState, action: TAction): TState {
+	const store = useStore();
+
 	switch (action.type) {
 		case TYPES.ADD_NEW_OBJECT_FIELD: {
 			const {
@@ -89,9 +91,9 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 		case TYPES.ADD_OBJECT_DEFINITION_TO_OBJECT_FOLDER: {
 			const {
 				newObjectDefinition,
-				nodes,
 				selectedObjectFolderName,
 			} = action.payload;
+			const {nodes} = store.getState();
 			const {elements, leftSidebarItems} = state;
 			let newPosition = {
 				x: 2 * 300,
@@ -117,6 +119,8 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 				};
 			}
 
+			let linkedObjectDefinition = false;
+
 			const newLeftSidebarItems = leftSidebarItems.map(
 				(leftSidebarItem) => {
 					let newLeftSidebarObjectDefinitionItem;
@@ -125,20 +129,41 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 						leftSidebarItem.objectFolderName ===
 						selectedObjectFolderName
 					) {
-						newLeftSidebarObjectDefinitionItem = {
-							id: newObjectDefinition.id,
-							label: getLocalizableLabel(
-								newObjectDefinition.defaultLanguageId,
-								newObjectDefinition.label,
-								newObjectDefinition.name
-							),
-							name: newObjectDefinition.name,
-							selected: true,
-							type: 'objectDefinition',
-						} as LeftSidebarObjectDefinitionItem;
+						linkedObjectDefinition =
+							leftSidebarItem.leftSidebarObjectDefinitionItems?.find(
+								(leftSidebarObjectDefinitionItem) =>
+									leftSidebarObjectDefinitionItem.id ===
+									newObjectDefinition.id
+							)?.type === 'linkedObjectDefinition';
+
+						if (!linkedObjectDefinition) {
+							newLeftSidebarObjectDefinitionItem = {
+								id: newObjectDefinition.id,
+								label: getLocalizableLabel(
+									newObjectDefinition.defaultLanguageId,
+									newObjectDefinition.label,
+									newObjectDefinition.name
+								),
+								name: newObjectDefinition.name,
+								selected: true,
+								type: 'objectDefinition',
+							} as LeftSidebarObjectDefinitionItem;
+						}
 
 						const updatedObjectDefinitions = leftSidebarItem.leftSidebarObjectDefinitionItems?.map(
 							(leftSidebarObjectDefinitionItem) => {
+								if (
+									linkedObjectDefinition &&
+									leftSidebarObjectDefinitionItem.id ===
+										newObjectDefinition.id
+								) {
+									return {
+										...leftSidebarObjectDefinitionItem,
+										selected: true,
+										type: 'objectDefinitionNode',
+									};
+								}
+
 								return {
 									...leftSidebarObjectDefinitionItem,
 									selected: false,
@@ -189,35 +214,64 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 
 			let newObjectDefinitionNodes = [];
 
-			const newObjectDefinitionNode = {
-				data: {
-					...newObjectDefinition,
-					hasObjectDefinitionDeleteResourcePermission: !!newObjectDefinition
-						.actions.delete,
-					hasObjectDefinitionManagePermissionsResourcePermission: !!newObjectDefinition
-						.actions.permissions,
-					hasObjectDefinitionUpdateResourcePermission: !!newObjectDefinition
-						.actions.update,
-					hasObjectDefinitionViewResourcePermission: false,
-					hasSelfObjectRelationships: false,
-					label: getLocalizableLabel(
-						newObjectDefinition.defaultLanguageId,
-						newObjectDefinition.label,
-						newObjectDefinition.name
-					),
-					linkedObjectDefinition: false,
-					objectFields: objectFieldsCustomSort(objectFields),
-					selected: true,
-				},
-				id: newObjectDefinition.id.toString(),
-				position: newPosition,
-				type: 'objectDefinitionNode',
-			} as Node<ObjectDefinitionNodeData>;
+			let newObjectDefinitionNode = {} as Node<ObjectDefinitionNodeData>;
 
-			newObjectDefinitionNodes = [
-				...updatedObjectDefinitionsNodes,
-				newObjectDefinitionNode,
-			] as Node<ObjectDefinitionNodeData>[];
+			if (linkedObjectDefinition) {
+				const objectDefinitionNodes = updatedObjectDefinitionsNodes.map(
+					(objectDefinitionNode) => {
+						if (
+							objectDefinitionNode.id ===
+							newObjectDefinition.id.toString()
+						) {
+							return {
+								...objectDefinitionNode,
+								data: {
+									...objectDefinitionNode.data,
+									linkedObjectDefinition: false,
+									selected: true,
+								},
+							} as Node<ObjectDefinitionNodeData>;
+						}
+
+						return objectDefinitionNode;
+					}
+				);
+
+				newObjectDefinitionNodes = [...objectDefinitionNodes] as Node<
+					ObjectDefinitionNodeData
+				>[];
+			}
+			else {
+				newObjectDefinitionNode = {
+					data: {
+						...newObjectDefinition,
+						hasObjectDefinitionDeleteResourcePermission: !!newObjectDefinition
+							.actions.delete,
+						hasObjectDefinitionManagePermissionsResourcePermission: !!newObjectDefinition
+							.actions.permissions,
+						hasObjectDefinitionUpdateResourcePermission: !!newObjectDefinition
+							.actions.update,
+						hasObjectDefinitionViewResourcePermission: false,
+						hasSelfObjectRelationships: false,
+						label: getLocalizableLabel(
+							newObjectDefinition.defaultLanguageId,
+							newObjectDefinition.label,
+							newObjectDefinition.name
+						),
+						linkedObjectDefinition: false,
+						objectFields: objectFieldsCustomSort(objectFields),
+						selected: true,
+					},
+					id: newObjectDefinition.id.toString(),
+					position: newPosition,
+					type: 'objectDefinitionNode',
+				} as Node<ObjectDefinitionNodeData>;
+
+				newObjectDefinitionNodes = [
+					...updatedObjectDefinitionsNodes,
+					newObjectDefinitionNode,
+				] as Node<ObjectDefinitionNodeData>[];
+			}
 
 			return {
 				...state,
@@ -229,11 +283,8 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 		}
 
 		case TYPES.BULK_CHANGE_NODE_VIEW: {
-			const {
-				edges,
-				hiddenObjectFolderObjectDefinitionNodes,
-				nodes,
-			} = action.payload;
+			const {hiddenObjectFolderObjectDefinitionNodes} = action.payload;
+			const {edges, nodes} = store.getState();
 			const {leftSidebarItems} = state;
 
 			const updatedObjectDefinitionNodes = nodes.map(
@@ -294,13 +345,12 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 
 		case TYPES.CHANGE_NODE_VIEW: {
 			const {
-				edges,
 				hiddenObjectDefinitionNode,
-				nodes,
 				objectDefinitionId,
 				objectDefinitionName,
 				selectedSidebarItem,
 			} = action.payload;
+			const {edges, nodes} = store.getState();
 			const {leftSidebarItems} = state;
 			let isObjectDefinitionNodeSelected = false;
 
@@ -388,20 +438,13 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 			};
 		}
 
-		case TYPES.UPDATE_MODEL_BUILDER_STRUCTURE: {
-			const {
-				objectFolders,
-				rightSidebarType,
-				selectedObjectFolder,
-				selectedObjectRelationshipEdgeId,
-			} = action.payload;
+		case TYPES.CREATE_MODEL_BUILDER_STRUCTURE: {
+			const {objectFolders, selectedObjectFolder} = action.payload;
 
 			const newLeftSidebarItems = objectFolders.map((objectFolder) => {
 				const leftSidebarObjectDefinitionItems = objectFolder.objectDefinitions?.map(
 					(objectDefinition) => {
 						return {
-							externalReferenceCode:
-								objectDefinition.externalReferenceCode,
 							hiddenObjectDefinitionNode: false,
 							id: objectDefinition.id,
 							label: getLocalizableLabel(
@@ -488,9 +531,7 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 														: oneMarkerId,
 												objectRelationshipId:
 													objectRelationship.id,
-												selected:
-													selectedObjectRelationshipEdgeId ===
-													objectRelationship.id,
+												selected: false,
 												selfObjectRelationships,
 												sourceY: 0,
 												targetY: 0,
@@ -559,7 +600,7 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 
 			const newObjectRelationshipEdges = getNonOverlappingEdges(allEdges);
 
-			let newModelBuilderState = {
+			return {
 				...state,
 				elements: [
 					...newObjectDefinitionNodes,
@@ -568,15 +609,47 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 				leftSidebarItems: newLeftSidebarItems,
 				selectedObjectFolder,
 			};
+		}
 
-			if (rightSidebarType) {
-				newModelBuilderState = {
-					...newModelBuilderState,
-					rightSidebarType,
-				};
-			}
+		case TYPES.DELETE_OBJECT_DEFINITION: {
+			const {
+				currentObjectFolderName,
+				deletedObjectDefinitionName,
+			} = action.payload;
 
-			return newModelBuilderState;
+			const {leftSidebarItems} = state;
+
+			let updatedObjectDefinitions;
+
+			const newLeftSidebarItems = leftSidebarItems.map(
+				(leftSidebarItem) => {
+					if (
+						leftSidebarItem.objectFolderName ===
+						currentObjectFolderName
+					) {
+						updatedObjectDefinitions = leftSidebarItem.leftSidebarObjectDefinitionItems?.filter(
+							(leftSidebarObjectDefinitionItem) =>
+								leftSidebarObjectDefinitionItem.name !==
+								deletedObjectDefinitionName
+						);
+
+						return {
+							...leftSidebarItem,
+							objectDefinitions: [...updatedObjectDefinitions!],
+						};
+					}
+					else {
+						return {
+							...leftSidebarItem,
+						};
+					}
+				}
+			) as LeftSidebarItem[];
+
+			return {
+				...state,
+				leftSidebarItems: newLeftSidebarItems,
+			};
 		}
 
 		case TYPES.SET_ELEMENTS: {
@@ -770,11 +843,7 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 								) {
 									return {
 										...leftSidebarObjectDefinitionItem,
-										label: getLocalizableLabel(
-											defaultLanguageId,
-											updatedObjectDefinitionNode.label,
-											updatedObjectDefinitionNode.name
-										),
+										name: updatedObjectDefinitionNode.label,
 									};
 								}
 
@@ -784,9 +853,7 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 
 						return {
 							...leftSidebarItem,
-							leftSidebarObjectDefinitionItems: [
-								...updatedObjectDefinitions!,
-							],
+							objectDefinitions: [...updatedObjectDefinitions!],
 						};
 					}
 					else {
@@ -800,181 +867,6 @@ export function ObjectFolderReducer(state: TState, action: TAction): TState {
 			return {
 				...state,
 				leftSidebarItems: newLeftSidebarItems,
-			};
-		}
-
-		case TYPES.ADD_NEW_OBJECT_RELATIONSHIP: {
-			const {objectFolders, selectedObjectFolder} = action.payload;
-
-			const newLeftSidebarItems = objectFolders.map((objectFolder) => {
-				const leftSidebarObjectDefinitionItems = objectFolder.objectDefinitions?.map(
-					(objectDefinition) => {
-						return {
-							externalReferenceCode:
-								objectDefinition.externalReferenceCode,
-							hiddenObjectDefinitionNode: false,
-							id: objectDefinition.id,
-							label: getLocalizableLabel(
-								objectDefinition.defaultLanguageId,
-								objectDefinition.label,
-								objectDefinition.name
-							),
-							name: objectDefinition.name,
-							selected: false,
-							type: objectDefinition.linkedObjectDefinition
-								? 'linkedObjectDefinition'
-								: 'objectDefinition',
-						} as LeftSidebarObjectDefinitionItem;
-					}
-				);
-
-				return {
-					hiddenObjectFolderObjectDefinitionNodes: false,
-					leftSidebarObjectDefinitionItems,
-					name: getLocalizableLabel(
-						defaultLanguageId,
-						objectFolder.label,
-						objectFolder.name
-					),
-					objectFolderName: objectFolder.name,
-					type: 'objectFolder',
-				} as LeftSidebarItem;
-			});
-
-			const currentObjectFolder = objectFolders.find(
-				(objectFolder) =>
-					objectFolder.name === selectedObjectFolder.name
-			);
-
-			let newObjectDefinitionNodes: Node<ObjectDefinitionNodeData>[] = [];
-			const allEdges: Edge<ObjectRelationshipEdgeData>[] = [];
-
-			if (currentObjectFolder) {
-				const positionColumn = {positionX: 0, positionY: 0};
-
-				newObjectDefinitionNodes = currentObjectFolder.objectDefinitions!.map(
-					(objectDefinition, index) => {
-						let selfObjectRelationships: ObjectRelationship[] = objectDefinition.objectRelationships.filter(
-							(objectRelationship) =>
-								objectRelationship.objectDefinitionName2 ===
-								objectDefinition.name
-						);
-
-						selfObjectRelationships = selfObjectRelationships.filter(
-							(selfObjectRelationship) =>
-								!selfObjectRelationship.reverse
-						);
-
-						const hasOneSelfObjectRelationship =
-							selfObjectRelationships?.length === 1;
-
-						if (objectDefinition.objectRelationships.length) {
-							objectDefinition.objectRelationships.forEach(
-								(objectRelationship) => {
-									if (!objectRelationship.reverse) {
-										const isSelfObjectRelationship =
-											objectDefinition.name ===
-											objectRelationship.objectDefinitionName2;
-
-										allEdges.push({
-											data: {
-												defaultLanguageId:
-													objectDefinition.defaultLanguageId,
-												label:
-													!isSelfObjectRelationship ||
-													(isSelfObjectRelationship &&
-														hasOneSelfObjectRelationship)
-														? getLocalizableLabel(
-																objectDefinition.defaultLanguageId,
-																objectRelationship.label,
-																objectRelationship.name
-														  )
-														: selfObjectRelationships.length.toString(),
-												markerEndId: manyMarkerId,
-												markerStartId:
-													objectRelationship.type ===
-													'manyToMany'
-														? manyMarkerId
-														: oneMarkerId,
-												objectRelationshipId:
-													objectRelationship.id,
-												selected: false,
-												selfObjectRelationships,
-												sourceY: 0,
-												targetY: 0,
-												type: objectRelationship.type,
-											},
-											id: `reactflow__edge-object-relationship-${objectRelationship.name}-parent-${objectRelationship.objectDefinitionId1}-child-${objectRelationship.objectDefinitionId2}`,
-											source: `${objectDefinition.id}`,
-											sourceHandle: isSelfObjectRelationship
-												? 'fixedLeftHandle'
-												: `${objectDefinition.id}`,
-											target: `${objectRelationship.objectDefinitionId2}`,
-											targetHandle: isSelfObjectRelationship
-												? 'fixedRightHandle'
-												: `${objectRelationship.objectDefinitionId2}`,
-											type: isSelfObjectRelationship
-												? 'selfObjectRelationshipEdge'
-												: 'defaultObjectRelationshipEdge',
-										});
-									}
-								}
-							);
-						}
-
-						const objectFolderItem = currentObjectFolder.objectFolderItems.find(
-							(objectFolderItem) =>
-								objectFolderItem.objectDefinitionExternalReferenceCode ===
-								objectDefinition.externalReferenceCode
-						);
-
-						let {
-							positionX,
-							positionY,
-						} = objectFolderItem as ObjectFolderItem;
-
-						if (positionX === 0 && positionY === 0) {
-							positionX = positionColumn.positionX * 300 + 200;
-							positionY = positionColumn.positionY * 400 + 100;
-
-							positionColumn.positionX++;
-						}
-
-						if (index % 4 === 0 && index !== 0) {
-							positionColumn.positionY++;
-							positionColumn.positionX = 0;
-						}
-
-						return {
-							data: {
-								...objectDefinition,
-								hasSelfObjectRelationships:
-									selfObjectRelationships?.length > 0,
-								objectFields: objectFieldsCustomSort(
-									objectDefinition.objectFields
-								),
-							},
-							id: objectDefinition.id.toString(),
-							position: {
-								x: positionX,
-								y: positionY,
-							},
-							type: 'objectDefinitionNode',
-						} as Node<ObjectDefinitionNodeData>;
-					}
-				);
-			}
-
-			const newObjectRelationshipEdges = getNonOverlappingEdges(allEdges);
-
-			return {
-				...state,
-				elements: [
-					...newObjectDefinitionNodes,
-					...newObjectRelationshipEdges,
-				],
-				leftSidebarItems: newLeftSidebarItems,
-				selectedObjectFolder,
 			};
 		}
 

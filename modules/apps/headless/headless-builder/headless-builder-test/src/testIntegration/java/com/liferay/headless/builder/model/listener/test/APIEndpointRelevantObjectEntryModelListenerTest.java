@@ -5,8 +5,6 @@
 
 package com.liferay.headless.builder.model.listener.test;
 
-import com.liferay.headless.builder.application.APIApplication;
-import com.liferay.headless.builder.constants.HeadlessBuilderConstants;
 import com.liferay.headless.builder.test.BaseTestCase;
 import com.liferay.headless.builder.util.ObjectDefinitionTestUtil;
 import com.liferay.object.field.util.ObjectFieldUtil;
@@ -68,10 +66,9 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 					"path",
 					StringPool.FORWARD_SLASH + RandomTestUtil.randomString()
 				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
+					"retrieveType", "collection"
 				).put(
-					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+					"scope", "company"
 				).toString(),
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
@@ -96,10 +93,9 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
 					RandomTestUtil.randomLong()
 				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
+					"retrieveType", "collection"
 				).put(
-					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+					"scope", "company"
 				).toString(),
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
@@ -124,10 +120,9 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
 					TestPropsValues.getUserId()
 				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
+					"retrieveType", "collection"
 				).put(
-					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+					"scope", "company"
 				).toString(),
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
@@ -167,10 +162,9 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 					"r_responseAPISchemaToAPIEndpoints_c_apiSchemaId",
 					RandomTestUtil.nextLong()
 				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
+					"retrieveType", "collection"
 				).put(
-					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+					"scope", "company"
 				).toString(),
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
@@ -195,13 +189,9 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 						StringPool.FORWARD_SLASH, RandomTestUtil.randomString(),
 						StringPool.COMMA)
 				).put(
-					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
-					apiApplicationJSONObject1.getLong("id")
+					"retrieveType", "collection"
 				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
-				).put(
-					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+					"scope", "company"
 				).toString(),
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
@@ -224,72 +214,15 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 						StringPool.FORWARD_SLASH, RandomTestUtil.randomString(),
 						StringPool.FORWARD_SLASH, StringPool.OPEN_CURLY_BRACE)
 				).put(
-					"pathParameter", HeadlessBuilderConstants.PATH_PARAMETER_ERC
+					"pathParameter", "externalReferenceCode"
 				).put(
-					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
-					apiApplicationJSONObject1.getLong("id")
+					"retrieveType", "singleElement"
 				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.SINGLE_ELEMENT.
-						getValue()
-				).put(
-					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+					"scope", "company"
 				).toString(),
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
 			JSONCompareMode.STRICT);
-
-		JSONObject apiSchemaJSONObject1 = HTTPTestUtil.invokeToJSONObject(
-			JSONUtil.put(
-				"mainObjectDefinitionERC",
-				_objectDefinition.getExternalReferenceCode()
-			).put(
-				"name", RandomTestUtil.randomString()
-			).put(
-				"r_apiApplicationToAPISchemas_c_apiApplicationId",
-				apiApplicationJSONObject1.getLong("id")
-			).toString(),
-			"headless-builder/schemas", Http.Method.POST);
-
-		JSONAssert.assertEquals(
-			JSONUtil.put(
-				"status", "BAD_REQUEST"
-			).put(
-				"title",
-				"Path parameter must be an external reference code, ID, or " +
-					"unique field."
-			).toString(),
-			HTTPTestUtil.invokeToJSONObject(
-				JSONUtil.put(
-					"httpMethod", "get"
-				).put(
-					"name", RandomTestUtil.randomString()
-				).put(
-					"path",
-					StringBundler.concat(
-						StringPool.FORWARD_SLASH, RandomTestUtil.randomString(),
-						StringPool.FORWARD_SLASH, StringPool.OPEN_CURLY_BRACE,
-						RandomTestUtil.randomString(),
-						StringPool.CLOSE_CURLY_BRACE)
-				).put(
-					"pathParameter", RandomTestUtil.randomString()
-				).put(
-					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
-					apiApplicationJSONObject1.getLong("id")
-				).put(
-					"r_responseAPISchemaToAPIEndpoints_c_apiSchemaId",
-					apiSchemaJSONObject1.getLong("id")
-				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.SINGLE_ELEMENT.
-						getValue()
-				).put(
-					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
-				).toString(),
-				"headless-builder/endpoints", Http.Method.POST
-			).toString(),
-			JSONCompareMode.STRICT);
-
 		JSONAssert.assertEquals(
 			JSONUtil.put(
 				"status", "BAD_REQUEST"
@@ -307,13 +240,9 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 						RandomTestUtil.randomString(), StringPool.FORWARD_SLASH,
 						StringPool.COMMA)
 				).put(
-					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
-					apiApplicationJSONObject1.getLong("id")
+					"retrieveType", "collection"
 				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
-				).put(
-					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+					"scope", "company"
 				).toString(),
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
@@ -322,7 +251,8 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 			JSONUtil.put(
 				"status", "BAD_REQUEST"
 			).put(
-				"title", "Single element ID endpoint cannot be scoped by group."
+				"title",
+				"Path parameter cannot be null in a single element endpoint."
 			).toString(),
 			HTTPTestUtil.invokeToJSONObject(
 				JSONUtil.put(
@@ -332,31 +262,28 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 				).put(
 					"path",
 					StringBundler.concat(
-						StringPool.FORWARD_SLASH, RandomTestUtil.randomString(),
-						StringPool.FORWARD_SLASH, StringPool.OPEN_CURLY_BRACE,
-						RandomTestUtil.randomString(),
-						StringPool.CLOSE_CURLY_BRACE)
+						RandomTestUtil.randomString(), StringPool.FORWARD_SLASH,
+						StringPool.COMMA)
 				).put(
-					"pathParameter", HeadlessBuilderConstants.PATH_PARAMETER_ID
+					"retrieveType", "singleElement"
 				).put(
-					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
-					apiApplicationJSONObject1.getLong("id")
-				).put(
-					"r_requestAPISchemaToAPIEndpoints_c_apiSchemaId",
-					apiSchemaJSONObject1.getLong("id")
-				).put(
-					"r_responseAPISchemaToAPIEndpoints_c_apiSchemaId",
-					apiSchemaJSONObject1.getLong("id")
-				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.SINGLE_ELEMENT.
-						getValue()
-				).put(
-					"scope", APIApplication.Endpoint.Scope.GROUP.getValue()
+					"scope", "company"
 				).toString(),
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
-			JSONCompareMode.LENIENT);
+			JSONCompareMode.STRICT);
+
+		JSONObject apiSchemaJSONObject1 = HTTPTestUtil.invokeToJSONObject(
+			JSONUtil.put(
+				"mainObjectDefinitionERC",
+				_objectDefinition.getExternalReferenceCode()
+			).put(
+				"name", RandomTestUtil.randomString()
+			).put(
+				"r_apiApplicationToAPISchemas_c_apiApplicationId",
+				apiApplicationJSONObject1.getLong("id")
+			).toString(),
+			"headless-builder/schemas", Http.Method.POST);
 
 		JSONAssert.assertEquals(
 			JSONUtil.put(
@@ -383,10 +310,9 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 					"r_responseAPISchemaToAPIEndpoints_c_apiSchemaId",
 					apiSchemaJSONObject1.getLong("id")
 				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
+					"retrieveType", "collection"
 				).put(
-					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+					"scope", "company"
 				).toString(),
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
@@ -411,7 +337,7 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 						RandomTestUtil.randomString(),
 						StringPool.CLOSE_CURLY_BRACE)
 				).put(
-					"pathParameter", HeadlessBuilderConstants.PATH_PARAMETER_ID
+					"pathParameter", "ID"
 				).put(
 					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
 					apiApplicationJSONObject1.getLong("id")
@@ -422,11 +348,9 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 					"r_responseAPISchemaToAPIEndpoints_c_apiSchemaId",
 					apiSchemaJSONObject1.getLong("id")
 				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.SINGLE_ELEMENT.
-						getValue()
+					"retrieveType", "singleElement"
 				).put(
-					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+					"scope", "company"
 				).toString(),
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
@@ -445,10 +369,9 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 				"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
 				apiApplicationJSONObject1.getLong("id")
 			).put(
-				"retrieveType",
-				APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
+				"retrieveType", "collection"
 			).put(
-				"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+				"scope", "company"
 			).toString(),
 			"headless-builder/endpoints", Http.Method.POST);
 
@@ -477,10 +400,9 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 					"r_apiApplicationToAPIEndpoints_c_apiApplicationId",
 					apiApplicationJSONObject1.getLong("id")
 				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
+					"retrieveType", "collection"
 				).put(
-					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+					"scope", "company"
 				).toString(),
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
@@ -550,10 +472,9 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 					"r_requestAPISchemaToAPIEndpoints_c_apiSchemaId",
 					apiSchemaJSONObject2.getLong("id")
 				).put(
-					"retrieveType",
-					APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
+					"retrieveType", "collection"
 				).put(
-					"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+					"scope", "company"
 				).toString(),
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),

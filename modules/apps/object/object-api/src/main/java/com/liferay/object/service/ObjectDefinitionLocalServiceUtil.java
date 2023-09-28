@@ -465,13 +465,6 @@ public class ObjectDefinitionLocalServiceUtil {
 		return getService().getObjectFolderObjectDefinitions(objectFolderId);
 	}
 
-	public static int getObjectFolderObjectDefinitionsCount(long objectFolderId)
-		throws PortalException {
-
-		return getService().getObjectFolderObjectDefinitionsCount(
-			objectFolderId);
-	}
-
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -492,12 +485,6 @@ public class ObjectDefinitionLocalServiceUtil {
 
 	public static List<ObjectDefinition> getSystemObjectDefinitions() {
 		return getService().getSystemObjectDefinitions();
-	}
-
-	public static List<ObjectDefinition> getUnmodifiableSystemObjectDefinitions(
-		long companyId) {
-
-		return getService().getUnmodifiableSystemObjectDefinitions(companyId);
 	}
 
 	public static boolean hasObjectRelationship(long objectDefinitionId) {

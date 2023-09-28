@@ -64,6 +64,7 @@ export function useObjectValidationForm({
 		}
 
 		if (
+			Liferay.FeatureFlags['LPS-187846'] &&
 			validation.outputType === 'partialValidation' &&
 			!validation.objectValidationRuleSettings?.length
 		) {

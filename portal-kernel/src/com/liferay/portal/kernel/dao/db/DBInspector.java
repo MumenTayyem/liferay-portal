@@ -428,7 +428,7 @@ public class DBInspector {
 	private static final Set<String> _controlTableNames = new HashSet<>(
 		Arrays.asList("company", "virtualhost"));
 	private static final Set<String> _partitionedControlTableNames =
-		new HashSet<>(Arrays.asList("classname_", "resourceaction"));
+		new HashSet<>(Arrays.asList("classname_"));
 
 	private final Connection _connection;
 

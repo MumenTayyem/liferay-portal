@@ -19,6 +19,7 @@ import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectRelationship;
+import com.liferay.object.related.models.ManyToOneObjectRelatedModelsProvider;
 import com.liferay.object.related.models.ObjectRelatedModelsProvider;
 import com.liferay.object.related.models.ObjectRelatedModelsProviderRegistry;
 import com.liferay.object.relationship.util.ObjectRelationshipUtil;
@@ -31,7 +32,6 @@ import com.liferay.object.rest.internal.petra.sql.dsl.expression.OrderByExpressi
 import com.liferay.object.rest.internal.resource.v1_0.ObjectEntryRelatedObjectsResourceImpl;
 import com.liferay.object.rest.internal.resource.v1_0.ObjectEntryResourceImpl;
 import com.liferay.object.rest.internal.util.ObjectEntryValuesUtil;
-import com.liferay.object.rest.internal.util.ServiceContextUtil;
 import com.liferay.object.rest.manager.v1_0.BaseObjectEntryManager;
 import com.liferay.object.rest.manager.v1_0.DefaultObjectEntryManager;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
@@ -72,10 +72,12 @@ import com.liferay.portal.kernel.service.PersistedModelLocalService;
 import com.liferay.portal.kernel.service.PersistedModelLocalServiceRegistry;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.GroupThreadLocal;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.odata.filter.expression.Expression;
@@ -143,7 +145,7 @@ public class DefaultObjectEntryManagerImpl
 				_toObjectValues(
 					dtoConverterContext.getUserId(), objectDefinition,
 					objectEntry, dtoConverterContext.getLocale()),
-				ServiceContextUtil.createServiceContext(
+				_createServiceContext(
 					objectEntry, dtoConverterContext.getUserId()));
 
 		return _toObjectEntry(
@@ -314,11 +316,13 @@ public class DefaultObjectEntryManagerImpl
 		ObjectDefinition relatedObjectDefinition = _getRelatedObjectDefinition(
 			objectDefinition, objectRelationship);
 
-		ObjectRelatedModelsProvider objectRelatedModelsProvider =
-			_objectRelatedModelsProviderRegistry.getObjectRelatedModelsProvider(
-				relatedObjectDefinition.getClassName(),
-				relatedObjectDefinition.getCompanyId(),
-				objectRelationship.getType());
+		ManyToOneObjectRelatedModelsProvider objectRelatedModelsProvider =
+			(ManyToOneObjectRelatedModelsProvider)
+				_objectRelatedModelsProviderRegistry.
+					getObjectRelatedModelsProvider(
+						relatedObjectDefinition.getClassName(),
+						relatedObjectDefinition.getCompanyId(),
+						objectRelationship.getType());
 
 		com.liferay.object.model.ObjectEntry serviceBuilderObjectEntry =
 			(com.liferay.object.model.ObjectEntry)
@@ -779,7 +783,7 @@ public class DefaultObjectEntryManagerImpl
 			_toObjectValues(
 				dtoConverterContext.getUserId(), objectDefinition, objectEntry,
 				dtoConverterContext.getLocale()),
-			ServiceContextUtil.createServiceContext(
+			_createServiceContext(
 				objectEntry, dtoConverterContext.getUserId()));
 
 		return _toObjectEntry(
@@ -802,7 +806,7 @@ public class DefaultObjectEntryManagerImpl
 
 		long groupId = getGroupId(objectDefinition, scopeKey);
 
-		ServiceContext serviceContext = ServiceContextUtil.createServiceContext(
+		ServiceContext serviceContext = _createServiceContext(
 			objectEntry, dtoConverterContext.getUserId());
 
 		serviceContext.setCompanyId(companyId);
@@ -902,7 +906,7 @@ public class DefaultObjectEntryManagerImpl
 
 					_relateNestedObjectEntry(
 						objectDefinition, objectRelationship, primaryKey,
-						nestedObjectEntryId, new ServiceContext());
+						nestedObjectEntryId);
 
 					nestedExternalReferenceCodes.add(
 						systemObjectDefinitionManager.
@@ -944,10 +948,7 @@ public class DefaultObjectEntryManagerImpl
 					if (!manyToOneObjectRelationship) {
 						_relateNestedObjectEntry(
 							objectDefinition, objectRelationship, primaryKey,
-							nestedObjectEntry.getId(),
-							ServiceContextUtil.createServiceContext(
-								nestedObjectEntry,
-								dtoConverterContext.getUserId()));
+							nestedObjectEntry.getId());
 					}
 
 					nestedExternalReferenceCodes.add(
@@ -999,6 +1000,49 @@ public class DefaultObjectEntryManagerImpl
 
 			throw new NoSuchObjectEntryException();
 		}
+	}
+
+	private ServiceContext _createServiceContext(
+		ObjectEntry objectEntry, long userId) {
+
+		ServiceContext serviceContext = new ServiceContext();
+
+		serviceContext.setAddGroupPermissions(true);
+		serviceContext.setAddGuestPermissions(true);
+
+		if (Validator.isNotNull(objectEntry.getTaxonomyCategoryIds())) {
+			serviceContext.setAssetCategoryIds(
+				ArrayUtil.toArray(objectEntry.getTaxonomyCategoryIds()));
+			serviceContext.setAssetTagNames(objectEntry.getKeywords());
+		}
+
+		Map<String, Object> properties = objectEntry.getProperties();
+
+		if (properties.get("categoryIds") != null) {
+			serviceContext.setAssetCategoryIds(
+				ListUtil.toLongArray(
+					(List<String>)properties.get("categoryIds"),
+					Long::parseLong));
+		}
+
+		if (Validator.isNotNull(objectEntry.getKeywords())) {
+			serviceContext.setAssetTagNames(objectEntry.getKeywords());
+		}
+
+		if (properties.get("tagNames") != null) {
+			serviceContext.setAssetTagNames(
+				ArrayUtil.toStringArray(
+					(List<String>)properties.get("tagNames")));
+		}
+
+		serviceContext.setUserId(userId);
+
+		if (_isObjectEntryDraft(objectEntry.getStatus())) {
+			serviceContext.setWorkflowAction(
+				WorkflowConstants.ACTION_SAVE_DRAFT);
+		}
+
+		return serviceContext;
 	}
 
 	private void _disassociateRelatedModels(
@@ -1107,23 +1151,27 @@ public class DefaultObjectEntryManagerImpl
 		throws Exception {
 
 		if (relatedObjectDefinition.isUnmodifiableSystemObject()) {
-			ObjectRelatedModelsProvider objectRelatedModelsProvider =
+			ManyToOneObjectRelatedModelsProvider
+				manyToOneObjectRelatedModelsProvider =
+					(ManyToOneObjectRelatedModelsProvider)
+						_objectRelatedModelsProviderRegistry.
+							getObjectRelatedModelsProvider(
+								relatedObjectDefinition.getClassName(),
+								relatedObjectDefinition.getCompanyId(),
+								objectRelationship.getType());
+
+			return manyToOneObjectRelatedModelsProvider.fetchRelatedModel(
+				relatedObjectDefinition.getCompanyId(),
+				objectRelationship.getObjectRelationshipId(), primaryKey);
+		}
+
+		ManyToOneObjectRelatedModelsProvider objectRelatedModelsProvider =
+			(ManyToOneObjectRelatedModelsProvider)
 				_objectRelatedModelsProviderRegistry.
 					getObjectRelatedModelsProvider(
 						relatedObjectDefinition.getClassName(),
 						relatedObjectDefinition.getCompanyId(),
 						objectRelationship.getType());
-
-			return objectRelatedModelsProvider.fetchRelatedModel(
-				relatedObjectDefinition.getCompanyId(),
-				objectRelationship.getObjectRelationshipId(), primaryKey);
-		}
-
-		ObjectRelatedModelsProvider objectRelatedModelsProvider =
-			_objectRelatedModelsProviderRegistry.getObjectRelatedModelsProvider(
-				relatedObjectDefinition.getClassName(),
-				relatedObjectDefinition.getCompanyId(),
-				objectRelationship.getType());
 
 		return objectRelatedModelsProvider.fetchRelatedModel(
 			GroupThreadLocal.getGroupId(),
@@ -1414,7 +1462,7 @@ public class DefaultObjectEntryManagerImpl
 	private void _relateNestedObjectEntry(
 			ObjectDefinition objectDefinition,
 			ObjectRelationship objectRelationship, long primaryKey,
-			long relatedPrimaryKey, ServiceContext serviceContext)
+			long relatedPrimaryKey)
 		throws Exception {
 
 		long primaryKey1 = relatedPrimaryKey;
@@ -1429,7 +1477,7 @@ public class DefaultObjectEntryManagerImpl
 
 		_objectRelationshipService.addObjectRelationshipMappingTableValues(
 			objectRelationship.getObjectRelationshipId(), primaryKey1,
-			primaryKey2, serviceContext);
+			primaryKey2, new ServiceContext());
 	}
 
 	private Date _toDate(Locale locale, String valueString) {

@@ -63,13 +63,7 @@ public class ContentFlagsFragmentRenderer
 							"name", "message"
 						).put(
 							"type", "text"
-						))
-				).put(
-					"label",
-					_language.format(
-						fragmentRendererContext.getLocale(), "x-options",
-						"content-flags", true)
-				))
+						))))
 		).toString();
 	}
 

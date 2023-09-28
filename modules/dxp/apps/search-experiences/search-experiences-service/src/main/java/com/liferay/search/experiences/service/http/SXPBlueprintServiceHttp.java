@@ -297,8 +297,8 @@ public class SXPBlueprintServiceHttp {
 
 	public static com.liferay.search.experiences.model.SXPBlueprint
 			updateSXPBlueprint(
-				HttpPrincipal httpPrincipal, String externalReferenceCode,
-				long sxpBlueprintId, String configurationJSON,
+				HttpPrincipal httpPrincipal, long sxpBlueprintId,
+				String configurationJSON,
 				java.util.Map<java.util.Locale, String> descriptionMap,
 				String elementInstancesJSON, String schemaVersion,
 				java.util.Map<java.util.Locale, String> titleMap,
@@ -311,9 +311,8 @@ public class SXPBlueprintServiceHttp {
 				_updateSXPBlueprintParameterTypes6);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, externalReferenceCode, sxpBlueprintId,
-				configurationJSON, descriptionMap, elementInstancesJSON,
-				schemaVersion, titleMap, serviceContext);
+				methodKey, sxpBlueprintId, configurationJSON, descriptionMap,
+				elementInstancesJSON, schemaVersion, titleMap, serviceContext);
 
 			Object returnObj = null;
 
@@ -368,8 +367,8 @@ public class SXPBlueprintServiceHttp {
 		};
 	private static final Class<?>[] _updateSXPBlueprintParameterTypes6 =
 		new Class[] {
-			String.class, long.class, String.class, java.util.Map.class,
-			String.class, String.class, java.util.Map.class,
+			long.class, String.class, java.util.Map.class, String.class,
+			String.class, java.util.Map.class,
 			com.liferay.portal.kernel.service.ServiceContext.class
 		};
 

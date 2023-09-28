@@ -29,7 +29,7 @@ import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
 import com.liferay.dynamic.data.mapping.storage.DDMStorageEngineManager;
 import com.liferay.dynamic.data.mapping.util.DDMDisplay;
-import com.liferay.dynamic.data.mapping.util.DDMDisplayRegistryUtil;
+import com.liferay.dynamic.data.mapping.util.DDMDisplayRegistry;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
@@ -82,6 +82,7 @@ public class DDLDisplayContext {
 			RenderRequest renderRequest, RenderResponse renderResponse, DDL ddl,
 			DDLRecordSetLocalService ddlRecordSetLocalService,
 			DDLWebConfiguration ddlWebConfiguration,
+			DDMDisplayRegistry ddmDisplayRegistry,
 			DDMPermissionSupport ddmPermissionSupport,
 			DDMStorageEngineManager ddmStorageEngineManager,
 			DDMTemplateLocalService ddmTemplateLocalService)
@@ -92,6 +93,7 @@ public class DDLDisplayContext {
 		_ddl = ddl;
 		_ddlRecordSetLocalService = ddlRecordSetLocalService;
 		_ddlWebConfiguration = ddlWebConfiguration;
+		_ddmDisplayRegistry = ddmDisplayRegistry;
 		_ddmPermissionSupport = ddmPermissionSupport;
 		_ddmStorageEngineManager = ddmStorageEngineManager;
 		_ddmTemplateLocalService = ddmTemplateLocalService;
@@ -813,7 +815,7 @@ public class DDLDisplayContext {
 	}
 
 	private DDMDisplay _getDDMDisplay() {
-		return DDMDisplayRegistryUtil.getDDMDisplay(
+		return _ddmDisplayRegistry.getDDMDisplay(
 			DDLPortletKeys.DYNAMIC_DATA_LISTS);
 	}
 
@@ -899,6 +901,7 @@ public class DDLDisplayContext {
 	private final DDLRecordSetLocalService _ddlRecordSetLocalService;
 	private final DDLRequestHelper _ddlRequestHelper;
 	private final DDLWebConfiguration _ddlWebConfiguration;
+	private final DDMDisplayRegistry _ddmDisplayRegistry;
 	private final DDMPermissionSupport _ddmPermissionSupport;
 	private final DDMStorageEngineManager _ddmStorageEngineManager;
 	private final DDMTemplateLocalService _ddmTemplateLocalService;

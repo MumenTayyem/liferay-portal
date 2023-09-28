@@ -257,14 +257,13 @@ public class RelatedObjectEntryResourceImpl
 	}
 
 	private ObjectDefinition _getSystemObjectDefinition(String previousPath) {
-		long companyId = CompanyThreadLocal.getCompanyId();
-
 		SystemObjectDefinitionManager systemObjectDefinitionManager =
-			_getSystemObjectDefinitionManager(companyId, previousPath);
+			_getSystemObjectDefinitionManager(previousPath);
 
 		ObjectDefinition systemObjectDefinition =
 			_objectDefinitionLocalService.fetchObjectDefinition(
-				companyId, systemObjectDefinitionManager.getName());
+				CompanyThreadLocal.getCompanyId(),
+				systemObjectDefinitionManager.getName());
 
 		if (systemObjectDefinition != null) {
 			return systemObjectDefinition;
@@ -276,7 +275,7 @@ public class RelatedObjectEntryResourceImpl
 	}
 
 	private SystemObjectDefinitionManager _getSystemObjectDefinitionManager(
-		long companyId, String previousPath) {
+		String previousPath) {
 
 		URI uri = _uriInfo.getBaseUri();
 
@@ -285,8 +284,7 @@ public class RelatedObjectEntryResourceImpl
 		String restContextPath = path.split("/")[2] + "/v1.0/" + previousPath;
 
 		for (ObjectDefinition systemObjectDefinition :
-				_objectDefinitionLocalService.
-					getUnmodifiableSystemObjectDefinitions(companyId)) {
+				_objectDefinitionLocalService.getSystemObjectDefinitions()) {
 
 			SystemObjectDefinitionManager systemObjectDefinitionManager =
 				_systemObjectDefinitionManagerRegistry.

@@ -29,9 +29,7 @@ const OptionsColumn = ({
 		},
 		{
 			customOptionStyle: 'pr-5',
-			disabled: highPriorityContactsNames.includes(
-				userAccount.emailAddress
-			),
+			disabled: highPriorityContactsNames.includes(userAccount.name),
 			label: i18n.translate('remove'),
 			onClick: () => onRemove(),
 			tooltip: i18n.translate(

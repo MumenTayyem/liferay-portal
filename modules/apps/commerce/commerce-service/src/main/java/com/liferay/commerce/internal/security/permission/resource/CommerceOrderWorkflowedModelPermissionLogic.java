@@ -11,7 +11,7 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionLogic;
-import com.liferay.portal.kernel.workflow.permission.WorkflowPermissionUtil;
+import com.liferay.portal.kernel.workflow.permission.WorkflowPermission;
 
 import java.util.Objects;
 import java.util.function.ToLongFunction;
@@ -23,9 +23,11 @@ public class CommerceOrderWorkflowedModelPermissionLogic
 	implements ModelResourcePermissionLogic<CommerceOrder> {
 
 	public CommerceOrderWorkflowedModelPermissionLogic(
+		WorkflowPermission workflowPermission,
 		ModelResourcePermission<CommerceOrder> modelResourcePermission,
 		ToLongFunction<CommerceOrder> primKeyToLongFunction) {
 
+		_workflowPermission = Objects.requireNonNull(workflowPermission);
 		_modelResourcePermission = Objects.requireNonNull(
 			modelResourcePermission);
 		_primKeyToLongFunction = Objects.requireNonNull(primKeyToLongFunction);
@@ -48,7 +50,7 @@ public class CommerceOrderWorkflowedModelPermissionLogic
 			return false;
 		}
 		else if (commerceOrder.isPending()) {
-			return WorkflowPermissionUtil.hasPermission(
+			return _workflowPermission.hasPermission(
 				permissionChecker, commerceOrder.getGroupId(), name,
 				_primKeyToLongFunction.applyAsLong(commerceOrder), actionId);
 		}
@@ -59,5 +61,6 @@ public class CommerceOrderWorkflowedModelPermissionLogic
 	private final ModelResourcePermission<CommerceOrder>
 		_modelResourcePermission;
 	private final ToLongFunction<CommerceOrder> _primKeyToLongFunction;
+	private final WorkflowPermission _workflowPermission;
 
 }

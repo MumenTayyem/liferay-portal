@@ -87,13 +87,11 @@ export default function EditObjectStateField({objectField, readOnly}: IProps) {
 		onSubmit,
 	});
 
-	const disabled = readOnly || !!objectField?.system;
-
 	return (
 		<SidePanelForm
 			className="lfr-objects__edit-object-state-field"
 			onSubmit={handleSubmit}
-			readOnly={disabled}
+			readOnly={readOnly}
 			title={`${
 				objectField.label[defaultLanguageId]
 			} ${Liferay.Language.get('settings')}`}
@@ -102,7 +100,7 @@ export default function EditObjectStateField({objectField, readOnly}: IProps) {
 				{listTypeEntries?.map(({key, name}, index) => (
 					<StateDefinition
 						currentKey={key}
-						disabled={disabled}
+						disabled={readOnly}
 						index={index}
 						initialValues={listTypeEntries
 							.filter((item) => item.name !== name)

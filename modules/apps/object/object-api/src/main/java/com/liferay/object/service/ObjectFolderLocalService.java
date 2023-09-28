@@ -79,8 +79,7 @@ public interface ObjectFolderLocalService
 			Map<Locale, String> labelMap, String name)
 		throws PortalException;
 
-	@Indexable(type = IndexableType.REINDEX)
-	public ObjectFolder addUncategorizedObjectFolder(long companyId)
+	public ObjectFolder addOrGetUncategorizedObjectFolder(long companyId)
 		throws PortalException;
 
 	/**
@@ -233,9 +232,6 @@ public interface ObjectFolderLocalService
 		String uuid, long companyId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public ObjectFolder fetchUncategorizedObjectFolder(long companyId);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -313,10 +309,6 @@ public interface ObjectFolderLocalService
 	@Override
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public PersistedModel getPersistedModel(Serializable primaryKeyObj)
-		throws PortalException;
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public ObjectFolder getUncategorizedObjectFolder(long companyId)
 		throws PortalException;
 
 	/**

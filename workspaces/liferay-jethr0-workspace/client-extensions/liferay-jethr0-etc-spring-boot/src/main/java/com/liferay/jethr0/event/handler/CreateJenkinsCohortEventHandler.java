@@ -26,11 +26,8 @@ public class CreateJenkinsCohortEventHandler extends BaseObjectEventHandler {
 		JSONObject jenkinsCohortJSONObject = validateJenkinsCohortJSONObject(
 			messageJSONObject.optJSONObject("jenkinsCohort"));
 
-		JenkinsCohortEntityRepository jenkinsCohortEntityRepository =
-			getJenkinsCohortEntityRepository();
-
-		JenkinsCohortEntity jenkinsCohortEntity =
-			jenkinsCohortEntityRepository.create(jenkinsCohortJSONObject);
+		JenkinsCohortEntity jenkinsCohortEntity = _createJenkinsCohortEntity(
+			jenkinsCohortJSONObject);
 
 		JSONArray jenkinsServersJSONArray =
 			jenkinsCohortJSONObject.optJSONArray("jenkinsServers");
@@ -52,12 +49,8 @@ public class CreateJenkinsCohortEventHandler extends BaseObjectEventHandler {
 						jenkinsCohortEntity, jenkinsServerJSONObject);
 
 				jenkinsNodeEntityRepository.createAll(jenkinsServerEntity);
-
-				jenkinsServerEntityRepository.update(jenkinsServerEntity);
 			}
 		}
-
-		jenkinsCohortEntityRepository.update(jenkinsCohortEntity);
 
 		return jenkinsCohortEntity.toString();
 	}
@@ -66,6 +59,15 @@ public class CreateJenkinsCohortEventHandler extends BaseObjectEventHandler {
 		EventHandlerContext eventHandlerContext, JSONObject messageJSONObject) {
 
 		super(eventHandlerContext, messageJSONObject);
+	}
+
+	private JenkinsCohortEntity _createJenkinsCohortEntity(
+		JSONObject jenkinsCohortJSONObject) {
+
+		JenkinsCohortEntityRepository jenkinsCohortEntityRepository =
+			getJenkinsCohortEntityRepository();
+
+		return jenkinsCohortEntityRepository.create(jenkinsCohortJSONObject);
 	}
 
 }

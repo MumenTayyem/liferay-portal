@@ -24,8 +24,6 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.portal.test.log.LogCapture;
-import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -175,12 +173,8 @@ public class GetContentDashboardItemsXlsMVCResourceCommandTest {
 			"groupId", String.valueOf(groupId));
 		mockLiferayResourceRequest.setParameter("className", className);
 
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				"org.apache.poi.POIDocument", LoggerTestUtil.WARN)) {
-
-			_mvcResourceCommand.serveResource(
-				mockLiferayResourceRequest, mockLiferayResourceResponse);
-		}
+		_mvcResourceCommand.serveResource(
+			mockLiferayResourceRequest, mockLiferayResourceResponse);
 
 		return (ByteArrayOutputStream)
 			mockLiferayResourceResponse.getPortletOutputStream();

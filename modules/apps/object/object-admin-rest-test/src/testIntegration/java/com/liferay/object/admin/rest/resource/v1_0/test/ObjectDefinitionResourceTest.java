@@ -29,7 +29,6 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -468,21 +467,15 @@ public class ObjectDefinitionResourceTest
 		testGetObjectDefinitionsPage_addObjectDefinition(objectDefinition2);
 
 		for (EntityField entityField : entityFields) {
-			_assertGetObjectDefinitionsPageWithFilter(
+			Page<ObjectDefinition> page =
+				objectDefinitionResource.getObjectDefinitionsPage(
+					null, null,
+					getFilterString(entityField, operator, objectDefinition1),
+					Pagination.of(1, 2), null);
+
+			assertEquals(
 				Collections.singletonList(objectDefinition1),
-				getFilterString(entityField, operator, objectDefinition1));
-
-			_objectFolder1 = _objectFolderLocalService.updateObjectFolder(
-				RandomTestUtil.randomString(),
-				_objectFolder1.getObjectFolderId(),
-				_objectFolder1.getLabelMap(), Collections.emptyList());
-
-			objectDefinition1 = objectDefinitionResource.getObjectDefinition(
-				objectDefinition1.getId());
-
-			_assertGetObjectDefinitionsPageWithFilter(
-				Collections.singletonList(objectDefinition1),
-				getFilterString(entityField, operator, objectDefinition1));
+				(List<ObjectDefinition>)page.getItems());
 		}
 	}
 
@@ -542,19 +535,6 @@ public class ObjectDefinitionResourceTest
 		return _objectDefinition;
 	}
 
-	private void _assertGetObjectDefinitionsPageWithFilter(
-			List<ObjectDefinition> expectedObjectDefinitions,
-			String filterString)
-		throws Exception {
-
-		Page<ObjectDefinition> page =
-			objectDefinitionResource.getObjectDefinitionsPage(
-				null, null, filterString, Pagination.of(1, 2), null);
-
-		assertEquals(
-			expectedObjectDefinitions, (List<ObjectDefinition>)page.getItems());
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		ObjectDefinitionResourceTest.class);
 
@@ -566,10 +546,7 @@ public class ObjectDefinitionResourceTest
 	@Inject
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
-	@DeleteAfterTestRun
 	private ObjectFolder _objectFolder1;
-
-	@DeleteAfterTestRun
 	private ObjectFolder _objectFolder2;
 
 	@Inject
