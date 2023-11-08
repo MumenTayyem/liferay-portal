@@ -632,7 +632,6 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 				Http.Method.PUT
 			).toString(),
 			JSONCompareMode.STRICT);
-
 		JSONAssert.assertEquals(
 			JSONUtil.put(
 				"status", "BAD_REQUEST"
@@ -665,6 +664,7 @@ public class APIEndpointRelevantObjectEntryModelListenerTest
 				"headless-builder/endpoints", Http.Method.POST
 			).toString(),
 			JSONCompareMode.STRICT);
+
 		JSONAssert.assertEquals(
 			JSONUtil.put(
 				"status", "BAD_REQUEST"

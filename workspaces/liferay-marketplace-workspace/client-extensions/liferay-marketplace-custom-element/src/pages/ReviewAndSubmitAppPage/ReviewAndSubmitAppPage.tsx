@@ -24,8 +24,8 @@ import './ReviewAndSubmitAppPage.scss';
 interface ReviewAndSubmitAppPageProps {
 	onClickBack: () => void;
 	onClickContinue: () => void;
-	productERC: string;
-	productId: number;
+	productERC?: string;
+	productId?: number;
 	readonly?: boolean;
 }
 
@@ -71,9 +71,10 @@ export function ReviewAndSubmitAppPage({
 				}
 			);
 
-			const nonTrialSKU = skuResponse.items.find(
-				({skuOptions: [trialOption]}) => trialOption.value === 'no'
+			const nonTrialSKU = skuResponse?.items.find(
+				({skuOptions: [trialOption]}) => trialOption?.value === 'no'
 			);
+
 			let version = '';
 			let versionDescription = '';
 
@@ -140,7 +141,7 @@ export function ReviewAndSubmitAppPage({
 				getThumbnailByProductAttachment(productResponse.attachments)
 			);
 
-			const newApp: App = {
+			const newApp = {
 				attachmentTitle: attachment?.title['en_US'] as string,
 				categories: productCategories,
 				description: productResponse.description['en_US'],

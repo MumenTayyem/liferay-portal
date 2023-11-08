@@ -853,6 +853,9 @@ components:
                 skuOptionKey:
                     example: Sku Option Key
                     type: string
+                skuOptionName:
+                    example: Sku Option Name
+                    type: string
                 skuOptionValueId:
                     example: 30130
                     format: int64
@@ -860,6 +863,10 @@ components:
                 skuOptionValueKey:
                     example: Sku Option Value Key
                     type: string
+                skuOptionValueNames:
+                    items:
+                        type: string
+                    type: array
                 value:
                     example: 31130
                     format: int64
@@ -957,7 +964,7 @@ components:
 info:
     description:
         "Headless Commerce Delivery Catalog API. A Java client JAR is available for use with the group ID 'com.liferay',
-        artifact ID 'com.liferay.headless.commerce.delivery.catalog.client', and version '4.0.41'."
+        artifact ID 'com.liferay.headless.commerce.delivery.catalog.client', and version '4.0.42'."
     license:
         name: Apache 2.0
         url: http://www.apache.org/licenses/LICENSE-2.0.html

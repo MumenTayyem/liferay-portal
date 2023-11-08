@@ -11,9 +11,9 @@ import classNames from 'classnames';
 import {useId} from 'frontend-js-components-web';
 import React, {useState} from 'react';
 
-import {addRule} from '../../../app/actions/index';
-import updateRule from '../../../app/actions/updateRule';
 import {useDispatch, useSelector} from '../../../app/contexts/StoreContext';
+import addRule from '../../../app/thunks/addRule';
+import updateRule from '../../../app/thunks/updateRule';
 import {
 	RuleBuilderActionSection,
 	RuleBuilderConditionSection,
@@ -22,18 +22,19 @@ import {
 export default function RulesModal({editingRule, onCloseModal}) {
 	const {observer, onClose} = useModal({onClose: () => onCloseModal()});
 
-	const layoutData = useSelector((state) => state.layoutData);
+	const rules = useSelector((state) => state.layoutData.pageRules);
 
 	const dispatch = useDispatch();
 	const nameId = useId();
-
-	const {rules = []} = layoutData;
 
 	const [name, setName] = useState(
 		editingRule?.name || getDefaultName(rules)
 	);
 
 	const [nameError, setNameError] = useState(false);
+
+	const [actions, setActions] = useState(editingRule?.actions || []);
+	const [conditions, setConditions] = useState(editingRule?.conditions || []);
 
 	const onSave = () => {
 		if (!name) {
@@ -42,33 +43,27 @@ export default function RulesModal({editingRule, onCloseModal}) {
 			return;
 		}
 
+		const filteredActions = actions.filter((action) => action.itemId);
+		const filteredConditions = conditions.filter(
+			(condition) => condition.value
+		);
+
 		if (editingRule) {
-			const nextLayoutData = {
-				...layoutData,
-				rules: rules.map((rule) => {
-					if (rule.id === editingRule.id) {
-						return {id: editingRule.id, name};
-					}
-
-					return rule;
-				}),
-			};
-
 			dispatch(
 				updateRule({
-					layoutData: nextLayoutData,
+					actions: filteredActions,
+					conditions: filteredConditions,
+					name,
+					ruleId: editingRule.id,
 				})
 			);
 		}
 		else {
-			const nextLayoutData = {
-				...layoutData,
-				rules: [...rules, {id: nameId, name}],
-			};
-
 			dispatch(
 				addRule({
-					layoutData: nextLayoutData,
+					actions: filteredActions,
+					conditions: filteredConditions,
+					name,
 				})
 			);
 		}
@@ -132,9 +127,15 @@ export default function RulesModal({editingRule, onCloseModal}) {
 					)}
 				</p>
 
-				<RuleBuilderConditionSection />
+				<RuleBuilderConditionSection
+					conditions={conditions}
+					setConditions={setConditions}
+				/>
 
-				<RuleBuilderActionSection />
+				<RuleBuilderActionSection
+					actions={actions}
+					setActions={setActions}
+				/>
 			</ClayModal.Body>
 
 			<ClayModal.Footer

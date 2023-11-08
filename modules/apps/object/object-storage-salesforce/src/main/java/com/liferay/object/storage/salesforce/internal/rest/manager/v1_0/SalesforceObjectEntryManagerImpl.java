@@ -39,6 +39,8 @@ import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
@@ -802,15 +804,30 @@ public class SalesforceObjectEntryManagerImpl
 		private JSONObject _getSalesforceAccessTokenJSONObject(
 			SalesforceConfiguration salesforceConfiguration) {
 
-			JSONObject jSONObject = SalesforceAccessTokenWebCacheItem.get(
-				salesforceConfiguration);
+			int retry = 0;
 
-			if (jSONObject == null) {
-				throw new ObjectEntryManagerHttpException(
-					"Unable to authenticate with Salesforce");
+			while (retry < 3) {
+				JSONObject jSONObject = SalesforceAccessTokenWebCacheItem.get(
+					salesforceConfiguration);
+
+				if (jSONObject != null) {
+					return jSONObject;
+				}
+
+				try {
+					Thread.sleep(500);
+				}
+				catch (InterruptedException interruptedException) {
+					if (_log.isDebugEnabled()) {
+						_log.debug(interruptedException);
+					}
+				}
+
+				retry++;
 			}
 
-			return jSONObject;
+			throw new ObjectEntryManagerHttpException(
+				"Unable to authenticate with Salesforce");
 		}
 
 		private SalesforceConfiguration _getSalesforceConfiguration(
@@ -893,6 +910,8 @@ public class SalesforceObjectEntryManagerImpl
 
 			return bytes;
 		}
+
+		private final Log _log = LogFactoryUtil.getLog(SalesforceHttp.class);
 
 	}
 

@@ -61,6 +61,34 @@ definition {
 		}
 	}
 
+	@description = "This is a test for LPS-143093. Add assets to manual collection for selected item types."
+	@priority = 4
+	test AddAssetsToManualCollectionForSelectedItemTypes {
+		task ("Given a user has a manual collection") {
+			AssetListsAdmin.openAssetListsAdmin(siteURLKey = "test-site-name");
+
+			AssetListsAdmin.addManualSelection(assetListTitle = "Manual Collection");
+		}
+
+		task ("When the user selects item types") {
+			AssetListsAdmin.configureItemTypeInManualCollection(
+				itemType = "Select Types...",
+				moveToAvailableItemTypeList = "Blogs Entry,Web Content Article");
+		}
+
+		task ("Then only selected types are shown on the dropdown menu") {
+			Button.clickSelect();
+
+			for (var menuItem : list "Calendar Event,Basic Document,Translation,Web Content Folder") {
+				MenuItem.verifyVisible(menuItem = ${menuItem});
+			}
+
+			for (var menuItem : list "Blogs Entry,Web Content Article") {
+				MenuItem.viewNotPresent(menuItem = ${menuItem});
+			}
+		}
+	}
+
 	@description = "Assert that the UI correctly displays a useful error message when an Asset List is added with a duplicate name."
 	@priority = 3
 	test AddDuplicateAssetList {
@@ -217,7 +245,7 @@ definition {
 
 			AssetListsAdmin.configureItemTypeInDynamicCollection(
 				itemSubtype = "All Subtypes",
-				itemType = "All Types");
+				itemType = "Web Content Article");
 		}
 
 		task ("Create a first variation for the collection and filter web contents by category") {
@@ -350,7 +378,7 @@ definition {
 
 			AssetListsAdmin.configureItemTypeInDynamicCollection(
 				itemSubtype = "All Subtypes",
-				itemType = "All Types");
+				itemType = "Web Content Article");
 		}
 
 		task ("Create a first variation for the collection and filter web contents by category") {
@@ -1909,7 +1937,7 @@ definition {
 		task ("Add a dynamic collection with All Types") {
 			AssetListsAdmin.openAssetListsAdmin(siteURLKey = "test-site-name");
 
-			AssetListsAdmin.addDynamicSelection(assetListTitle = "Dynamic Collection Test");
+			AssetListsAdmin.addDynamicSelection(assetListTitle = "Dynamic Collection");
 
 			AssetListsAdmin.configureItemTypeInDynamicCollection(itemType = "All Types");
 		}

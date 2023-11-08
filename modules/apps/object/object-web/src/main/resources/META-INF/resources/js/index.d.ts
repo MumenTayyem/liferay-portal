@@ -30,10 +30,11 @@ type DefinitionActions = {
 	update: DefinitionAction;
 };
 
-type DeletionNotAllowedModal = {
+type ObjectFieldDeleteInfoProps = {
 	deleteLastPublishedObjectDefinitionObjectField: boolean;
 	deleteObjectFieldObjectValidationRuleSetting: boolean;
-	showModal: boolean;
+	showObjectFieldDeletionConfirmationModal: boolean;
+	showObjectFieldDeletionNotAllowedModal: boolean;
 };
 
 type ExcludesFilterOperator = {
@@ -96,7 +97,7 @@ interface ModelBuilderModals
 	extends Omit<
 		ViewObjectDefinitionsModals,
 		| 'bindToRootObjectDefinition'
-		| 'deletionNotAllowed'
+		| 'objectFieldDeletionNotAllowed'
 		| 'unbindFromRootObjectDefinition'
 	> {
 	addObjectField: boolean;
@@ -484,8 +485,8 @@ interface ViewObjectDefinitionsModals {
 	bindToRootObjectDefinition: boolean;
 	deleteObjectDefinition: boolean;
 	deleteObjectFolder: boolean;
-	deletionNotAllowed: boolean;
 	editObjectFolder: boolean;
 	moveObjectDefinition: boolean;
+	objectFieldDeletionNotAllowed: boolean;
 	unbindFromRootObjectDefinition: boolean;
 }

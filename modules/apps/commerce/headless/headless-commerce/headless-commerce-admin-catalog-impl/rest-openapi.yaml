@@ -416,8 +416,7 @@ components:
                         type: string
                     type: object
                 geo:
-                    allOf:
-                        - $ref: "#/components/schemas/Geo"
+                    $ref: "#/components/schemas/Geo"
                     description:
                         A point determined by latitude and longitude.
             type: object
@@ -1037,8 +1036,7 @@ components:
                     readOnly: true
                     type: integer
                 workflowStatusInfo:
-                    allOf:
-                        - $ref: "#/components/schemas/Status"
+                    $ref: "#/components/schemas/Status"
                     readOnly: true
             required:
                 - active
@@ -1997,7 +1995,7 @@ info:
         name: Commerce Team
     description:
         "Liferay Commerce Admin Catalog API. A Java client JAR is available for use with the group ID 'com.liferay',
-        artifact ID 'com.liferay.headless.commerce.admin.catalog.client', and version '4.0.47'."
+        artifact ID 'com.liferay.headless.commerce.admin.catalog.client', and version '4.0.48'."
     license:
         name: "Apache 2.0"
         url: "http://www.apache.org/licenses/LICENSE-2.0.html"

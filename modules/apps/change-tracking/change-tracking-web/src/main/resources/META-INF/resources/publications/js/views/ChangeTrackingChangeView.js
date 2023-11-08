@@ -6,50 +6,34 @@
 import ClayAlert from '@clayui/alert';
 import ClayEmptyState from '@clayui/empty-state';
 import ClayLayout from '@clayui/layout';
-import {sub} from 'frontend-js-web';
+import {createPortletURL, navigate as navigateUtil, sub} from 'frontend-js-web';
 import React, {useCallback, useRef, useState} from 'react';
 
 import ChangeTrackingRenderView from './ChangeTrackingRenderView';
 
 export default function ChangeTrackingChangeView({
+	changeURL,
 	changes,
-	columnFromURL,
 	contextView,
-	ctMappingInfos,
 	dataURL,
 	defaultLocale,
-	deltaFromURL,
 	discardURL,
 	entryFromURL,
 	expired,
 	modelData,
 	moveChangesURL,
 	namespace,
-	navigationFromURL,
-	orderByTypeFromURL,
-	pageFromURL,
 	showHideableFromURL,
 	siteNames,
 	spritemap,
-	total,
 	typeNames,
 	userInfo,
 }) {
 	const CHANGE_TYPE_ADDITION = 0;
 	const CHANGE_TYPE_DELETION = 1;
-	const COLUMN_TITLE = 'title';
 	const GLOBAL_SITE_NAME = Liferay.Language.get('global');
-	const NAVIGATION_DATA = 'data';
-	const NAVIGATION_RELATIONSHIPS = 'relationships';
-	const PARAM_COLUMN = namespace + 'column';
-	const PARAM_DELTA = namespace + 'delta';
 	const PARAM_ENTRY = namespace + 'entry';
-	const PARAM_NAVIGATION = namespace + 'navigation';
-	const PARAM_ORDER_BY_TYPE = namespace + 'orderByType';
-	const PARAM_PAGE = namespace + 'page';
 	const PARAM_SHOW_HIDEABLE = namespace + 'showHideable';
-	const ORDER_BY_TYPE_ASC = 'asc';
-	const ORDER_BY_TYPE_DESC = 'desc';
 
 	const pathname = window.location.pathname;
 
@@ -57,17 +41,10 @@ export default function ChangeTrackingChangeView({
 
 	const params = new URLSearchParams(search);
 
-	params.delete(PARAM_COLUMN);
-	params.delete(PARAM_DELTA);
 	params.delete(PARAM_ENTRY);
-	params.delete(PARAM_NAVIGATION);
-	params.delete(PARAM_ORDER_BY_TYPE);
-	params.delete(PARAM_PAGE);
 	params.delete(PARAM_SHOW_HIDEABLE);
 
 	const basePathRef = useRef(pathname + '?' + params.toString());
-
-	const renderCacheRef = useRef({});
 
 	const getNodeId = useCallback(
 		(modelKey) => {
@@ -240,8 +217,8 @@ export default function ChangeTrackingChangeView({
 					const model = modelsRef.current[keys[i]];
 
 					if (
-						model.modelClassNameId === modelClassNameId &&
-						model.modelClassPK === modelClassPK
+						String(model.modelClassNameId) === modelClassNameId &&
+						String(model.modelClassPK) === modelClassPK
 					) {
 						if (!contextView) {
 							return model;
@@ -349,9 +326,6 @@ export default function ChangeTrackingChangeView({
 		? true
 		: !!showHideableFromURL;
 
-	const ascendingState = orderByTypeFromURL !== ORDER_BY_TYPE_DESC;
-	const columnState = columnFromURL ? columnFromURL : COLUMN_TITLE;
-
 	const filterNodes = useCallback(
 		(showHideable) => {
 			const nodes = getModels(changes);
@@ -365,35 +339,13 @@ export default function ChangeTrackingChangeView({
 		[changes, getModels]
 	);
 
-	const initialDelta = deltaFromURL ? Number(deltaFromURL) : 20;
 	const initialNodes = filterNodes(initialShowHideable);
-
-	const calculatePage = (delta, page, total) => {
-		const lastPage = total > 0 ? Math.ceil(total / delta) : 1;
-
-		if (page > lastPage) {
-			return lastPage;
-		}
-
-		return page;
-	};
 
 	const [renderState, setRenderState] = useState({
 		changes: initialNodes,
 		children: initialNode.children,
-		delta: initialDelta,
 		id: initialNode.nodeId,
-		nav:
-			!!ctMappingInfos.length &&
-			(!total || navigationFromURL === NAVIGATION_RELATIONSHIPS)
-				? NAVIGATION_RELATIONSHIPS
-				: NAVIGATION_DATA,
 		node: initialNode,
-		page: calculatePage(
-			initialDelta,
-			pageFromURL ? Number(pageFromURL) : 1,
-			initialNodes.length
-		),
 		parents: initialNode.parents,
 		showHideable: initialShowHideable,
 	});
@@ -407,43 +359,9 @@ export default function ChangeTrackingChangeView({
 	};
 
 	const getPath = useCallback(
-		(
-			ascending,
-			column,
-			delta,
-			entryParam,
-			navigation,
-			page,
-			showHideable
-		) => {
-			let orderByType = ORDER_BY_TYPE_DESC;
-
-			if (ascending) {
-				orderByType = ORDER_BY_TYPE_ASC;
-			}
-
+		(entryParam, showHideable) => {
 			let path =
 				basePathRef.current +
-				'&' +
-				PARAM_COLUMN +
-				'=' +
-				column +
-				'&' +
-				PARAM_DELTA +
-				'=' +
-				delta.toString() +
-				'&' +
-				PARAM_NAVIGATION +
-				'=' +
-				navigation +
-				'&' +
-				PARAM_ORDER_BY_TYPE +
-				'=' +
-				orderByType +
-				'&' +
-				PARAM_PAGE +
-				'=' +
-				page.toString() +
 				'&' +
 				PARAM_SHOW_HIDEABLE +
 				'=' +
@@ -455,15 +373,7 @@ export default function ChangeTrackingChangeView({
 
 			return path;
 		},
-		[
-			PARAM_COLUMN,
-			PARAM_DELTA,
-			PARAM_ENTRY,
-			PARAM_NAVIGATION,
-			PARAM_ORDER_BY_TYPE,
-			PARAM_PAGE,
-			PARAM_SHOW_HIDEABLE,
-		]
+		[PARAM_ENTRY, PARAM_SHOW_HIDEABLE]
 	);
 
 	const pushState = (path) => {
@@ -486,45 +396,17 @@ export default function ChangeTrackingChangeView({
 	};
 
 	const navigate = useCallback(
-		(nodeId, resetPage) => {
+		(nodeId) => {
 			const node = getNode(nodeId);
 
-			const page = resetPage ? 1 : renderState.page;
-
-			pushState(
-				getPath(
-					ascendingState,
-					columnState,
-					renderState.delta,
-					getEntryParam(node),
-					renderState.nav,
-					page,
-					renderState.showHideable
-				)
-			);
-
-			setRenderState({
-				changes: filterNodes(renderState.showHideable),
-				children: node.children,
-				delta: renderState.delta,
-				id: nodeId,
-				nav: renderState.nav,
-				node,
-				page,
-				parents: node.parents,
-				showHideable: renderState.showHideable,
+			const newChangeURL = createPortletURL(changeURL, {
+				modelClassNameId: node.modelClassNameId,
+				modelClassPK: node.modelClassPK,
 			});
 
-			window.scrollTo(0, 0);
+			navigateUtil(newChangeURL.toString());
 		},
-		[
-			ascendingState,
-			columnState,
-			filterNodes,
-			getNode,
-			getPath,
-			renderState,
-		]
+		[changeURL, getNode]
 	);
 
 	const setParameter = useCallback(
@@ -583,32 +465,13 @@ export default function ChangeTrackingChangeView({
 	const handleShowHideableToggle = (showHideable) => {
 		const nodes = filterNodes(showHideable);
 
-		const page = calculatePage(
-			renderState.delta,
-			renderState.id > 0 ? 1 : renderState.page,
-			nodes.length
-		);
-
-		pushState(
-			getPath(
-				ascendingState,
-				columnState,
-				renderState.delta,
-				getEntryParam(renderState.node),
-				renderState.nav,
-				page,
-				showHideable
-			)
-		);
+		pushState(getPath(getEntryParam(renderState.node), showHideable));
 
 		setRenderState({
 			changes: nodes,
 			children: renderState.children,
-			delta: renderState.delta,
 			id: renderState.id,
-			nav: renderState.nav,
 			node: renderState.node,
-			page,
 			parents: renderState.parents,
 			showHideable,
 		});
@@ -637,32 +500,13 @@ export default function ChangeTrackingChangeView({
 	};
 
 	const renderMainContent = () => {
-		if (!total && !ctMappingInfos.length) {
-			return (
-				<div className="container-fluid container-fluid-max-xl">
-					{renderExpiredBanner()}
-
-					<ClayLayout.Sheet>
-						<ClayEmptyState
-							className="mt-0"
-							description={Liferay.Language.get(
-								'no-changes-were-found'
-							)}
-							imgSrc={`${themeDisplay.getPathThemeImages()}/states/empty_state.gif`}
-							title={Liferay.Language.get('no-results-found')}
-						/>
-					</ClayLayout.Sheet>
-				</div>
-			);
-		}
-
 		return (
 			<div className="container-fluid container-fluid-max-xl">
 				{renderExpiredBanner()}
 
 				<div className="publications-changes-content row">
 					<div className="col-md-12">
-						{renderState.node.modelClassNameId && (
+						{renderState.node.modelClassNameId ? (
 							<ChangeTrackingRenderView
 								childEntries={renderState.children}
 								ctEntry={!!renderState.node.ctEntryId}
@@ -673,16 +517,7 @@ export default function ChangeTrackingChangeView({
 										: renderState.node.typeName
 								}
 								discardURL={getDiscardURL(renderState.node)}
-								getCache={() =>
-									renderCacheRef.current[
-										renderState.node.modelClassNameId +
-											'-' +
-											renderState.node.modelClassPK
-									]
-								}
-								handleNavigation={(nodeId) =>
-									navigate(nodeId, true)
-								}
+								handleNavigation={(nodeId) => navigate(nodeId)}
 								handleShowHideable={handleShowHideableToggle}
 								initialDataURL={getDataURL(renderState.node)}
 								moveChangesURL={getMoveChangesURL(
@@ -693,14 +528,20 @@ export default function ChangeTrackingChangeView({
 								showHideable={renderState.showHideable}
 								spritemap={spritemap}
 								title={renderState.node.title}
-								updateCache={(data) => {
-									renderCacheRef.current[
-										renderState.node.modelClassNameId +
-											'-' +
-											renderState.node.modelClassPK
-									] = data;
-								}}
 							/>
+						) : (
+							<ClayLayout.Sheet>
+								<ClayEmptyState
+									className="mt-0"
+									description={Liferay.Language.get(
+										'no-changes-were-found'
+									)}
+									imgSrc={`${themeDisplay.getPathThemeImages()}/states/empty_state.gif`}
+									title={Liferay.Language.get(
+										'no-results-found'
+									)}
+								/>
+							</ClayLayout.Sheet>
 						)}
 					</div>
 				</div>
@@ -708,5 +549,5 @@ export default function ChangeTrackingChangeView({
 		);
 	};
 
-	return <>{renderMainContent()}</>;
+	return renderMainContent();
 }

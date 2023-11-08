@@ -8,6 +8,7 @@ package com.liferay.headless.builder.internal.model.listener;
 import com.liferay.headless.builder.application.APIApplication;
 import com.liferay.headless.builder.constants.HeadlessBuilderConstants;
 import com.liferay.headless.builder.internal.helper.ObjectEntryHelper;
+import com.liferay.headless.builder.internal.helper.ValidationHelper;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.exception.ObjectEntryValuesException;
 import com.liferay.object.model.ObjectDefinition;
@@ -130,8 +131,8 @@ public class APIEndpointRelevantObjectEntryModelListener
 				values.get(
 					"r_apiApplicationToAPIEndpoints_c_apiApplicationId"));
 
-			if (!_objectEntryHelper.isValidObjectEntry(
-					apiApplicationId, "L_API_APPLICATION")) {
+			if (!_validationHelper.isValidObjectEntry(
+					"L_API_APPLICATION", apiApplicationId)) {
 
 				throw new ObjectEntryValuesException.InvalidObjectField(
 					null,
@@ -416,5 +417,8 @@ public class APIEndpointRelevantObjectEntryModelListener
 
 	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private ValidationHelper _validationHelper;
 
 }
