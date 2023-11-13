@@ -82,11 +82,7 @@ definition {
 		}
 
 		if (IsElementPresent(locator1 = "APIBuilder#VIEW_RELATED_OBJECTS")) {
-			Click(locator1 = "APIBuilder#VIEW_RELATED_OBJECTS");
-
-			Click(
-				key_componentName = ${relatedObjectName},
-				locator1 = "Panel#PANEL_TITLE");
+			APIBuilderUI.gotoRelatedObjectsProperties(relatedObjectName = ${relatedObjectName});
 
 			Click(
 				key_text = ${relatedFieldName},
@@ -231,7 +227,12 @@ definition {
 	macro createAPISchema(objectDefinitionName = null, name = null) {
 		Variables.assertDefined(parameterList = "${name},${objectDefinitionName}");
 
-		Click(locator1 = "APIBuilder#ADD_NEW_SCHEMA");
+		if (isSet(addByPlus)) {
+			Click(locator1 = "Button#PLUS");
+		}
+		else {
+			Click(locator1 = "APIBuilder#ADD_NEW_SCHEMA");
+		}
 
 		Type(
 			locator1 = "TextInput#NAME",
@@ -393,6 +394,17 @@ definition {
 		Click(
 			locator1 = "Button#BUTTON_WITH_VALUE",
 			value = ${tabEntity});
+	}
+
+	@summary = "Default summary"
+	macro gotoRelatedObjectsProperties(relatedObjectName = null) {
+		Variables.assertDefined(parameterList = ${relatedObjectName});
+
+		Click(locator1 = "APIBuilder#VIEW_RELATED_OBJECTS");
+
+		Click(
+			key_componentName = ${relatedObjectName},
+			locator1 = "Panel#PANEL_TITLE");
 	}
 
 	@summary = "Default summary"
