@@ -17,8 +17,7 @@
 			"familyName": "Adam",
 			"givenName": "M2H8 Admin",
 			"jobTitle": "Administrator",
-			"name": "M2H8 Admin Adam",
-			"password": "test"
+			"name": "M2H8 Admin Adam"
 		},
 		{
 			"alternateName": "m2h8.customer.carl",
@@ -27,8 +26,7 @@
 			"familyName": "Carl",
 			"givenName": "M2H8 Customer",
 			"jobTitle": "Customer",
-			"name": "M2H8 Customer Carl",
-			"password": "test"
+			"name": "M2H8 Customer Carl"
 		},
 		{
 			"alternateName": "m2h8.support.sam",
@@ -37,8 +35,7 @@
 			"familyName": "Sam",
 			"givenName": "M2H8 Support",
 			"jobTitle": "Support",
-			"name": "M2H8 Support Sam",
-			"password": "test"
+			"name": "M2H8 Support Sam"
 		}
 	]
 }
