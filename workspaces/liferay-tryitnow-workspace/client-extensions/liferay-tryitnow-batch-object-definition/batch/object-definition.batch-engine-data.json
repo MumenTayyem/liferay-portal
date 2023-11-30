@@ -24,44 +24,6 @@
 			"name": "M2H8ProgressTracker",
 			"objectFields": [
 				{
-					"DBType": "Date",
-					"businessType": "Date",
-					"indexed": false,
-					"indexedAsKeyword": false,
-					"indexedLanguageId": "",
-					"label": {
-						"en_US": "Create Date"
-					},
-					"name": "createDate",
-					"objectFieldSettings": [
-					],
-					"readOnly": "true",
-					"readOnlyConditionExpression": "",
-					"required": false,
-					"state": false,
-					"system": true,
-					"type": "Date"
-				},
-				{
-					"DBType": "String",
-					"businessType": "Text",
-					"indexed": false,
-					"indexedAsKeyword": false,
-					"indexedLanguageId": "",
-					"label": {
-						"en_US": "Creator"
-					},
-					"name": "creator",
-					"objectFieldSettings": [
-					],
-					"readOnly": "true",
-					"readOnlyConditionExpression": "",
-					"required": false,
-					"state": false,
-					"system": true,
-					"type": "String"
-				},
-				{
 					"DBType": "Boolean",
 					"businessType": "Boolean",
 					"indexed": true,
@@ -79,82 +41,6 @@
 					"state": false,
 					"system": false,
 					"type": "Boolean"
-				},
-				{
-					"DBType": "String",
-					"businessType": "Text",
-					"indexed": false,
-					"indexedAsKeyword": false,
-					"indexedLanguageId": "",
-					"label": {
-						"en_US": "External Reference Code"
-					},
-					"name": "externalReferenceCode",
-					"objectFieldSettings": [
-					],
-					"readOnly": "false",
-					"readOnlyConditionExpression": "",
-					"required": false,
-					"state": false,
-					"system": true,
-					"type": "String"
-				},
-				{
-					"DBType": "Long",
-					"businessType": "LongInteger",
-					"indexed": true,
-					"indexedAsKeyword": true,
-					"indexedLanguageId": "",
-					"label": {
-						"en_US": "ID"
-					},
-					"name": "id",
-					"objectFieldSettings": [
-					],
-					"readOnly": "true",
-					"readOnlyConditionExpression": "",
-					"required": false,
-					"state": false,
-					"system": true,
-					"type": "Long"
-				},
-				{
-					"DBType": "Date",
-					"businessType": "Date",
-					"indexed": false,
-					"indexedAsKeyword": false,
-					"indexedLanguageId": "",
-					"label": {
-						"en_US": "Modified Date"
-					},
-					"name": "modifiedDate",
-					"objectFieldSettings": [
-					],
-					"readOnly": "true",
-					"readOnlyConditionExpression": "",
-					"required": false,
-					"state": false,
-					"system": true,
-					"type": "Date"
-				},
-				{
-					"DBType": "String",
-					"businessType": "Text",
-					"indexed": false,
-					"indexedAsKeyword": false,
-					"indexedLanguageId": "",
-					"label": {
-						"en_US": "Status"
-					},
-					"name": "status",
-					"objectFieldSettings": [
-					],
-					"readOnly": "true",
-					"readOnlyConditionExpression": "",
-					"required": false,
-					"state": false,
-					"system": true,
-					"type": "String"
 				},
 				{
 					"DBType": "Integer",
