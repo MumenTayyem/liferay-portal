@@ -250,7 +250,7 @@
 										"definition": {
 											"formConfig": {
 												"formReference": {
-													"className": "com.liferay.object.model.ObjectDefinition#[$OBJECT_DEFINITION_ID:Ticket$]",
+													"className": "com.liferay.object.model.ObjectDefinition#[$OBJECT_DEFINITION_ID:M2H8ProgressTracker$]",
 													"classType": 0
 												}
 											},
