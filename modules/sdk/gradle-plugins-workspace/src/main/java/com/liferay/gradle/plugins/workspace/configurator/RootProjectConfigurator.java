@@ -33,6 +33,7 @@ import com.liferay.gradle.plugins.workspace.internal.util.FileUtil;
 import com.liferay.gradle.plugins.workspace.internal.util.GradleUtil;
 import com.liferay.gradle.plugins.workspace.internal.util.StringUtil;
 import com.liferay.gradle.plugins.workspace.task.CreateTokenTask;
+import com.liferay.gradle.plugins.workspace.task.GenerateBatchClientExtensionsTask;
 import com.liferay.gradle.plugins.workspace.task.InitBundleTask;
 import com.liferay.gradle.plugins.workspace.task.VerifyBundleTask;
 import com.liferay.gradle.plugins.workspace.task.VerifyProductTask;
@@ -159,6 +160,9 @@ public class RootProjectConfigurator implements Plugin<Project> {
 	public static final String FORMAT_SOURCE_UPGRADE_TASK_NAME =
 		"formatSourceUpgrade";
 
+	public static final String GENERATE_BATCH_CLIENT_EXTENSIONS =
+		"generateBatchClientExtensions";
+
 	public static final String INIT_BUNDLE_TASK_NAME = "initBundle";
 
 	public static final String LIFERAY_CONFIGS_DIR_NAME = "configs";
@@ -271,6 +275,8 @@ public class RootProjectConfigurator implements Plugin<Project> {
 			verifyProductTask);
 
 		_addTaskFormatSourceUpgrade(project);
+
+		_addGenerateBatchClientExtensionsTask(project);
 	}
 
 	public boolean isDefaultRepositoryEnabled() {
@@ -329,6 +335,21 @@ public class RootProjectConfigurator implements Plugin<Project> {
 			project, workspaceExtension, dockerBuildImage);
 
 		_addTaskPushDockerImage(project, workspaceExtension, dockerTagImage);
+	}
+
+	private GenerateBatchClientExtensionsTask
+		_addGenerateBatchClientExtensionsTask(Project project) {
+
+		GenerateBatchClientExtensionsTask generateBatchClientExtensionsTask =
+			GradleUtil.addTask(
+				project, GENERATE_BATCH_CLIENT_EXTENSIONS,
+				GenerateBatchClientExtensionsTask.class);
+
+		generateBatchClientExtensionsTask.setDescription(
+			"Generate batch client extensions from an existing instance");
+		generateBatchClientExtensionsTask.setGroup("Generation");
+
+		return generateBatchClientExtensionsTask;
 	}
 
 	private DockerBuildImage _addTaskBuildDockerImage(
