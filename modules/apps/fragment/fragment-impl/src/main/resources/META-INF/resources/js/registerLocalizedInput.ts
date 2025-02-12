@@ -17,6 +17,7 @@ type Args = {
 		languageId: string;
 		value: string;
 	}) => void;
+	optionValues: Record<string, string>;
 };
 
 export function registerLocalizedInput({
@@ -27,6 +28,7 @@ export function registerLocalizedInput({
 	localizationInputsContainer,
 	namespace,
 	onLocaleChange,
+	optionValues,
 }: Args) {
 	if (initialValues) {
 		Object.entries(initialValues).forEach(([languageId, value]) => {
@@ -37,11 +39,10 @@ export function registerLocalizedInput({
 				namespace
 			);
 
-			if (input.type === 'checkbox') {
-				input.checked = value;
-			}
-			else {
-				input.value = value;
+			input.value = value;
+
+			if (optionValues) {
+				input.dataset.label = optionValues[value];
 			}
 		});
 	}
@@ -61,7 +62,17 @@ export function registerLocalizedInput({
 		if (translationInput.getAttribute('value') !== null) {
 			onLocaleChange?.({languageId, value: translationInput.value});
 
-			if (inputElement) {
+			if (!inputElement) {
+				return;
+			}
+
+			if (inputElement.type === 'checkbox') {
+				inputElement.checked = translationInput.value === 'true';
+			}
+			else if (inputElement.getAttribute('role') === 'combobox') {
+				inputElement.value = translationInput.dataset.label || '';
+			}
+			else {
 				inputElement.value = translationInput.value;
 			}
 		}
@@ -75,14 +86,21 @@ export function registerLocalizedInput({
 
 			onLocaleChange?.({languageId, value: defaultLanguageInput.value});
 
-			if (inputElement) {
+			if (!inputElement) {
+				return;
+			}
+
+			if (inputElement.getAttribute('role') === 'combobox') {
+				inputElement.value = defaultLanguageInput.dataset.label || '';
+			}
+			else {
 				inputElement.value = defaultLanguageInput.value;
 			}
 		}
 	});
 
 	return {
-		onChange: (value: string) => {
+		onChange: (value: string, label?: string) => {
 			const translationInput = getOrCreateTranslationInput(
 				inputName,
 				currentLanguageId,
@@ -91,6 +109,10 @@ export function registerLocalizedInput({
 			);
 
 			translationInput.value = value;
+
+			if (label) {
+				translationInput.dataset.label = label;
+			}
 
 			Liferay.fire('localizationSelect:updateTranslationStatus', {
 				languageId: currentLanguageId,

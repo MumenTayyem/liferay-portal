@@ -378,6 +378,13 @@ public class ObjectEntryWrapper
 		return model.getTitleValue();
 	}
 
+	@Override
+	public String getTitleValue(String languageId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getTitleValue(languageId);
+	}
+
 	/**
 	 * Returns the tree path of this object entry.
 	 *
@@ -389,16 +396,12 @@ public class ObjectEntryWrapper
 	}
 
 	@Override
-	public String getURLTitle(java.util.Locale locale)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public String getURLTitle(java.util.Locale locale) {
 		return model.getURLTitle(locale);
 	}
 
 	@Override
-	public Map<String, String> getURLTitleMap()
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public Map<String, String> getURLTitleMap() {
 		return model.getURLTitleMap();
 	}
 
