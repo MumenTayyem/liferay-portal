@@ -2025,6 +2025,449 @@ test.describe('Form Localization', () => {
 	);
 
 	test(
+		'Can translate checkbox form field',
+		{tag: '@LPD-46483'},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Create object definition with a localized boolean
+
+			const objectDefinitionAPIClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {body: objectDefinition} =
+				await objectDefinitionAPIClient.postObjectDefinition({
+					active: true,
+					enableLocalization: true,
+					externalReferenceCode: 'booleanERC',
+					label: {
+						en_US: 'Boolean',
+					},
+					name: 'Boolean',
+					objectFields: [
+						{
+							DBType: ObjectField.DBTypeEnum.Boolean,
+							businessType: ObjectField.BusinessTypeEnum.Boolean,
+							externalReferenceCode: 'legalThingsERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Legal Things',
+							},
+							localized: true,
+							name: 'legalThings',
+							required: false,
+						},
+					],
+					pluralLabel: {
+						en_US: 'Booleans',
+					},
+					portlet: true,
+					scope: 'company',
+					status: {
+						code: 0,
+					},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			// Create a page with a Form fragment
+
+			const formId = getRandomString();
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			// Map the form to the Boolean object
+
+			await pageEditorPage.mapFormFragment(formId, 'Boolean', 'all', {
+				addLocalizationSelect: true,
+			});
+
+			await pageEditorPage.publishPage();
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await page.getByLabel('Legal Things').check();
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				}),
+				trigger: page.getByLabel(
+					'Select a language, current language:'
+				),
+			});
+
+			await page.getByLabel('Legal Things').uncheck();
+
+			// Check the translation in the localization select
+
+			await page
+				.getByLabel('Select a language, current language:')
+				.click();
+
+			expect(
+				page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				})
+			).toContainText(/Translated/);
+
+			await page.keyboard.press('Escape');
+
+			// Save the form and publish the page
+
+			await page.getByRole('button', {name: 'Submit'}).click();
+
+			await expect(
+				page.getByText(
+					'Thank you. Your information was successfully received.'
+				)
+			).toBeVisible();
+
+			// Check the object entry
+
+			const {items} =
+				await apiHelpers.objectEntry.getObjectDefinitionObjectEntries(
+					'c/booleans'
+				);
+
+			const item = items[0];
+
+			expect(item.legalThings_i18n).toStrictEqual({
+				en_US: true,
+				es_ES: false,
+			});
+		}
+	);
+
+	test(
+		'Can translate select form field',
+		{tag: '@LPD-46485'},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Create object definition with a localized select
+
+			const objectDefinitionApiClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const listTypeDefinition =
+				await apiHelpers.listTypeAdmin.postRandomListTypeDefinition();
+
+			const options = ['Spain', 'Italy', 'Germany', 'Brasil'];
+
+			for (const option of options) {
+				await apiHelpers.listTypeAdmin.postListTypeEntry(
+					listTypeDefinition.externalReferenceCode,
+					option
+				);
+			}
+
+			const {body: objectDefinition} =
+				await objectDefinitionApiClient.postObjectDefinition({
+					active: true,
+					enableLocalization: true,
+					externalReferenceCode: 'SelectERC',
+					label: {
+						en_US: 'Select',
+					},
+					name: 'Select',
+					objectFields: [
+						{
+							DBType: ObjectField.DBTypeEnum.String,
+							businessType: ObjectField.BusinessTypeEnum.Picklist,
+							externalReferenceCode: 'selectCountryERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Select a Country',
+							},
+							listTypeDefinitionExternalReferenceCode:
+								listTypeDefinition.externalReferenceCode,
+							listTypeDefinitionId: listTypeDefinition.id,
+							localized: true,
+							name: 'selectCountry',
+							required: false,
+						},
+					],
+					panelCategoryKey: 'control_panel.object',
+					pluralLabel: {
+						en_US: 'Select',
+					},
+					portlet: true,
+					scope: 'company',
+					status: {
+						code: 0,
+					},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			// Create a page with a Form fragment
+
+			const formId = getRandomString();
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			// Map the form to the Boolean object
+
+			await pageEditorPage.mapFormFragment(formId, 'Select', 'all', {
+				addLocalizationSelect: true,
+			});
+
+			await pageEditorPage.publishPage();
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Italy',
+				}),
+				trigger: page.getByPlaceholder('Choose an Option'),
+			});
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				}),
+				trigger: page.getByLabel(
+					'Select a language, current language:'
+				),
+			});
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Germany',
+				}),
+				trigger: page.getByPlaceholder('Choose an Option'),
+			});
+
+			// Check the translation in the localization select
+
+			await page
+				.getByLabel('Select a language, current language:')
+				.click();
+
+			expect(
+				page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				})
+			).toContainText(/Translated/);
+
+			await page.keyboard.press('Escape');
+
+			// Save the form and publish the page
+
+			await page.getByRole('button', {name: 'Submit'}).click();
+
+			await expect(
+				page.getByText(
+					'Thank you. Your information was successfully received.'
+				)
+			).toBeVisible();
+
+			// Check the object entry
+
+			const {items} =
+				await apiHelpers.objectEntry.getObjectDefinitionObjectEntries(
+					'c/selects'
+				);
+
+			const item = items[0];
+
+			expect(item.selectCountry_i18n).toStrictEqual({
+				en_US: {key: 'italy', name: 'Italy'},
+				es_ES: {key: 'germany', name: 'Germany'},
+			});
+		}
+	);
+
+	test(
+		'Can translate multiselect form field',
+		{tag: '@LPD-48344'},
+		async ({apiHelpers, page, pageEditorPage, site}) => {
+
+			// Create object definition
+
+			const listTypeDefinition =
+				await apiHelpers.listTypeAdmin.postRandomListTypeDefinition();
+
+			for (const option of ['Spain', 'Italy', 'Germany']) {
+				await apiHelpers.listTypeAdmin.postListTypeEntry(
+					listTypeDefinition.externalReferenceCode,
+					option
+				);
+			}
+
+			const objectDefinitionAPIClient =
+				await apiHelpers.buildRestClient(ObjectDefinitionApi);
+
+			const {body: objectDefinition} =
+				await objectDefinitionAPIClient.postObjectDefinition({
+					active: true,
+					enableLocalization: true,
+					externalReferenceCode: 'plantERC',
+					label: {
+						en_US: 'Plant',
+					},
+					name: 'Plant',
+					objectFields: [
+						{
+							DBType: ObjectField.DBTypeEnum.String,
+							businessType:
+								ObjectField.BusinessTypeEnum
+									.MultiselectPicklist,
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Growth Areas',
+							},
+							listTypeDefinitionExternalReferenceCode:
+								listTypeDefinition.externalReferenceCode,
+							listTypeDefinitionId: listTypeDefinition.id,
+							localized: true,
+							name: 'growthAreas',
+							required: false,
+						},
+					],
+					pluralLabel: {
+						en_US: 'Plants',
+					},
+					portlet: true,
+					scope: 'company',
+					status: {
+						code: 0,
+					},
+				});
+
+			apiHelpers.data.push({
+				id: objectDefinition.id,
+				type: 'objectDefinition',
+			});
+
+			// Create a page with a Form fragment
+
+			const formId = getRandomString();
+
+			const formDefinition = getFormContainerDefinition({
+				id: formId,
+			});
+
+			const layout = await apiHelpers.headlessDelivery.createSitePage({
+				pageDefinition: getPageDefinition([formDefinition]),
+				siteId: site.id,
+				title: getRandomString(),
+			});
+
+			await pageEditorPage.goto(layout, site.friendlyUrlPath);
+
+			// Map the form to the Plant object
+
+			await pageEditorPage.mapFormFragment(formId, 'Plant', 'all', {
+				addLocalizationSelect: true,
+			});
+
+			await pageEditorPage.publishPage();
+
+			await page.goto(
+				`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}`
+			);
+
+			const translationTrigger = page.getByLabel(
+				'Select a language, current language:'
+			);
+
+			await translationTrigger.waitFor();
+
+			await page.getByRole('checkbox', {name: 'Spain'}).check();
+			await page.getByRole('checkbox', {name: 'Italy'}).check();
+
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				}),
+				trigger: translationTrigger,
+			});
+
+			await page.getByRole('checkbox', {name: 'Germany'}).check();
+
+			// Check the translation in the localization multiselect
+
+			await translationTrigger.click();
+
+			expect(
+				page.getByRole('option', {
+					name: 'Spanish (Spain) Language',
+				})
+			).toContainText(/Translated/);
+
+			await page.keyboard.press('Escape');
+
+			// Save the form and publish the page
+
+			await page.getByRole('button', {name: 'Submit'}).click();
+
+			await expect(
+				page.getByText(
+					'Thank you. Your information was successfully received.'
+				)
+			).toBeVisible();
+
+			// Check the object entry
+
+			const {items} =
+				await apiHelpers.objectEntry.getObjectDefinitionObjectEntries(
+					'c/plants'
+				);
+
+			expect(items[0].growthAreas_i18n).toStrictEqual({
+				en_US: [
+					{key: 'spain', name: 'Spain'},
+					{key: 'italy', name: 'Italy'},
+				],
+				es_ES: [
+					{key: 'spain', name: 'Spain'},
+					{key: 'italy', name: 'Italy'},
+					{key: 'germany', name: 'Germany'},
+				],
+			});
+		}
+	);
+
+	test(
 		'Can translate date and date time form fields',
 		{tag: '@LPD-43805'},
 		async ({apiHelpers, page, pageEditorPage, site}) => {
@@ -2243,6 +2686,16 @@ test.describe('Form Localization', () => {
 
 			// Create object definition
 
+			const listTypeDefinition =
+				await apiHelpers.listTypeAdmin.postRandomListTypeDefinition();
+
+			for (const option of ['Spain', 'Italy']) {
+				await apiHelpers.listTypeAdmin.postListTypeEntry(
+					listTypeDefinition.externalReferenceCode,
+					option
+				);
+			}
+
 			const objectDefinitionAPIClient =
 				await apiHelpers.buildRestClient(ObjectDefinitionApi);
 
@@ -2321,6 +2774,39 @@ test.describe('Form Localization', () => {
 							name: 'evergreen',
 							required: false,
 						},
+						{
+							DBType: ObjectField.DBTypeEnum.String,
+							businessType: ObjectField.BusinessTypeEnum.Picklist,
+							externalReferenceCode: 'selectOriginERC',
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Select Origin',
+							},
+							listTypeDefinitionExternalReferenceCode:
+								listTypeDefinition.externalReferenceCode,
+							listTypeDefinitionId: listTypeDefinition.id,
+							localized: false,
+							name: 'selectOrigin',
+							required: false,
+						},
+						{
+							DBType: ObjectField.DBTypeEnum.String,
+							businessType:
+								ObjectField.BusinessTypeEnum
+									.MultiselectPicklist,
+							indexed: true,
+							indexedAsKeyword: false,
+							label: {
+								en_US: 'Growth Areas',
+							},
+							listTypeDefinitionExternalReferenceCode:
+								listTypeDefinition.externalReferenceCode,
+							listTypeDefinitionId: listTypeDefinition.id,
+							localized: false,
+							name: 'growthAreas',
+							required: false,
+						},
 					],
 					pluralLabel: {
 						en_US: 'Plants',
@@ -2397,6 +2883,14 @@ test.describe('Form Localization', () => {
 				page.getByLabel('Scientific Name field cannot be localized')
 			).toBeVisible();
 
+			await expect(
+				page.getByLabel('Select Origin field cannot be localized')
+			).toBeVisible();
+
+			await expect(
+				page.getByLabel('Growth Areas field cannot be localized')
+			).toBeVisible();
+
 			// Check that unlocalized fields are disabled
 
 			await expect(
@@ -2418,12 +2912,27 @@ test.describe('Form Localization', () => {
 					.locator('body')
 			).toHaveAttribute('aria-disabled', 'true');
 
-			await expect(page.locator('.rich-text-input--disabled'))
-				.toBeAttached;
+			await expect(
+				page.locator('.rich-text-input--disabled')
+			).toBeAttached();
 
 			await expect(
 				page.getByRole('textbox', {name: 'Scientific Name'})
 			).toBeDisabled();
+
+			await expect(
+				page.getByPlaceholder('Choose an option')
+			).toBeDisabled();
+
+			const firstMultiSelectOption = page.getByRole('checkbox', {
+				name: 'Spain',
+			});
+			const secondMultiSelectOption = page.getByRole('checkbox', {
+				name: 'Italy',
+			});
+
+			await expect(firstMultiSelectOption).toBeDisabled();
+			await expect(secondMultiSelectOption).toBeDisabled();
 
 			// Check that the read only labels are not visibles
 
@@ -2439,9 +2948,19 @@ test.describe('Form Localization', () => {
 				.getByText('Scientific Name')
 				.getByText('(Read Only)');
 
+			const selectReadOnlyLabel = page
+				.getByText('Select Origin')
+				.getByText('(Read Only)');
+
+			const multiSelectReadOnlyLabel = page
+				.getByText('Growth Areas')
+				.getByText('(Read Only)');
+
 			await expect(checkboxReadOnlyLabel).not.toBeVisible();
 			await expect(inputTextReadOnlyLabel).not.toBeVisible();
 			await expect(textareaReadOnlyLabel).not.toBeVisible();
+			await expect(selectReadOnlyLabel).not.toBeVisible();
+			await expect(multiSelectReadOnlyLabel).not.toBeVisible();
 
 			// Go to edit mode and change unlocalized field configuration to read only
 
@@ -2485,11 +3004,13 @@ test.describe('Form Localization', () => {
 
 			await expect(
 				page.getByLabel('field is not localizable message')
-			).toHaveCount(4);
+			).toHaveCount(6);
 
 			await expect(checkboxReadOnlyLabel).toBeVisible();
 			await expect(inputTextReadOnlyLabel).toBeVisible();
 			await expect(textareaReadOnlyLabel).toBeVisible();
+			await expect(selectReadOnlyLabel).toBeVisible();
+			await expect(multiSelectReadOnlyLabel).toBeVisible();
 
 			await expect(page.getByLabel('Country')).toHaveAttribute(
 				'readonly'
@@ -2507,6 +3028,16 @@ test.describe('Form Localization', () => {
 			await expect(page.getByLabel('Scientific Name')).toHaveAttribute(
 				'readonly'
 			);
+
+			await expect(page.getByLabel('Select Origin')).toHaveAttribute(
+				'readonly'
+			);
+
+			await firstMultiSelectOption.click({force: true});
+			await secondMultiSelectOption.click({force: true});
+
+			await expect(firstMultiSelectOption).not.toBeChecked();
+			await expect(secondMultiSelectOption).not.toBeChecked();
 		}
 	);
 
@@ -2607,6 +3138,10 @@ test.describe('Form Localization', () => {
 
 			const objectEntry = await apiHelpers.objectEntry.postObjectEntry(
 				{
+					boolean_i18n: {
+						en_US: true,
+						es_ES: false,
+					},
 					longText_i18n: {
 						en_US: 'long text english',
 						es_ES: 'long text spanish',
@@ -2687,7 +3222,7 @@ test.describe('Form Localization', () => {
 				name: 'Text',
 			});
 
-			await expect(checkboxField).not.toBeChecked();
+			await expect(checkboxField).toBeChecked();
 
 			await expect(longTextField).toHaveValue('long text english');
 
@@ -2699,7 +3234,7 @@ test.describe('Form Localization', () => {
 
 			// Fill new values for the translation
 
-			await checkboxField.check();
+			await checkboxField.uncheck();
 
 			await longTextField.fill('long text english 1');
 
@@ -2723,7 +3258,7 @@ test.describe('Form Localization', () => {
 				),
 			});
 
-			await expect(checkboxField).toBeChecked();
+			await expect(checkboxField).not.toBeChecked();
 
 			await expect(longTextField).toHaveValue('long text spanish');
 
@@ -2735,7 +3270,7 @@ test.describe('Form Localization', () => {
 
 			// Fill new values
 
-			await checkboxField.uncheck();
+			await checkboxField.check();
 
 			await longTextField.fill('long text spanish 1');
 
@@ -2779,7 +3314,7 @@ test.describe('Form Localization', () => {
 
 			await longTextField.waitFor();
 
-			await expect(checkboxField).toBeChecked();
+			await expect(checkboxField).not.toBeChecked();
 
 			await expect(page.getByText('long text english 1')).toBeVisible();
 
@@ -2799,7 +3334,7 @@ test.describe('Form Localization', () => {
 				trigger: page.getByTestId('triggerButton').first(),
 			});
 
-			await expect(checkboxField).not.toBeChecked();
+			await expect(checkboxField).toBeChecked();
 
 			await expect(page.getByText('long text spanish 1')).toBeVisible();
 
@@ -4008,7 +4543,9 @@ test.describe('Picklist input field', () => {
 			`/web${pageManagementSite.friendlyUrlPath}${layout.friendlyUrlPath}`
 		);
 
-		await page.getByLabel('Lemon Basket to Lemons').click();
+		await page
+			.getByRole('combobox', {name: 'Lemon Basket to Lemons'})
+			.click();
 
 		await expect(page.getByText('Plastic', {exact: true})).toBeVisible();
 		await expect(page.getByText('Carton', {exact: true})).toBeVisible();
@@ -4057,11 +4594,15 @@ test.describe('Picklist input field', () => {
 
 			// Check that the value after selecting the item is correct
 
-			await page.getByLabel('Material').click();
+			const materialField = page.getByRole('combobox', {
+				name: 'Material',
+			});
+
+			await materialField.click();
 
 			await page.getByText('carton').click();
 
-			await expect(page.getByLabel('Material')).toHaveValue('Carton');
+			await expect(materialField).toHaveValue('Carton');
 		}
 	);
 

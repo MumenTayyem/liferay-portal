@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import DataTable from '~/components/DataTable';
+import Table from '~/components/Table';
 
 import './BETable.css';
 
@@ -24,7 +24,7 @@ interface IProps {
 }
 
 const BETable = ({columns, rows}: IProps) => {
-	return <DataTable className="be" columns={columns} rows={rows} />;
+	return <Table className="be" columns={columns} rows={rows} />;
 };
 
 export default BETable;
