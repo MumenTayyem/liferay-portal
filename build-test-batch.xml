@@ -1015,10 +1015,7 @@ app.server.type=@{app.server.type}]]></echo>
 					<lstopwatch action="total" name="prepare-test-build-dist.bundles.@{app.server.type}.dist" />
 				</then>
 				<elseif>
-					<or>
-						<equals arg1="@{app.server.type}" arg2="weblogic" />
-						<equals arg1="@{app.server.type}" arg2="websphere" />
-					</or>
+					<equals arg1="@{app.server.type}" arg2="weblogic" />
 					<then>
 						<antcall inheritAll="false" target="prepare-test-build-custom">
 							<param name="app.server.type" value="@{app.server.type}" />
@@ -1738,7 +1735,12 @@ app.server.type=@{app.server.type}]]></echo>
 								<contains string="${env.JOB_NAME}" substring="-release" />
 							</and>
 							<then>
-								<set-tomcat-version-number liferay.portal.bundle="${test.portal.bundle.version}" />
+								<if>
+									<equals arg1="@{app.server.type}" arg2="tomcat" />
+									<then>
+										<set-tomcat-version-number liferay.portal.bundle="${test.portal.bundle.version}" />
+									</then>
+								</if>
 
 								<prepare-release-test-environment
 									app.server.type="@{app.server.type}"
@@ -1819,10 +1821,7 @@ app.server.type=@{app.server.type}]]></echo>
 								<antcall target="compile" />
 
 								<if>
-									<or>
-										<equals arg1="@{app.server.type}" arg2="weblogic" />
-										<equals arg1="@{app.server.type}" arg2="websphere" />
-									</or>
+									<equals arg1="@{app.server.type}" arg2="weblogic" />
 									<then>
 										<prepare-test-build-custom />
 									</then>
@@ -2490,7 +2489,12 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 							<contains string="${env.JOB_NAME}" substring="-release" />
 						</and>
 						<then>
-							<set-tomcat-version-number liferay.portal.bundle="${test.portal.bundle.version}" />
+							<if>
+								<equals arg1="@{app.server.type}" arg2="tomcat" />
+								<then>
+									<set-tomcat-version-number liferay.portal.bundle="${test.portal.bundle.version}" />
+								</then>
+							</if>
 
 							<prepare-release-test-environment
 								app.server.type="@{app.server.type}"
@@ -2931,7 +2935,12 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 							<contains string="${env.JOB_NAME}" substring="-release" />
 						</and>
 						<then>
-							<set-tomcat-version-number liferay.portal.bundle="${test.portal.bundle.version}" />
+							<if>
+								<equals arg1="@{app.server.type}" arg2="tomcat" />
+								<then>
+									<set-tomcat-version-number liferay.portal.bundle="${test.portal.bundle.version}" />
+								</then>
+							</if>
 
 							<prepare-release-test-environment
 								app.server.type="@{app.server.type}"

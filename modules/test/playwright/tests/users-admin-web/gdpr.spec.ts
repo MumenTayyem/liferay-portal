@@ -7,19 +7,27 @@ import {Page, expect, mergeTests} from '@playwright/test';
 import {createReadStream} from 'fs';
 import path from 'node:path';
 
+import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
 import {contactsCenterPagesTest} from '../../fixtures/contactsCenterPagesTest';
 import {dataApiHelpersTest} from '../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
+import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../fixtures/loginTest';
 import {productMenuPageTest} from '../../fixtures/productMenuPageTest';
 import {siteStagingPageTest} from '../../fixtures/siteStagingPageTest';
 import {usersAndOrganizationsPagesTest} from '../../fixtures/usersAndOrganizationsPagesTest';
 import {getRandomInt} from '../../utils/getRandomInt';
 import getRandomString from '../../utils/getRandomString';
-import performLogin, {performLogout, userData} from '../../utils/performLogin';
+import performLogin, {
+	performLoginViaApi,
+	performLogout,
+	userData,
+} from '../../utils/performLogin';
 import {PORTLET_URLS} from '../../utils/portletUrls';
 import getBasicWebContentStructureId from '../../utils/structured-content/getBasicWebContentStructureId';
+import {waitForAlert} from '../../utils/waitForAlert';
 import {blogsPagesTest} from '../blogs-web/fixtures/blogsPagesTest';
+import {journalPagesTest} from '../journal-web/fixtures/journalPagesTest';
 
 export const test = mergeTests(
 	contactsCenterPagesTest,
@@ -33,6 +41,7 @@ export const test = mergeTests(
 );
 
 export const testAdmin = mergeTests(
+	applicationsMenuPageTest,
 	blogsPagesTest,
 	contactsCenterPagesTest,
 	dataApiHelpersTest,
@@ -40,6 +49,8 @@ export const testAdmin = mergeTests(
 		'LPD-35013': {enabled: true},
 		'LPS-178052': {enabled: true},
 	}),
+	isolatedSiteTest,
+	journalPagesTest,
 	loginTest(),
 	productMenuPageTest,
 	siteStagingPageTest,
@@ -90,6 +101,8 @@ test.describe('LPD-25858 Refactor of GDPR#CanExportMultipleEntries', () => {
 		page,
 		usersAndOrganizationsPage,
 	}) => {
+		test.setTimeout(120000);
+
 		const site = await apiHelpers.headlessSite.createSite({
 			name: getRandomString(),
 		});
@@ -203,6 +216,8 @@ testAdmin.describe('LPD-27068 Refactor of GDPR#CanAnonymizeAllEntries', () => {
 			personalDataErasurePage,
 			usersAndOrganizationsPage,
 		}) => {
+			testAdmin.setTimeout(120000);
+
 			const userAccount =
 				await apiHelpers.headlessAdminUser.postUserAccount();
 
@@ -315,7 +330,7 @@ testAdmin.describe('LPD-27068 Refactor of GDPR#CanAnonymizeAllEntries', () => {
 });
 
 testAdmin(
-	'LPD-31206 - Can delete a single staged and live blogs entry',
+	'LPD-31206 Can delete a single staged and live blogs entry',
 	async ({
 		apiHelpers,
 		blogsPage,
@@ -325,6 +340,8 @@ testAdmin(
 		siteStagingPage,
 		usersAndOrganizationsPage,
 	}) => {
+		testAdmin.setTimeout(120000);
+
 		page.on('dialog', (dialog) => {
 			dialog.accept();
 		});
@@ -360,15 +377,15 @@ testAdmin(
 		await performLogout(page);
 		await performLogin(page, userAccount.alternateName);
 
-		const blog1NameStaging = 'Blog1 Staging';
-		const blog2NameStaging = 'Blog2 Staging';
+		const blog1Name = 'Blog1';
+		const blog2Name = 'Blog2';
 		const blog3Name = 'Blog3';
 
 		const blog1 = await apiHelpers.headlessDelivery.postBlog(site.id, {
-			headline: blog1NameStaging,
+			headline: blog1Name,
 		});
 		const blog2 = await apiHelpers.headlessDelivery.postBlog(site.id, {
-			headline: blog2NameStaging,
+			headline: blog2Name,
 		});
 		await apiHelpers.headlessDelivery.postBlog(site.id, {
 			headline: blog3Name,
@@ -384,18 +401,10 @@ testAdmin(
 		await siteStagingPage.blogsCheckbox.check();
 		await siteStagingPage.saveButton.click();
 
+		await waitForAlert(page, 'Local staging is successfully enabled.');
+
 		await performLogout(page);
 		await performLogin(page, 'test');
-
-		const blog1NameLive = 'Blog1 Live';
-		const blog2NameLive = 'Blog2 Live';
-
-		await apiHelpers.headlessDelivery.putBlog(blog1.id, {
-			headline: blog1NameLive,
-		});
-		await apiHelpers.headlessDelivery.putBlog(blog2.id, {
-			headline: blog2NameLive,
-		});
 
 		await usersAndOrganizationsPage.goToUsers(false);
 		await (
@@ -410,18 +419,14 @@ testAdmin(
 			personalDataErasurePage.selectAllItemsOnPageCheckbox
 		).toBeVisible();
 
-		await personalDataErasurePage.blogCountLink('6').click();
+		await personalDataErasurePage.objectCountLink('6').click();
 
-		await (
-			await personalDataErasurePage.userAssociatedDataTableRowCheckBox(
-				blog1NameStaging
-			)
-		).check();
-		await (
-			await personalDataErasurePage.userAssociatedDataTableRowCheckBox(
-				blog2NameLive
-			)
-		).check();
+		await personalDataErasurePage
+			.blogCheckBox(blog1.id, blog1Name, true)
+			.check();
+		await personalDataErasurePage
+			.blogCheckBox(blog2.id, blog2Name, false)
+			.check();
 
 		await personalDataErasurePage.actionsButton.click();
 		await personalDataErasurePage.menuItemDelete.click();
@@ -432,14 +437,194 @@ testAdmin(
 
 		await page.goto(`/group/${site.name}-staging${PORTLET_URLS.blogs}`);
 
-		await expect(blogsPage.blogName(blog1NameStaging)).toHaveCount(0);
-		await expect(blogsPage.blogName(blog2NameStaging)).toHaveCount(1);
+		await expect(blogsPage.blogName(blog1Name)).toHaveCount(1);
+		await expect(blogsPage.blogName(blog2Name)).toHaveCount(0);
 		await expect(blogsPage.blogName(blog3Name)).toHaveCount(1);
 
 		await page.goto(`/group/${site.name}${PORTLET_URLS.blogs}`);
 
-		await expect(blogsPage.blogName(blog1NameLive)).toHaveCount(1);
-		await expect(blogsPage.blogName(blog2NameLive)).toHaveCount(0);
+		await expect(blogsPage.blogName(blog1Name)).toHaveCount(0);
+		await expect(blogsPage.blogName(blog2Name)).toHaveCount(1);
 		await expect(blogsPage.blogName(blog3Name)).toHaveCount(1);
+	}
+);
+
+testAdmin(
+	'LPD-32063 Can anonymize a single staged and live web content entry',
+	async ({
+		apiHelpers,
+		journalEditArticlePage,
+		journalPage,
+		page,
+		personalDataErasurePage,
+		site,
+		siteStagingPage,
+		userAssociatedDataJournalPage,
+		userAssociatedDataSiteStagingPage,
+		usersAndOrganizationsPage,
+	}) => {
+		testAdmin.setTimeout(120000);
+
+		page.on('dialog', (dialog) => {
+			dialog.accept();
+		});
+
+		const userAccount =
+			await apiHelpers.headlessAdminUser.postUserAccount();
+
+		userData[userAccount.alternateName] = {
+			name: userAccount.givenName,
+			password: 'test',
+			surname: userAccount.familyName,
+		};
+
+		const role =
+			await apiHelpers.headlessAdminUser.getRoleByName('Administrator');
+
+		await apiHelpers.headlessAdminUser.postRoleByExternalReferenceCodeUserAccountAssociation(
+			role.externalReferenceCode,
+			userAccount.id
+		);
+
+		await page.goto(`/group/${site.name}${PORTLET_URLS.staging}`);
+
+		await siteStagingPage.localStagingCheckbox.check();
+		await userAssociatedDataSiteStagingPage.webContentCheckbox.check();
+		await siteStagingPage.saveButton.click();
+
+		await waitForAlert(page, 'Local staging is successfully enabled.');
+
+		await performLogout(page);
+		await performLoginViaApi(page, userAccount.alternateName);
+
+		const webContent1Name = 'wcontent1';
+		const webContent2Name = 'wcontent2';
+		const webContent3Name = 'wcontent3';
+
+		await page.goto(`/group/${site.name}-staging${PORTLET_URLS.journal}`);
+
+		for (const articleName of [
+			webContent1Name,
+			webContent2Name,
+			webContent3Name,
+		]) {
+			await journalPage.goToCreateArticle();
+			await journalEditArticlePage.createAndPublishBasicArticle(
+				articleName
+			);
+			await waitForAlert(page, 'was created successfully');
+		}
+
+		await performLogout(page);
+		await performLoginViaApi(page, 'test');
+
+		await page.goto(`/group/${site.name}-staging${PORTLET_URLS.journal}`);
+
+		await userAssociatedDataJournalPage.optionsButton.click();
+		await userAssociatedDataSiteStagingPage.stagingMenuItem.click();
+		await userAssociatedDataSiteStagingPage.stagingFramePublishToLiveButton.click();
+
+		await expect(
+			userAssociatedDataSiteStagingPage.stagingFrameSuccessfulStatusCell
+		).toBeVisible();
+
+		await page.reload();
+
+		await usersAndOrganizationsPage.goToUsers(false);
+		await (
+			await usersAndOrganizationsPage.usersTableRowActions(
+				userAccount.alternateName
+			)
+		).click();
+
+		await usersAndOrganizationsPage.deletePersonalDataMenuItem.click();
+
+		await expect(
+			personalDataErasurePage.selectAllItemsOnPageCheckbox
+		).toBeVisible();
+
+		await personalDataErasurePage.objectCountLink('6').click();
+
+		const article1 =
+			await apiHelpers.jsonWebServicesJournal.getArticleByUrlTitle(
+				site.id,
+				webContent1Name
+			);
+		const article2 =
+			await apiHelpers.jsonWebServicesJournal.getArticleByUrlTitle(
+				site.id,
+				webContent2Name
+			);
+
+		await personalDataErasurePage
+			.journalArticleCheckBox(article1.articleId, webContent1Name, true)
+			.check();
+		await personalDataErasurePage
+			.journalArticleCheckBox(article2.articleId, webContent2Name, false)
+			.check();
+		await personalDataErasurePage.actionsButton.click();
+		await personalDataErasurePage.anonymizeMenuItem.click();
+
+		await waitForAlert(page);
+
+		await page.goto(`/group/${site.name}-staging${PORTLET_URLS.journal}`);
+
+		await expect(
+			userAssociatedDataJournalPage.articleLink(webContent1Name)
+		).toHaveCount(1);
+		await expect(
+			userAssociatedDataJournalPage.articleLink(webContent2Name)
+		).toHaveCount(1);
+		await expect(
+			userAssociatedDataJournalPage.articleLink(webContent3Name)
+		).toHaveCount(1);
+		await expect(
+			userAssociatedDataJournalPage.articleCreator(
+				'Anonymous Anonymous',
+				webContent1Name
+			)
+		).toBeVisible();
+		await expect(
+			userAssociatedDataJournalPage.articleCreator(
+				userAccount.name,
+				webContent2Name
+			)
+		).toBeVisible();
+		await expect(
+			userAssociatedDataJournalPage.articleCreator(
+				userAccount.name,
+				webContent3Name
+			)
+		).toBeVisible();
+
+		await page.goto(`/group/${site.name}${PORTLET_URLS.journal}`);
+
+		await expect(
+			userAssociatedDataJournalPage.articleLink(webContent1Name)
+		).toHaveCount(1);
+		await expect(
+			userAssociatedDataJournalPage.articleLink(webContent2Name)
+		).toHaveCount(1);
+		await expect(
+			userAssociatedDataJournalPage.articleLink(webContent3Name)
+		).toHaveCount(1);
+		await expect(
+			userAssociatedDataJournalPage.articleCreator(
+				'Anonymous Anonymous',
+				webContent2Name
+			)
+		).toBeVisible();
+		await expect(
+			userAssociatedDataJournalPage.articleCreator(
+				userAccount.name,
+				webContent1Name
+			)
+		).toBeVisible();
+		await expect(
+			userAssociatedDataJournalPage.articleCreator(
+				userAccount.name,
+				webContent3Name
+			)
+		).toBeVisible();
 	}
 );

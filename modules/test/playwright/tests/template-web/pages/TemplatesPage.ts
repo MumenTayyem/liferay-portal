@@ -88,13 +88,27 @@ export class TemplatesPage {
 	}
 
 	async createWidgetTemplate(name: string, type: string) {
+		const typeOption = this.page.getByRole('menuitem', {
+			name: type,
+		});
+
+		const moreButton = this.page.getByRole('button', {name: 'More'});
+
 		await clickAndExpectToBeVisible({
-			autoClick: true,
-			target: this.page.getByRole('menuitem', {
-				name: type,
-			}),
+			target: moreButton,
 			trigger: this.page.getByRole('button', {name: 'New'}),
 		});
+
+		if (await typeOption.isVisible()) {
+			await typeOption.click();
+		}
+		else {
+			await clickAndExpectToBeVisible({
+				autoClick: true,
+				target: typeOption,
+				trigger: moreButton,
+			});
+		}
 
 		// Wait until the editor is loaded
 
@@ -119,6 +133,12 @@ export class TemplatesPage {
 
 	async editTemplate(name: string) {
 		await this.page.getByRole('link', {exact: true, name}).click();
+	}
+
+	async getTemplateKey() {
+		await this.page.getByLabel('Properties').click();
+
+		return await this.page.getByLabel('Template Key').getAttribute('value');
 	}
 
 	async importInformationTemplate(dirname: string, fileName: string) {
