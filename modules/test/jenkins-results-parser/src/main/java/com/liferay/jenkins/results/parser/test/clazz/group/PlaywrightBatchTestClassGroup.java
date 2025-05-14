@@ -173,27 +173,39 @@ public class PlaywrightBatchTestClassGroup extends BatchTestClassGroup {
 			totalDuration += testClass.getAverageDuration();
 		}
 
-		if (totalDuration != 0L) {
-			JobProperty jobProperty = getJobProperty(
-				"test.batch.target.axis.duration");
-
-			String jobPropertyValue = jobProperty.getValue();
-
-			if (JenkinsResultsParserUtil.isInteger(jobPropertyValue)) {
-				recordJobProperty(jobProperty);
-
-				long testBatchTargetAxisDuration = Long.parseLong(
-					jobPropertyValue);
-
-				long axisCount =
-					Math.floorDiv(totalDuration, testBatchTargetAxisDuration) +
-						1;
-
-				return Math.toIntExact(axisCount);
-			}
+		if (totalDuration == 0L) {
+			return getAxisCount();
 		}
 
-		return getAxisCount();
+		JobProperty targetAxisDurationJobProperty = getJobProperty(
+			"test.batch.target.axis.duration");
+
+		String targetAxisDurationString =
+			targetAxisDurationJobProperty.getValue();
+
+		if (!JenkinsResultsParserUtil.isInteger(targetAxisDurationString)) {
+			return getAxisCount();
+		}
+
+		recordJobProperty(targetAxisDurationJobProperty);
+
+		long targetAxisDuration = Long.parseLong(targetAxisDurationString);
+
+		JobProperty performanceModifierJobProperty = getJobProperty(
+			"test.batch.performance.modifier");
+
+		String performanceModifier = performanceModifierJobProperty.getValue();
+
+		if (JenkinsResultsParserUtil.isDouble(performanceModifier)) {
+			targetAxisDuration = Math.round(
+				targetAxisDuration * Double.parseDouble(performanceModifier));
+
+			recordJobProperty(performanceModifierJobProperty);
+		}
+
+		long axisCount = Math.floorDiv(totalDuration, targetAxisDuration) + 1;
+
+		return Math.toIntExact(axisCount);
 	}
 
 	protected File getPlaywrightBaseDir() {
@@ -310,26 +322,43 @@ public class PlaywrightBatchTestClassGroup extends BatchTestClassGroup {
 						playwrightSegmentTestClassGroup.addAxisTestClassGroup(
 							axisTestClassGroup);
 
-						StringBuilder sb = new StringBuilder();
+						synchronized (_loadedProjectNames) {
+							if (!_loadedProjectNames.contains(projectName) ||
+								(axisCount > 1)) {
 
-						sb.append("npx playwright test --project=");
-						sb.append(projectName);
-						sb.append(" --shard=");
-						sb.append(axisIndex + 1);
-						sb.append("/");
-						sb.append(axisCount);
-						sb.append(" --list");
+								_loadedProjectNames.add(projectName);
 
-						String result = _callNPMCommand(
-							getPlaywrightBaseDir(), sb.toString());
+								StringBuilder sb = new StringBuilder();
 
-						for (TestClass testClass : testClasses) {
-							if (result.contains(testClass.getName())) {
-								axisTestClassGroup.addTestClass(testClass);
+								sb.append("npx playwright test --project=");
+								sb.append(projectName);
+								sb.append(" --shard=");
+								sb.append(axisIndex + 1);
+								sb.append("/");
+								sb.append(axisCount);
+								sb.append(" --list");
+
+								String result = _callNPMCommand(
+									getPlaywrightBaseDir(), sb.toString());
+
+								for (TestClass testClass : testClasses) {
+									if (result.contains(testClass.getName())) {
+										axisTestClassGroup.addTestClass(
+											testClass);
+									}
+								}
 							}
-						}
+							else {
+								for (TestClass testClass : testClasses) {
+									axisTestClassGroup.addTestClass(testClass);
+								}
+							}
 
-						addAxisTestClassGroup(axisTestClassGroup);
+							addAxisTestClassGroup(axisTestClassGroup);
+
+							playwrightSegmentTestClassGroup.setSlaveLabel(
+								axisTestClassGroup.getSlaveLabel());
+						}
 					}
 				}
 
@@ -721,6 +750,8 @@ public class PlaywrightBatchTestClassGroup extends BatchTestClassGroup {
 		}
 	}
 
+	private static final Set<String> _loadedProjectNames =
+		Collections.synchronizedSet(new HashSet<>());
 	private static final Pattern _playwrightFileNamePattern = Pattern.compile(
 		"tests/(?<filePath>(?<projectName>[^/]+)/.*.spec.ts)");
 	private static JSONObject _playwrightJSONObject;

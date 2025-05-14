@@ -277,7 +277,7 @@ public class OpenAPIUtil {
 		return allSchemas;
 	}
 
-	public static Map<String, Schema> getGlobalEnumSchemas(
+	public static Map<String, Schema> getEnumSchemas(
 		ConfigYAML configYAML, Map<String, Schema> schemas) {
 
 		Map<String, Schema> globalEnumSchemas = new TreeMap<>();
@@ -313,6 +313,18 @@ public class OpenAPIUtil {
 		}
 
 		return globalEnumSchemas;
+	}
+
+	public static Map<String, Schema> getGlobalEnumSchemas(
+		ConfigYAML configYAML, OpenAPIYAML openAPIYAML) {
+
+		Components components = openAPIYAML.getComponents();
+
+		if (components == null) {
+			return new HashMap<>();
+		}
+
+		return getEnumSchemas(configYAML, components.getSchemas());
 	}
 
 	private static void _addExternalReference(

@@ -7,7 +7,6 @@ package com.liferay.layout.content.page.editor.web.internal.display.context;
 
 import com.liferay.exportimport.kernel.staging.Staging;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
-import com.liferay.fragment.service.FragmentEntryLocalService;
 import com.liferay.frontend.token.definition.FrontendTokenDefinitionRegistry;
 import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.search.InfoSearchClassMapperRegistry;
@@ -21,13 +20,13 @@ import com.liferay.layout.content.page.editor.web.internal.manager.FragmentEntry
 import com.liferay.layout.content.page.editor.web.internal.segments.SegmentsExperienceUtil;
 import com.liferay.layout.manager.LayoutLockManager;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
-import com.liferay.layout.page.template.model.LayoutPageTemplateStructureRel;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureRelLocalService;
 import com.liferay.learn.LearnMessage;
 import com.liferay.learn.LearnMessageUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -40,10 +39,10 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.PortletProvider;
 import com.liferay.portal.kernel.portlet.PortletProviderUtil;
 import com.liferay.portal.kernel.portlet.PortletURLFactory;
+import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.LayoutSetLocalService;
-import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.permission.LayoutPermission;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -63,8 +62,6 @@ import com.liferay.segments.service.SegmentsExperimentRelLocalService;
 import com.liferay.staging.StagingGroupHelper;
 import com.liferay.style.book.service.StyleBookEntryLocalService;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -86,7 +83,6 @@ public class ContentPageLayoutEditorDisplayContext
 		FragmentCollectionManager fragmentCollectionManager,
 		FragmentEntryLinkManager fragmentEntryLinkManager,
 		FragmentEntryLinkLocalService fragmentEntryLinkLocalService,
-		FragmentEntryLocalService fragmentEntryLocalService,
 		FrontendTokenDefinitionRegistry frontendTokenDefinitionRegistry,
 		GroupLocalService groupLocalService,
 		HttpServletRequest httpServletRequest,
@@ -104,8 +100,9 @@ public class ContentPageLayoutEditorDisplayContext
 			layoutPageTemplateStructureRelLocalService,
 		LayoutPermission layoutPermission,
 		PageEditorConfiguration pageEditorConfiguration, Portal portal,
-		PortletRequest portletRequest, PortletURLFactory portletURLFactory,
-		RenderResponse renderResponse,
+		PortletRequest portletRequest,
+		PortletResourcePermission portletResourcePermission,
+		PortletURLFactory portletURLFactory, RenderResponse renderResponse,
 		SegmentsConfigurationProvider segmentsConfigurationProvider,
 		SegmentsExperienceManager segmentsExperienceManager,
 		SegmentsExperienceLocalService segmentsExperienceLocalService,
@@ -113,24 +110,22 @@ public class ContentPageLayoutEditorDisplayContext
 		SegmentsEntryService segmentsEntryService, Staging staging,
 		StagingGroupHelper stagingGroupHelper,
 		StyleBookEntryLocalService styleBookEntryLocalService,
-		UserLocalService userLocalService,
 		WorkflowDefinitionLinkLocalService workflowDefinitionLinkLocalService) {
 
 		super(
 			contentPageEditorSidebarPanels, contentManager,
 			fragmentCollectionManager, fragmentEntryLinkManager,
-			fragmentEntryLinkLocalService, fragmentEntryLocalService,
-			frontendTokenDefinitionRegistry, httpServletRequest,
-			infoItemServiceRegistry, infoSearchClassMapperRegistry,
-			itemSelector, jsonFactory, language, layoutLocalService,
-			layoutLockManager, layoutPageTemplateEntryLocalService,
-			layoutPageTemplateEntryService, layoutPermission,
-			layoutSetLocalService, pageEditorConfiguration, portal,
-			portletRequest, portletURLFactory, renderResponse,
-			segmentsConfigurationProvider, segmentsExperienceManager,
-			segmentsExperienceLocalService, segmentsExperimentRelLocalService,
-			segmentsEntryService, staging, stagingGroupHelper,
-			styleBookEntryLocalService, userLocalService,
+			fragmentEntryLinkLocalService, frontendTokenDefinitionRegistry,
+			httpServletRequest, infoItemServiceRegistry,
+			infoSearchClassMapperRegistry, itemSelector, jsonFactory, language,
+			layoutLocalService, layoutLockManager,
+			layoutPageTemplateEntryLocalService, layoutPageTemplateEntryService,
+			layoutPermission, layoutSetLocalService, pageEditorConfiguration,
+			portal, portletRequest, portletResourcePermission,
+			portletURLFactory, renderResponse, segmentsConfigurationProvider,
+			segmentsExperienceManager, segmentsExperienceLocalService,
+			segmentsExperimentRelLocalService, segmentsEntryService, staging,
+			stagingGroupHelper, styleBookEntryLocalService,
 			workflowDefinitionLinkLocalService);
 
 		_groupLocalService = groupLocalService;
@@ -191,10 +186,15 @@ public class ContentPageLayoutEditorDisplayContext
 			SegmentsExperienceUtil.getAvailableSegmentsExperiences(
 				httpServletRequest));
 		stateContext.put("layoutDataList", _getLayoutDataList());
+
+		SegmentsExperience segmentsExperience =
+			segmentsExperienceLocalService.fetchSegmentsExperience(
+				getSegmentsExperienceId());
+
 		stateContext.put(
 			"segmentsExperimentStatus",
 			SegmentsExperienceUtil.getSegmentsExperimentStatus(
-				themeDisplay, getSegmentsExperienceId()));
+				themeDisplay, segmentsExperience.getSegmentsExperienceKey()));
 
 		Map<String, Object> permissionsContext =
 			(Map<String, Object>)stateContext.get("permissions");
@@ -236,6 +236,9 @@ public class ContentPageLayoutEditorDisplayContext
 			_segmentsExperienceId = super.getSegmentsExperienceId();
 		}
 
+		_segmentsExperienceId = getDraftSegmentsExperienceId(
+			themeDisplay.getPlid(), _segmentsExperienceId);
+
 		return _segmentsExperienceId;
 	}
 
@@ -276,22 +279,12 @@ public class ContentPageLayoutEditorDisplayContext
 				fetchLayoutPageTemplateStructure(
 					themeDisplay.getScopeGroupId(), themeDisplay.getPlid());
 
-		if (layoutPageTemplateStructure == null) {
-			return Collections.emptyList();
-		}
-
-		List<Map<String, Object>> layoutDataList = new ArrayList<>();
-
-		List<LayoutPageTemplateStructureRel> layoutPageTemplateStructureRels =
+		return TransformUtil.transform(
 			_layoutPageTemplateStructureRelLocalService.
 				getLayoutPageTemplateStructureRels(
 					layoutPageTemplateStructure.
-						getLayoutPageTemplateStructureId());
-
-		for (LayoutPageTemplateStructureRel layoutPageTemplateStructureRel :
-				layoutPageTemplateStructureRels) {
-
-			layoutDataList.add(
+						getLayoutPageTemplateStructureId()),
+			layoutPageTemplateStructureRel ->
 				HashMapBuilder.<String, Object>put(
 					"layoutData",
 					JSONFactoryUtil.createJSONObject(
@@ -300,9 +293,6 @@ public class ContentPageLayoutEditorDisplayContext
 					"segmentsExperienceId",
 					layoutPageTemplateStructureRel.getSegmentsExperienceId()
 				).build());
-		}
-
-		return layoutDataList;
 	}
 
 	private long _getSegmentsEntryId() {
@@ -370,8 +360,9 @@ public class ContentPageLayoutEditorDisplayContext
 		if (segmentsExperience != null) {
 			List<SegmentsExperimentRel> segmentsExperimentRels =
 				_segmentsExperimentRelLocalService.
-					getSegmentsExperimentRelsBySegmentsExperienceId(
-						segmentsExperience.getSegmentsExperienceId());
+					getSegmentsExperimentRelsBySegmentsExperienceKey(
+						segmentsExperience.getSegmentsExperienceKey(),
+						themeDisplay.getPlid());
 
 			if (segmentsExperimentRels.isEmpty()) {
 				return false;

@@ -66,6 +66,7 @@ public interface ObjectEntryLocalService
 	 */
 	public ObjectEntry addObjectEntry(
 			long userId, long groupId, long objectDefinitionId,
+			long objectEntryFolderId, String defaultLanguageId,
 			Map<String, Serializable> values, ServiceContext serviceContext)
 		throws PortalException;
 
@@ -84,7 +85,7 @@ public interface ObjectEntryLocalService
 
 	public ObjectEntry addObjectEntry(
 			String externalReferenceCode, long userId,
-			ObjectDefinition objectDefinition)
+			ObjectDefinition objectDefinition, long objectEntryFolderId)
 		throws PortalException;
 
 	public void addOrUpdateExtensionDynamicObjectDefinitionTableValues(
@@ -94,8 +95,8 @@ public interface ObjectEntryLocalService
 
 	public ObjectEntry addOrUpdateObjectEntry(
 			String externalReferenceCode, long userId, long groupId,
-			long objectDefinitionId, Map<String, Serializable> values,
-			ServiceContext serviceContext)
+			long objectDefinitionId, long objectEntryFolderId,
+			Map<String, Serializable> values, ServiceContext serviceContext)
 		throws PortalException;
 
 	/**
@@ -235,6 +236,11 @@ public interface ObjectEntryLocalService
 	public long dynamicQueryCount(
 		DynamicQuery dynamicQuery, Projection projection);
 
+	public ObjectEntry expireObjectEntry(
+			long userId, long objectEntryId, int version,
+			ServiceContext serviceContext)
+		throws PortalException;
+
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ObjectEntry fetchManyToOneObjectEntry(
 			long groupId, long objectRelationshipId, long primaryKey)
@@ -242,6 +248,10 @@ public interface ObjectEntryLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ObjectEntry fetchObjectEntry(long objectEntryId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public ObjectEntry fetchObjectEntry(
+		long groupId, ObjectDefinition objectDefinition, String urlTitle);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ObjectEntry fetchObjectEntry(
@@ -399,6 +409,10 @@ public interface ObjectEntryLocalService
 		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
+	public int getObjectEntryFolderObjectEntriesCount(
+		long groupId, long objectEntryFolderId);
+
+	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<ObjectEntry> getOneToManyObjectEntries(
 			long groupId, long objectRelationshipId, long primaryKey,
 			boolean related, String search, int start, int end)
@@ -514,6 +528,12 @@ public interface ObjectEntryLocalService
 	public ObjectEntry updateStatus(
 			long userId, ObjectEntry objectEntry, int status,
 			ServiceContext serviceContext)
+		throws PortalException;
+
+	public void validate(
+			long groupId, ObjectEntry objectEntry,
+			List<String> objectValidationRuleExternalReferenceCodes,
+			ServiceContext serviceContext, long userId)
 		throws PortalException;
 
 }

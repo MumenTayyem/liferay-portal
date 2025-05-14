@@ -51,7 +51,7 @@ public class UserGroupResourceDTOConverter
 	public UserGroup getObject(String externalReferenceCode) throws Exception {
 		UserGroup userGroup =
 			_userGroupService.fetchUserGroupByExternalReferenceCode(
-				CompanyThreadLocal.getCompanyId(), externalReferenceCode);
+				externalReferenceCode, CompanyThreadLocal.getCompanyId());
 
 		if (userGroup == null) {
 			userGroup = _userGroupService.getUserGroup(
@@ -99,7 +99,9 @@ public class UserGroupResourceDTOConverter
 						"roleBriefs",
 						fieldName -> TransformUtil.transformToArray(
 							_roleService.getGroupRoles(userGroup.getGroupId()),
-							RoleBriefUtil::toRoleBrief, RoleBrief.class)));
+							role -> RoleBriefUtil.toRoleBrief(
+								dtoConverterContext, role),
+							RoleBrief.class)));
 				setUserAccountBriefs(
 					() -> NestedFieldsSupplier.supply(
 						"userAccountBriefs",

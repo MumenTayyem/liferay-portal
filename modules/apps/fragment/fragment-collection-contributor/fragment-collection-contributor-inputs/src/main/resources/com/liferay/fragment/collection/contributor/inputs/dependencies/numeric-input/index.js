@@ -38,11 +38,13 @@ else {
 	numericInput.addEventListener('keyup', handleOnKeyUp);
 
 	if (Liferay.FeatureFlags['LPD-37927']) {
-		import('@liferay/fragment-impl').then(
+		const defaultLanguageId = themeDisplay.getDefaultLanguageId();
+
+		import('@liferay/fragment-impl/api').then(
 			({registerLocalizedInput, registerUnlocalizedInput}) => {
 				if (input.localizable) {
 					const {onChange} = registerLocalizedInput({
-						defaultLanguageId: themeDisplay.getDefaultLanguageId(),
+						defaultLanguageId,
 						initialValues: input.valueI18n,
 						inputElement: numericInput,
 						inputName: input.name,
@@ -56,8 +58,11 @@ else {
 				}
 				else {
 					registerUnlocalizedInput({
-						defaultLanguageId: themeDisplay.getDefaultLanguageId(),
+						defaultLanguageId,
 						inputElement: numericInput,
+						readOnlyInputLabel: document.getElementById(
+							`${fragmentNamespace}-numeric-read-only`
+						),
 						unlocalizedFieldsState:
 							input.attributes.unlocalizedFieldsState,
 						unlocalizedMessageContainer: document.getElementById(

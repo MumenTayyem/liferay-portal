@@ -13,7 +13,6 @@ import {waitForAlert} from '../../utils/waitForAlert';
 import {InstanceSettingsPage} from '../configuration-admin-web/InstanceSettingsPage';
 
 export class ChangeTrackingPage {
-	readonly bulkDeleteButton: Locator;
 	readonly frontendDataSetEntries: Locator;
 	readonly instanceSettingsPage: InstanceSettingsPage;
 	readonly page: Page;
@@ -21,11 +20,6 @@ export class ChangeTrackingPage {
 	readonly tabsContainer: Locator;
 
 	constructor(page: Page) {
-		this.bulkDeleteButton = page
-			.locator('[data-testid="visualization-mode-table"]')
-			.locator('.bulk-actions')
-			.getByRole('button')
-			.nth(1);
 		this.frontendDataSetEntries = page.locator(
 			'[data-testid="visualization-mode-table"]'
 		);
@@ -199,11 +193,22 @@ export class ChangeTrackingPage {
 	}
 
 	async enablePublications(check: boolean) {
-		await this.page.getByLabel('Open Applications MenuCtrl+Alt+A').click();
+		await this.goToPublicationsViaApplicationMenu();
 
-		await this.page.getByRole('menuitem', {name: 'Publications'}).click();
+		if (
+			await this.page
+				.getByTestId('headerTitle')
+				.filter({hasText: 'Publications'})
+				.isVisible()
+		) {
+			await this.page.getByLabel('Options').click();
 
-		await expect(this.page.getByText('Enable Publications')).toBeVisible();
+			await this.page.getByRole('menuitem', {name: 'Settings'}).click();
+
+			await expect(
+				this.page.getByText('Enable Publications')
+			).toBeVisible();
+		}
 
 		const checkBox = this.page.getByRole('checkbox', {
 			name: 'Enable Publications',
@@ -239,6 +244,20 @@ export class ChangeTrackingPage {
 		}
 	}
 
+	async goToPublicationsViaApplicationMenu() {
+		await this.page.getByLabel('Open Applications MenuCtrl+Alt+A').click();
+
+		await this.page.getByRole('menuitem', {name: 'Publications'}).click();
+
+		const enablePublications = this.page.getByText('Enable Publications');
+
+		const publicationsHeader = this.page
+			.getByTestId('headerTitle')
+			.filter({hasText: 'Publications'});
+
+		await expect(enablePublications.or(publicationsHeader)).toBeVisible();
+	}
+
 	async goToPublicationHistory() {
 		await this.goto();
 
@@ -272,6 +291,27 @@ export class ChangeTrackingPage {
 			.filter({hasText: 'History'})
 			.first()
 			.click();
+
+		await this.page
+			.locator('#fnsd___table-id div')
+			.filter({hasText: title})
+			.first()
+			.waitFor();
+
+		await this.page.getByRole('link', {exact: true, name: title}).click();
+
+		await this.page
+			.locator(
+				'#_com_liferay_change_tracking_web_portlet_PublicationsPortlet_controlMenu'
+			)
+			.filter({hasText: 'Review Changes'})
+			.waitFor();
+	}
+
+	async goToReviewChangesScheduled(title: string) {
+		await this.goto();
+
+		await this.selectTab('Scheduled');
 
 		await this.page
 			.locator('#fnsd___table-id div')
@@ -406,40 +446,45 @@ export class ChangeTrackingPage {
 		}
 	}
 
-	async viewChanges({changed, site, title, type}) {
+	async viewChanges({
+		changed,
+		isVisible,
+		site,
+		title,
+		type,
+	}: {
+		changed?: string;
+		isVisible?: boolean;
+		site?: string;
+		title: string;
+		type?: string;
+	}) {
+		let fdsRow = this.page.locator('.fds tbody tr').filter({
+			has: this.page.getByText(title),
+		});
+
 		if (changed) {
-			await this.page
-				.locator('.fds tbody tr')
-				.filter({
-					has: this.page.getByText(title),
-				})
-				.filter({
-					has: this.page.getByRole('cell', {name: changed}),
-				})
-				.isVisible();
+			fdsRow = fdsRow.filter({
+				has: this.page.getByRole('cell', {name: changed}),
+			});
 		}
 
 		if (site) {
-			await this.page
-				.locator('.fds tbody tr')
-				.filter({
-					has: this.page.getByText(title),
-				})
-				.filter({
-					has: this.page.getByRole('cell', {name: site}),
-				})
-				.isVisible();
+			fdsRow = fdsRow.filter({
+				has: this.page.getByRole('cell', {name: site}),
+			});
 		}
 		if (type) {
-			await this.page
-				.locator('.fds tbody tr')
-				.filter({
-					has: this.page.getByText(title),
-				})
-				.filter({
-					has: this.page.getByRole('cell', {name: type}),
-				})
-				.isVisible();
+			fdsRow = fdsRow.filter({
+				has: this.page.getByRole('cell', {name: type}),
+			});
+		}
+
+		if (isVisible === true) {
+			await expect(fdsRow).toBeVisible();
+		}
+		else if (isVisible === false) {
+			await expect(fdsRow).toBeHidden();
 		}
 	}
 

@@ -3,9 +3,13 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import {getOrCreateTranslationInput} from './getOrCreateTranslationInput';
+
 type Args = {
-	defaultLanguageId: string;
-	initialValues: Record<string, any>;
+	changeTextDirection: boolean;
+	customLocaleChangeHandler: boolean;
+	defaultLanguageId: Liferay.Language.Locale;
+	initialValues?: Record<string, any>;
 	inputElement?: HTMLInputElement;
 	inputName: string;
 	localizationInputsContainer: HTMLElement;
@@ -15,11 +19,13 @@ type Args = {
 		value,
 	}: {
 		languageId: string;
-		value: string;
+		value?: string;
 	}) => void;
 };
 
 export function registerLocalizedInput({
+	changeTextDirection = true,
+	customLocaleChangeHandler = false,
 	defaultLanguageId,
 	initialValues,
 	inputElement,
@@ -28,94 +34,112 @@ export function registerLocalizedInput({
 	namespace,
 	onLocaleChange,
 }: Args) {
+
+	// Create hidden inputs for initial values if any
+
 	if (initialValues) {
 		Object.entries(initialValues).forEach(([languageId, value]) => {
 			const input = getOrCreateTranslationInput(
+				inputElement?.id || inputName,
 				inputName,
 				languageId,
 				localizationInputsContainer,
 				namespace
 			);
 
-			if (input.type === 'checkbox') {
-				input.checked = value;
-			}
-			else {
-				input.value = value;
-			}
+			input.value = value;
 		});
 	}
 
 	let currentLanguageId = defaultLanguageId;
 
-	Liferay.on('localizationSelect:localeChanged', ({languageId}) => {
-		currentLanguageId = languageId;
-
-		const translationInput = getOrCreateTranslationInput(
-			inputName,
-			languageId,
-			localizationInputsContainer,
-			namespace
+	if (changeTextDirection) {
+		inputElement?.setAttribute(
+			'dir',
+			Liferay.Language.direction[defaultLanguageId]!
 		);
+	}
 
-		if (translationInput.getAttribute('value') !== null) {
-			onLocaleChange?.({languageId, value: translationInput.value});
+	Liferay.on(
+		'localizationSelect:localeChanged',
+		({languageId}: {languageId: Liferay.Language.Locale}) => {
+			currentLanguageId = languageId;
 
-			if (inputElement) {
-				inputElement.value = translationInput.value;
+			if (changeTextDirection) {
+				inputElement?.setAttribute(
+					'dir',
+					Liferay.Language.direction[languageId]!
+				);
 			}
-		}
-		else {
-			const defaultLanguageInput = getOrCreateTranslationInput(
+
+			if (customLocaleChangeHandler) {
+				onLocaleChange?.({languageId});
+
+				return;
+			}
+
+			const translationInput = getOrCreateTranslationInput(
+				inputElement?.id || inputName,
 				inputName,
-				defaultLanguageId,
+				languageId,
 				localizationInputsContainer,
 				namespace
 			);
 
-			onLocaleChange?.({languageId, value: defaultLanguageInput.value});
+			if (translationInput.getAttribute('value') !== null) {
+				onLocaleChange?.({languageId, value: translationInput.value});
 
-			if (inputElement) {
+				if (!inputElement) {
+					return;
+				}
+
+				if (inputElement.type === 'checkbox') {
+					inputElement.checked = translationInput.value === 'true';
+				}
+				else {
+					inputElement.value = translationInput.value;
+				}
+			}
+			else {
+				const defaultLanguageInput = getOrCreateTranslationInput(
+					inputElement?.id || inputName,
+					inputName,
+					defaultLanguageId,
+					localizationInputsContainer,
+					namespace
+				);
+
+				onLocaleChange?.({
+					languageId,
+					value: defaultLanguageInput.value,
+				});
+
+				if (!inputElement) {
+					return;
+				}
+
 				inputElement.value = defaultLanguageInput.value;
 			}
 		}
-	});
+	);
 
 	return {
-		onChange: (value: string) => {
-			const translationInput = getOrCreateTranslationInput(
-				inputName,
-				currentLanguageId,
-				localizationInputsContainer,
-				namespace
-			);
+		onChange: (value = null) => {
+			if (value !== null) {
+				const translationInput = getOrCreateTranslationInput(
+					inputElement?.id || inputName,
+					inputName,
+					currentLanguageId,
+					localizationInputsContainer,
+					namespace
+				);
 
-			translationInput.value = value;
+				translationInput.value = value;
+			}
 
 			Liferay.fire('localizationSelect:updateTranslationStatus', {
 				languageId: currentLanguageId,
 			});
 		},
 	};
-}
-
-function getOrCreateTranslationInput(
-	inputName: string,
-	languageId: string,
-	localizationInputsContainer: HTMLElement,
-	namespace: string
-) {
-	const inputId = `${namespace}${inputName}_${languageId}`;
-
-	let translationInput = document.getElementById(inputId) as HTMLInputElement;
-
-	if (!translationInput) {
-		translationInput = document.createElement('input');
-		translationInput.type = 'hidden';
-		translationInput.id = inputId;
-		translationInput.name = `${inputName}_${languageId}`;
-		localizationInputsContainer.appendChild(translationInput);
-	}
-
-	return translationInput;
 }

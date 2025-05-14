@@ -882,7 +882,7 @@ public class CommerceOrderItemServiceHttp {
 			importCommerceOrderItem(
 				HttpPrincipal httpPrincipal, String externalReferenceCode,
 				long commerceOrderItemId, long commerceOrderId,
-				long cpInstanceId, String cpMeasurementUnitKey,
+				long cpInstanceId, String cpMeasurementUnitKey, String json,
 				java.math.BigDecimal quantity,
 				java.math.BigDecimal shippedQuantity,
 				java.math.BigDecimal unitOfMeasureIncrementalOrderQuantity,
@@ -897,9 +897,10 @@ public class CommerceOrderItemServiceHttp {
 
 			MethodHandler methodHandler = new MethodHandler(
 				methodKey, externalReferenceCode, commerceOrderItemId,
-				commerceOrderId, cpInstanceId, cpMeasurementUnitKey, quantity,
-				shippedQuantity, unitOfMeasureIncrementalOrderQuantity,
-				unitOfMeasureKey, serviceContext);
+				commerceOrderId, cpInstanceId, cpMeasurementUnitKey, json,
+				quantity, shippedQuantity,
+				unitOfMeasureIncrementalOrderQuantity, unitOfMeasureKey,
+				serviceContext);
 
 			Object returnObj = null;
 
@@ -1199,8 +1200,9 @@ public class CommerceOrderItemServiceHttp {
 
 	public static com.liferay.commerce.model.CommerceOrderItem
 			updateCommerceOrderItem(
-				HttpPrincipal httpPrincipal, long commerceOrderItemId,
-				String json, java.math.BigDecimal quantity,
+				HttpPrincipal httpPrincipal, String externalReferenceCode,
+				long commerceOrderItemId, String json,
+				java.math.BigDecimal quantity,
 				com.liferay.commerce.context.CommerceContext commerceContext,
 				com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
@@ -1211,8 +1213,8 @@ public class CommerceOrderItemServiceHttp {
 				_updateCommerceOrderItemParameterTypes27);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, commerceOrderItemId, json, quantity, commerceContext,
-				serviceContext);
+				methodKey, externalReferenceCode, commerceOrderItemId, json,
+				quantity, commerceContext, serviceContext);
 
 			Object returnObj = null;
 
@@ -1789,9 +1791,9 @@ public class CommerceOrderItemServiceHttp {
 	private static final Class<?>[] _importCommerceOrderItemParameterTypes20 =
 		new Class[] {
 			String.class, long.class, long.class, long.class, String.class,
+			String.class, java.math.BigDecimal.class,
 			java.math.BigDecimal.class, java.math.BigDecimal.class,
-			java.math.BigDecimal.class, String.class,
-			com.liferay.portal.kernel.service.ServiceContext.class
+			String.class, com.liferay.portal.kernel.service.ServiceContext.class
 		};
 	private static final Class<?>[] _searchCommerceOrderItemsParameterTypes21 =
 		new Class[] {
@@ -1827,7 +1829,7 @@ public class CommerceOrderItemServiceHttp {
 		};
 	private static final Class<?>[] _updateCommerceOrderItemParameterTypes27 =
 		new Class[] {
-			long.class, String.class, java.math.BigDecimal.class,
+			String.class, long.class, String.class, java.math.BigDecimal.class,
 			com.liferay.commerce.context.CommerceContext.class,
 			com.liferay.portal.kernel.service.ServiceContext.class
 		};

@@ -70,6 +70,7 @@ const LAYOUT_DATA = {
 };
 
 const renderTopperItemActions = ({
+	canManageFragments = true,
 	isDisabled = false,
 	itemId = 'itemId1',
 	layoutData = LAYOUT_DATA,
@@ -81,6 +82,9 @@ const renderTopperItemActions = ({
 			getState={() => ({
 				fragmentEntryLinks: {},
 				layoutData,
+				permissions: {
+					MANAGE_FRAGMENT_ENTRIES: canManageFragments,
+				},
 			})}
 		>
 			<ClipboardContextProvider>
@@ -111,8 +115,6 @@ describe('TopperItemActions', () => {
 	});
 
 	it('calls setClipboard and deleteItem when Cut action is pressed', async () => {
-		Liferay.FeatureFlags['LPD-18221'] = true;
-
 		const setClipboard = useSetClipboard();
 
 		renderTopperItemActions();
@@ -128,13 +130,9 @@ describe('TopperItemActions', () => {
 		expect(setClipboard).toBeCalledWith(
 			expect.objectContaining(['itemId1'])
 		);
-
-		Liferay.FeatureFlags['LPD-18221'] = false;
 	});
 
 	it('calls setClipboard when Copy action is pressed', async () => {
-		Liferay.FeatureFlags['LPD-18221'] = true;
-
 		const setClipboard = useSetClipboard();
 
 		renderTopperItemActions();
@@ -144,13 +142,9 @@ describe('TopperItemActions', () => {
 		expect(setClipboard).toBeCalledWith(
 			expect.objectContaining(['itemId1'])
 		);
-
-		Liferay.FeatureFlags['LPD-18221'] = false;
 	});
 
 	it('calls pasteItem when Paste action is pressed', async () => {
-		Liferay.FeatureFlags['LPD-18221'] = true;
-
 		renderTopperItemActions({itemId: 'itemId3'});
 
 		await userEvent.click(screen.getByText('paste'));
@@ -161,7 +155,11 @@ describe('TopperItemActions', () => {
 				parentItemId: 'itemId3',
 			})
 		);
+	});
 
-		Liferay.FeatureFlags['LPD-18221'] = false;
+	it('does not render save composition action if user does not have the correct permission', async () => {
+		renderTopperItemActions({canManageFragments: false, itemId: 'itemId3'});
+
+		expect(screen.queryByText('save-composition')).not.toBeInTheDocument();
 	});
 });

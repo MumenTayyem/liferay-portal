@@ -19,8 +19,6 @@ import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLName;
 import com.liferay.portal.vulcan.util.ObjectMapperUtil;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.io.Serializable;
 
 import java.util.Iterator;
@@ -40,7 +38,9 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @generated
  */
 @Generated("")
-@GraphQLName(description = "The page form's layout.", value = "Layout")
+@GraphQLName(
+	description = "the container page element's layout.", value = "Layout"
+)
 @JsonFilter("Liferay.Vulcan")
 @XmlRootElement(name = "Layout")
 public class Layout implements Serializable {
@@ -53,41 +53,45 @@ public class Layout implements Serializable {
 		return ObjectMapperUtil.unsafeReadValue(Layout.class, json);
 	}
 
-	@JsonGetter("align")
-	@Schema
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "The container's type (fixed or fluid)."
+	)
+	@JsonGetter("containerType")
 	@Valid
-	public Align getAlign() {
-		if (_alignSupplier != null) {
-			align = _alignSupplier.get();
+	public ContainerType getContainerType() {
+		if (_containerTypeSupplier != null) {
+			containerType = _containerTypeSupplier.get();
 
-			_alignSupplier = null;
+			_containerTypeSupplier = null;
 		}
 
-		return align;
+		return containerType;
 	}
 
 	@JsonIgnore
-	public String getAlignAsString() {
-		Align align = getAlign();
+	public String getContainerTypeAsString() {
+		ContainerType containerType = getContainerType();
 
-		if (align == null) {
+		if (containerType == null) {
 			return null;
 		}
 
-		return align.toString();
+		return containerType.toString();
 	}
 
-	public void setAlign(Align align) {
-		this.align = align;
+	public void setContainerType(ContainerType containerType) {
+		this.containerType = containerType;
 
-		_alignSupplier = null;
+		_containerTypeSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setAlign(UnsafeSupplier<Align, Exception> alignUnsafeSupplier) {
-		_alignSupplier = () -> {
+	public void setContainerType(
+		UnsafeSupplier<ContainerType, Exception> containerTypeUnsafeSupplier) {
+
+		_containerTypeSupplier = () -> {
 			try {
-				return alignUnsafeSupplier.get();
+				return containerTypeUnsafeSupplier.get();
 			}
 			catch (RuntimeException runtimeException) {
 				throw runtimeException;
@@ -98,70 +102,15 @@ public class Layout implements Serializable {
 		};
 	}
 
-	@GraphQLField
+	@GraphQLField(description = "The container's type (fixed or fluid).")
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Align align;
+	protected ContainerType containerType;
 
 	@JsonIgnore
-	private Supplier<Align> _alignSupplier;
+	private Supplier<ContainerType> _containerTypeSupplier;
 
-	@JsonGetter("contentDisplay")
-	@Schema
-	@Valid
-	public ContentDisplay getContentDisplay() {
-		if (_contentDisplaySupplier != null) {
-			contentDisplay = _contentDisplaySupplier.get();
-
-			_contentDisplaySupplier = null;
-		}
-
-		return contentDisplay;
-	}
-
-	@JsonIgnore
-	public String getContentDisplayAsString() {
-		ContentDisplay contentDisplay = getContentDisplay();
-
-		if (contentDisplay == null) {
-			return null;
-		}
-
-		return contentDisplay.toString();
-	}
-
-	public void setContentDisplay(ContentDisplay contentDisplay) {
-		this.contentDisplay = contentDisplay;
-
-		_contentDisplaySupplier = null;
-	}
-
-	@JsonIgnore
-	public void setContentDisplay(
-		UnsafeSupplier<ContentDisplay, Exception>
-			contentDisplayUnsafeSupplier) {
-
-		_contentDisplaySupplier = () -> {
-			try {
-				return contentDisplayUnsafeSupplier.get();
-			}
-			catch (RuntimeException runtimeException) {
-				throw runtimeException;
-			}
-			catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		};
-	}
-
-	@GraphQLField
-	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected ContentDisplay contentDisplay;
-
-	@JsonIgnore
-	private Supplier<ContentDisplay> _contentDisplaySupplier;
-
+	@io.swagger.v3.oas.annotations.media.Schema
 	@JsonGetter("flexWrap")
-	@Schema
 	@Valid
 	public FlexWrap getFlexWrap() {
 		if (_flexWrapSupplier != null) {
@@ -214,62 +163,10 @@ public class Layout implements Serializable {
 	@JsonIgnore
 	private Supplier<FlexWrap> _flexWrapSupplier;
 
-	@JsonGetter("justify")
-	@Schema
-	@Valid
-	public Justify getJustify() {
-		if (_justifySupplier != null) {
-			justify = _justifySupplier.get();
-
-			_justifySupplier = null;
-		}
-
-		return justify;
-	}
-
-	@JsonIgnore
-	public String getJustifyAsString() {
-		Justify justify = getJustify();
-
-		if (justify == null) {
-			return null;
-		}
-
-		return justify.toString();
-	}
-
-	public void setJustify(Justify justify) {
-		this.justify = justify;
-
-		_justifySupplier = null;
-	}
-
-	@JsonIgnore
-	public void setJustify(
-		UnsafeSupplier<Justify, Exception> justifyUnsafeSupplier) {
-
-		_justifySupplier = () -> {
-			try {
-				return justifyUnsafeSupplier.get();
-			}
-			catch (RuntimeException runtimeException) {
-				throw runtimeException;
-			}
-			catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		};
-	}
-
-	@GraphQLField
-	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Justify justify;
-
-	@JsonIgnore
-	private Supplier<Justify> _justifySupplier;
-
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "The width's type (fixed or fluid)."
+	)
 	@JsonGetter("widthType")
-	@Schema(description = "The width's type (fixed or fluid).")
 	@Valid
 	public WidthType getWidthType() {
 		if (_widthTypeSupplier != null) {
@@ -349,34 +246,18 @@ public class Layout implements Serializable {
 
 		sb.append("{");
 
-		Align align = getAlign();
+		ContainerType containerType = getContainerType();
 
-		if (align != null) {
+		if (containerType != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"align\": ");
+			sb.append("\"containerType\": ");
 
 			sb.append("\"");
 
-			sb.append(align);
-
-			sb.append("\"");
-		}
-
-		ContentDisplay contentDisplay = getContentDisplay();
-
-		if (contentDisplay != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"contentDisplay\": ");
-
-			sb.append("\"");
-
-			sb.append(contentDisplay);
+			sb.append(containerType);
 
 			sb.append("\"");
 		}
@@ -393,22 +274,6 @@ public class Layout implements Serializable {
 			sb.append("\"");
 
 			sb.append(flexWrap);
-
-			sb.append("\"");
-		}
-
-		Justify justify = getJustify();
-
-		if (justify != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"justify\": ");
-
-			sb.append("\"");
-
-			sb.append(justify);
 
 			sb.append("\"");
 		}
@@ -434,28 +299,27 @@ public class Layout implements Serializable {
 		return sb.toString();
 	}
 
-	@Schema(
-		accessMode = Schema.AccessMode.READ_ONLY,
+	@io.swagger.v3.oas.annotations.media.Schema(
+		accessMode = io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY,
 		defaultValue = "com.liferay.headless.admin.site.dto.v1_0.Layout",
 		name = "x-class-name"
 	)
 	public String xClassName;
 
-	@GraphQLName("Align")
-	public static enum Align {
+	@GraphQLName("ContainerType")
+	public static enum ContainerType {
 
-		BASELINE("Baseline"), CENTER("Center"), END("End"), NONE("None"),
-		START("Start"), STRETCH("Stretch");
+		FIXED("Fixed"), FLUID("Fluid");
 
 		@JsonCreator
-		public static Align create(String value) {
+		public static ContainerType create(String value) {
 			if ((value == null) || value.equals("")) {
 				return null;
 			}
 
-			for (Align align : values()) {
-				if (Objects.equals(align.getValue(), value)) {
-					return align;
+			for (ContainerType containerType : values()) {
+				if (Objects.equals(containerType.getValue(), value)) {
+					return containerType;
 				}
 			}
 
@@ -472,45 +336,7 @@ public class Layout implements Serializable {
 			return _value;
 		}
 
-		private Align(String value) {
-			_value = value;
-		}
-
-		private final String _value;
-
-	}
-
-	@GraphQLName("ContentDisplay")
-	public static enum ContentDisplay {
-
-		BLOCK("Block"), FLEX_COLUMN("FlexColumn"), FLEX_ROW("FlexRow");
-
-		@JsonCreator
-		public static ContentDisplay create(String value) {
-			if ((value == null) || value.equals("")) {
-				return null;
-			}
-
-			for (ContentDisplay contentDisplay : values()) {
-				if (Objects.equals(contentDisplay.getValue(), value)) {
-					return contentDisplay;
-				}
-			}
-
-			throw new IllegalArgumentException("Invalid enum value: " + value);
-		}
-
-		@JsonValue
-		public String getValue() {
-			return _value;
-		}
-
-		@Override
-		public String toString() {
-			return _value;
-		}
-
-		private ContentDisplay(String value) {
+		private ContainerType(String value) {
 			_value = value;
 		}
 
@@ -549,45 +375,6 @@ public class Layout implements Serializable {
 		}
 
 		private FlexWrap(String value) {
-			_value = value;
-		}
-
-		private final String _value;
-
-	}
-
-	@GraphQLName("Justify")
-	public static enum Justify {
-
-		CENTER("Center"), END("End"), NONE("None"), SPACE_AROUND("SpaceAround"),
-		SPACE_BETWEEN("SpaceBetween"), START("Start");
-
-		@JsonCreator
-		public static Justify create(String value) {
-			if ((value == null) || value.equals("")) {
-				return null;
-			}
-
-			for (Justify justify : values()) {
-				if (Objects.equals(justify.getValue(), value)) {
-					return justify;
-				}
-			}
-
-			throw new IllegalArgumentException("Invalid enum value: " + value);
-		}
-
-		@JsonValue
-		public String getValue() {
-			return _value;
-		}
-
-		@Override
-		public String toString() {
-			return _value;
-		}
-
-		private Justify(String value) {
 			_value = value;
 		}
 

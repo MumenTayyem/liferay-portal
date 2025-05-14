@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -119,7 +120,8 @@ public class JournalHistoryManagementToolbarDisplayContext
 
 		if (JournalArticlePermission.contains(
 				themeDisplay.getPermissionChecker(), article,
-				ActionKeys.DELETE)) {
+				ActionKeys.DELETE) &&
+			!Objects.equals(_article.getVersion(), article.getVersion())) {
 
 			availableActions.add("deleteArticles");
 		}
@@ -133,6 +135,15 @@ public class JournalHistoryManagementToolbarDisplayContext
 		}
 
 		return StringUtil.merge(availableActions, StringPool.COMMA);
+	}
+
+	@Override
+	public String getClearResultsURL() {
+		return PortletURLBuilder.create(
+			getPortletURL()
+		).setKeywords(
+			StringPool.BLANK
+		).buildString();
 	}
 
 	@Override

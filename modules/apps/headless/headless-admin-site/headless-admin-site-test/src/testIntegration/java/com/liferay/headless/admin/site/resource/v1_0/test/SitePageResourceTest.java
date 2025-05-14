@@ -17,6 +17,7 @@ import com.liferay.headless.admin.site.client.resource.v1_0.SitePageResource;
 import com.liferay.headless.admin.site.resource.v1_0.test.util.LayoutPageTemplateEntryTestUtil;
 import com.liferay.headless.admin.site.resource.v1_0.test.util.LayoutUtilityPageEntryTestUtil;
 import com.liferay.headless.admin.site.resource.v1_0.test.util.PageSpecificationsTestUtil;
+import com.liferay.layout.test.util.ContentLayoutTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.string.StringPool;
@@ -42,7 +43,7 @@ import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
-import com.liferay.portal.test.rule.FeatureFlags;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -51,6 +52,7 @@ import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -66,7 +68,7 @@ import org.junit.runner.RunWith;
 /**
  * @author Rubén Pulido
  */
-@FeatureFlags("LPD-35443")
+@FeatureFlag("LPD-35443")
 @RunWith(Arquillian.class)
 public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 
@@ -148,8 +150,19 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 			ServiceContextTestUtil.getServiceContext(
 				testGroup.getGroupId(), TestPropsValues.getUserId());
 
-		_testGetSiteSiteByExternalReferenceCodeSitePage(
-			_addLayout(LayoutConstants.TYPE_CONTENT, null, serviceContext));
+		Layout layout = _addLayout(
+			LayoutConstants.TYPE_CONTENT, null, serviceContext);
+
+		Assert.assertFalse(layout.isPublished());
+
+		_testGetSiteSiteByExternalReferenceCodeSitePage(layout);
+
+		ContentLayoutTestUtil.publishLayout(layout.fetchDraftLayout(), layout);
+
+		Assert.assertTrue(layout.isPublished());
+
+		_testGetSiteSiteByExternalReferenceCodeSitePage(layout);
+
 		_testGetSiteSiteByExternalReferenceCodeSitePage(
 			_addLayout(
 				LayoutConstants.TYPE_PORTLET,
@@ -157,15 +170,6 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 					LayoutTypePortletConstants.LAYOUT_TEMPLATE_ID, "1_column"
 				).buildString(),
 				serviceContext));
-	}
-
-	@Ignore
-	@Override
-	@Test
-	public void testGetSiteSiteByExternalReferenceCodeSitePagePermissionsPage()
-		throws Exception {
-
-		super.testGetSiteSiteByExternalReferenceCodeSitePagePermissionsPage();
 	}
 
 	@Override
@@ -188,10 +192,8 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 	@Ignore
 	@Override
 	@Test
-	public void testGetSiteSiteExternalReferenceCodeSitePagePermissionsPage()
-		throws Exception {
-
-		super.testGetSiteSiteExternalReferenceCodeSitePagePermissionsPage();
+	public void testGetSiteSitePagePermissionsPage() throws Exception {
+		super.testGetSiteSitePagePermissionsPage();
 	}
 
 	@Override
@@ -318,19 +320,8 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 	@Ignore
 	@Override
 	@Test
-	public void testPutSiteSiteByExternalReferenceCodeSitePagePermissionsPage()
-		throws Exception {
-
-		super.testPutSiteSiteByExternalReferenceCodeSitePagePermissionsPage();
-	}
-
-	@Ignore
-	@Override
-	@Test
-	public void testPutSiteSiteExternalReferenceCodeSitePagePermissionsPage()
-		throws Exception {
-
-		super.testPutSiteSiteExternalReferenceCodeSitePagePermissionsPage();
+	public void testPutSiteSitePagePermissionsPage() throws Exception {
+		super.testPutSiteSitePagePermissionsPage();
 	}
 
 	@Override
@@ -378,6 +369,15 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 		return testGroup.getExternalReferenceCode();
 	}
 
+	@Ignore
+	@Override
+	@Test
+	protected SitePage testGetSiteSitePagePermissionsPage_addSitePage()
+		throws Exception {
+
+		return super.testGetSiteSitePagePermissionsPage_addSitePage();
+	}
+
 	@Override
 	protected SitePage testPostByExternalReferenceCodeSitePage_addSitePage(
 			SitePage sitePage)
@@ -385,6 +385,15 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 
 		return sitePageResource.postByExternalReferenceCodeSitePage(
 			testGroup.getExternalReferenceCode(), sitePage);
+	}
+
+	@Ignore
+	@Override
+	@Test
+	protected SitePage testPutSiteSitePagePermissionsPage_addSitePage()
+		throws Exception {
+
+		return super.testPutSiteSitePagePermissionsPage_addSitePage();
 	}
 
 	private Layout _addLayout(
@@ -443,7 +452,11 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 		Layout layout = _layoutLocalService.getLayoutByExternalReferenceCode(
 			sitePage.getExternalReferenceCode(), testGroup.getGroupId());
 
-		Map<Locale, String> friendlyURLMap = layout.getFriendlyURLMap();
+		Map<Locale, String> friendlyURLMap = new HashMap<>();
+
+		if (layout.isPublished()) {
+			friendlyURLMap = layout.getFriendlyURLMap();
+		}
 
 		Assert.assertEquals(
 			jsonObject.toString(), friendlyURLMap.size(), jsonObject.length());

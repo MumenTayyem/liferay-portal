@@ -6,6 +6,7 @@
 package com.liferay.testray.rest.internal.resource.v1_0;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -383,10 +384,10 @@ public class TestrayStatusMetricResourceImpl
 	@Override
 	public Page<TestrayRoutineMetric>
 			getTestrayStatusMetricByTestrayProjectIdTestrayProjectTestrayRoutinesMetricsPage(
-				Long testrayProjectId, Pagination pagination)
+				Long testrayProjectId, Pagination pagination, Sort[] sorts)
 		throws Exception {
 
-		StringBundler sb = new StringBundler(27);
+		StringBundler sb = new StringBundler(28);
 
 		sb.append("select (b.caseresultblocked_ + b.caseresultfailed_ + ");
 		sb.append("b.caseresultincomplete_ + b.caseresultinprogress_ + ");
@@ -397,24 +398,25 @@ public class TestrayStatusMetricResourceImpl
 		sb.append("b.caseresultinprogress_ as inprogress, ");
 		sb.append("b.caseresultpassed_ as passed, b.caseresulttestfix_ as ");
 		sb.append("testfix, b.caseresultuntested_ as untested, ");
-		sb.append("r.c_routineId_, r.name_, b.dueDate_ from ");
+		sb.append("r.c_routineId_, r.name_, b.dueDate_, bx.cpuUseTime_ from ");
 		sb.append("O_[%COMPANY_ID%]_Project p, O_[%COMPANY_ID%]_Routine r, ");
-		sb.append("O_[%COMPANY_ID%]_Build b where p.c_projectId_ = ? and ");
-		sb.append("r.c_routineId_ = b.r_routineToBuilds_c_routineId and ");
-		sb.append("p.c_projectId_ = r.r_routineToProjects_c_projectId and ");
-		sb.append("b.c_buildId_ = (select b2.c_buildId_ from ");
-		sb.append("O_[%COMPANY_ID%]_Build b2 where ");
-		sb.append("b2.r_routineToBuilds_c_routineId = r.c_routineId_ and ");
-		sb.append("b2.dueDate_ = (select max(b3.dueDate_) from ");
+		sb.append("O_[%COMPANY_ID%]_Build b, O_[%COMPANY_ID%]_Build_x bx ");
+		sb.append("where p.c_projectId_ = ? and r.c_routineId_ = ");
+		sb.append("b.r_routineToBuilds_c_routineId and p.c_projectId_ = ");
+		sb.append("r.r_routineToProjects_c_projectId and b.c_buildId_ = ");
+		sb.append("(select b2.c_buildId_ from O_[%COMPANY_ID%]_Build b2 ");
+		sb.append("where b2.r_routineToBuilds_c_routineId = r.c_routineId_ ");
+		sb.append("and b2.dueDate_ = (select max(b3.dueDate_) from ");
 		sb.append("O_[%COMPANY_ID%]_Build b3 where ");
 		sb.append("b3.r_routineToBuilds_c_routineId = r.c_routineId_ and ");
 		sb.append("exists  (select 1 from O_[%COMPANY_ID%]_CaseResult cr ");
 		sb.append("where cr.r_buildToCaseResult_c_buildId = b3.c_buildId_)) ");
-		sb.append("limit 1) group by r.c_routineId_, r.name_, b.dueDate_, ");
+		sb.append("limit 1) and b.c_buildId_ = bx.c_buildId_ group by ");
+		sb.append("r.c_routineId_, r.name_, b.dueDate_, bx.cpuUseTime_, ");
 		sb.append("b.caseresultblocked_, b.caseresultfailed_, ");
 		sb.append("b.caseresultincomplete_, b.caseresultinprogress_, ");
 		sb.append("b.caseresultpassed_, b.caseresulttestfix_, ");
-		sb.append("b.caseresultuntested_");
+		sb.append("b.caseresultuntested_ order by r.name_ ");
 
 		List<Object> params = new ArrayList<>();
 
@@ -425,6 +427,10 @@ public class TestrayStatusMetricResourceImpl
 			String.valueOf(contextCompany.getCompanyId()));
 
 		long totalCount = TestrayUtil.getTotalCount(sql, params);
+
+		if ((sorts != null) && sorts[0].isReverse()) {
+			sql += "desc";
+		}
 
 		if (pagination != null) {
 			sql += " limit ? offset ?";
@@ -447,6 +453,18 @@ public class TestrayStatusMetricResourceImpl
 							value.get("name_"));
 						testrayStatusMetric = _getTestrayStatusMetric(value);
 
+						setTestrayBuildCPUUseTime(
+							() -> {
+								if (Validator.isNull(
+										value.get("cpuusetime_"))) {
+
+									return null;
+								}
+
+								return value.get(
+									"cpuusetime_"
+								).toString();
+							});
 						setTestrayBuildDueDate(
 							() -> {
 								if (value.get("duedate_") == null) {
@@ -513,7 +531,7 @@ public class TestrayStatusMetricResourceImpl
 
 		long totalCount = TestrayUtil.getTotalCount(sql, params);
 
-		sb = new StringBundler(28);
+		sb = new StringBundler(29);
 
 		sb.append("select (b.caseresultblocked_ + b.caseresultfailed_ + ");
 		sb.append("b.caseresultincomplete_ + b.caseresultinprogress_ + ");
@@ -524,12 +542,13 @@ public class TestrayStatusMetricResourceImpl
 		sb.append("b.caseresultinprogress_ as inprogress, ");
 		sb.append("b.caseresultpassed_ as passed, b.caseresulttestfix_ as ");
 		sb.append("testfix, b.caseresultuntested_ as untested, b.c_buildId_, ");
-		sb.append("b.dueDate_, bx.importStatus_, b.gitHash_, b.name_, ");
-		sb.append("b.promoted_, b.archived_, pv.name_ as productVersionName, ");
-		sb.append("(select dueStatus_ from O_[%COMPANY_ID%]_Task t where ");
-		sb.append("t.r_buildToTasks_c_buildId = b.c_buildId_) as taskStatus ");
-		sb.append("from O_[%COMPANY_ID%]_Build b, O_[%COMPANY_ID%]_Build_x ");
-		sb.append("bx, O_[%COMPANY_ID%]_ProductVersion pv ");
+		sb.append("bx.cpuUseTime_, b.dueDate_, bx.importStatus_, b.gitHash_, ");
+		sb.append("b.name_, b.promoted_, b.archived_, pv.name_ as ");
+		sb.append("productVersionName, (select dueStatus_ from ");
+		sb.append("O_[%COMPANY_ID%]_Task t where t.r_buildToTasks_c_buildId ");
+		sb.append("= b.c_buildId_) as taskStatus from O_[%COMPANY_ID%]_Build ");
+		sb.append("b, O_[%COMPANY_ID%]_Build_x bx, ");
+		sb.append("O_[%COMPANY_ID%]_ProductVersion pv ");
 
 		if (Validator.isNotNull(testrayTaskStatus)) {
 			sb.append(", O_[%COMPANY_ID%]_Task t ");
@@ -561,8 +580,8 @@ public class TestrayStatusMetricResourceImpl
 			sb.append(") ");
 		}
 
-		sb.append("group by b.c_buildId_, bx.importstatus_, pv.name_ order ");
-		sb.append("by b.c_buildId_ desc limit ? offset ?");
+		sb.append("group by b.c_buildId_, bx.importstatus_, pv.name_, ");
+		sb.append("bx.cpuUseTime_ order by b.c_buildId_ desc limit ? offset ?");
 
 		sql = StringUtil.replace(
 			sb.toString(), "[%COMPANY_ID%]",
@@ -581,6 +600,8 @@ public class TestrayStatusMetricResourceImpl
 					{
 						testrayBuildArchived = GetterUtil.getBoolean(
 							String.valueOf(value.get("archived_")));
+						testrayBuildCPUUseTime = GetterUtil.getString(
+							value.get("cpuusetime_"));
 						testrayBuildGitHash = GetterUtil.getString(
 							value.get("githash_"));
 						testrayBuildId = GetterUtil.getLong(

@@ -5,13 +5,18 @@
 
 package com.liferay.dynamic.data.mapping.form.web.internal.portlet.action;
 
+import com.liferay.document.library.configuration.DLFileEntryMimeTypeConfiguration;
 import com.liferay.document.library.kernel.exception.FileExtensionException;
+import com.liferay.document.library.kernel.exception.FileMimeTypeException;
 import com.liferay.document.library.kernel.exception.FileNameException;
 import com.liferay.document.library.kernel.exception.FileSizeException;
 import com.liferay.document.library.kernel.exception.InvalidFileException;
+import com.liferay.document.library.kernel.model.DLFileEntry;
+import com.liferay.document.library.kernel.util.DLValidator;
 import com.liferay.dynamic.data.mapping.constants.DDMActionKeys;
 import com.liferay.dynamic.data.mapping.constants.DDMFormConstants;
 import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
+import com.liferay.dynamic.data.mapping.form.web.internal.portlet.action.util.FileEntryMVCActionCommandUtil;
 import com.liferay.dynamic.data.mapping.form.web.internal.security.permission.resource.DDMFormInstancePermission;
 import com.liferay.dynamic.data.mapping.form.web.internal.upload.DDMFormUploadValidator;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
@@ -20,6 +25,7 @@ import com.liferay.object.exception.ObjectEntryValuesException;
 import com.liferay.object.model.ObjectFieldSetting;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -27,14 +33,18 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.CompanyLocalService;
-import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.upload.UploadPortletRequest;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -76,6 +86,10 @@ public class UploadFileEntryMVCActionCommand extends BaseMVCActionCommand {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
+		FileEntryMVCActionCommandUtil.deleteFileEntry(
+			ParamUtil.getLong(actionRequest, "oldFileEntryId"),
+			(ThemeDisplay)actionRequest.getAttribute(WebKeys.THEME_DISPLAY));
+
 		_uploadHandler.upload(
 			_ddmFormUploadFileEntryHandler, _ddmFormUploadResponseHandler,
 			actionRequest, actionResponse);
@@ -86,6 +100,9 @@ public class UploadFileEntryMVCActionCommand extends BaseMVCActionCommand {
 	@Reference
 	private CompanyLocalService _companyLocalService;
 
+	@Reference
+	private ConfigurationProvider _configurationProvider;
+
 	private final DDMFormUploadFileEntryHandler _ddmFormUploadFileEntryHandler =
 		new DDMFormUploadFileEntryHandler();
 	private final DDMFormUploadResponseHandler _ddmFormUploadResponseHandler =
@@ -95,16 +112,22 @@ public class UploadFileEntryMVCActionCommand extends BaseMVCActionCommand {
 	private UploadResponseHandler _defaultUploadResponseHandler;
 
 	@Reference
+	private DLValidator _dlValidator;
+
+	@Reference
 	private Language _language;
 
 	@Reference
 	private ObjectFieldSettingLocalService _objectFieldSettingLocalService;
 
 	@Reference
-	private UploadHandler _uploadHandler;
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
 
 	@Reference
-	private UserLocalService _userLocalService;
+	private RoleLocalService _roleLocalService;
+
+	@Reference
+	private UploadHandler _uploadHandler;
 
 	private class DDMFormUploadFileEntryHandler
 		implements UploadFileEntryHandler {
@@ -116,6 +139,10 @@ public class UploadFileEntryMVCActionCommand extends BaseMVCActionCommand {
 			File file = null;
 
 			try {
+				ThemeDisplay themeDisplay =
+					(ThemeDisplay)uploadPortletRequest.getAttribute(
+						WebKeys.THEME_DISPLAY);
+
 				InputStream inputStream = uploadPortletRequest.getFileAsStream(
 					"file");
 
@@ -126,6 +153,11 @@ public class UploadFileEntryMVCActionCommand extends BaseMVCActionCommand {
 				file = FileUtil.createTempFile(inputStream);
 
 				String fileName = uploadPortletRequest.getFileName("file");
+
+				String mimeType = MimeTypesUtil.getContentType(file, fileName);
+
+				_dlValidator.validateFileMimeType(
+					themeDisplay.getCompanyId(), mimeType);
 
 				DDMFormUploadValidator.validateFileSize(file, fileName);
 
@@ -142,9 +174,7 @@ public class UploadFileEntryMVCActionCommand extends BaseMVCActionCommand {
 					ParamUtil.getLong(uploadPortletRequest, "formInstanceId"),
 					ParamUtil.getLong(uploadPortletRequest, "groupId"),
 					ParamUtil.getLong(uploadPortletRequest, "folderId"), file,
-					fileName, MimeTypesUtil.getContentType(file, fileName),
-					(ThemeDisplay)uploadPortletRequest.getAttribute(
-						WebKeys.THEME_DISPLAY));
+					fileName, mimeType, themeDisplay);
 			}
 			finally {
 				FileUtil.delete(file);
@@ -172,11 +202,22 @@ public class UploadFileEntryMVCActionCommand extends BaseMVCActionCommand {
 			String uniqueFileName = PortletFileRepositoryUtil.getUniqueFileName(
 				groupId, folderId, fileName);
 
-			return PortletFileRepositoryUtil.addPortletFileEntry(
+			FileEntry fileEntry = PortletFileRepositoryUtil.addPortletFileEntry(
 				null, groupId, user.getUserId(),
 				DDMFormInstance.class.getName(), 0,
 				DDMFormConstants.SERVICE_NAME, folderId, file, uniqueFileName,
 				mimeType, true);
+
+			_resourcePermissionLocalService.removeResourcePermission(
+				themeDisplay.getCompanyId(), DLFileEntry.class.getName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(fileEntry.getFileEntryId()),
+				_roleLocalService.getRole(
+					themeDisplay.getCompanyId(), RoleConstants.GUEST
+				).getRoleId(),
+				ActionKeys.VIEW);
+
+			return fileEntry;
 		}
 
 		private void _validateAttachmentObjectField(
@@ -226,6 +267,19 @@ public class UploadFileEntryMVCActionCommand extends BaseMVCActionCommand {
 					"please-enter-a-file-with-a-valid-extension-x",
 					StringUtil.merge(
 						DDMFormUploadValidator.getGuestUploadFileExtensions(),
+						StringPool.COMMA_AND_SPACE));
+			}
+			else if (portalException instanceof FileMimeTypeException) {
+				DLFileEntryMimeTypeConfiguration
+					dlFileEntryMimeTypeConfiguration =
+						_configurationProvider.getCompanyConfiguration(
+							DLFileEntryMimeTypeConfiguration.class,
+							themeDisplay.getCompanyId());
+
+				errorMessage = themeDisplay.translate(
+					"please-enter-a-file-with-a-valid-mime-type-x",
+					StringUtil.merge(
+						dlFileEntryMimeTypeConfiguration.fileMimeTypes(),
 						StringPool.COMMA_AND_SPACE));
 			}
 			else if (portalException instanceof FileNameException) {

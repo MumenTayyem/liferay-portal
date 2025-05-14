@@ -9,6 +9,7 @@ import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.module.service.Snapshot;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,14 +33,14 @@ public class ObjectEntryFolderServiceUtil {
 	 */
 	public static ObjectEntryFolder addObjectEntryFolder(
 			String externalReferenceCode, long groupId,
-			long parentObjectEntryFolderId,
+			long parentObjectEntryFolderId, String description,
 			Map<java.util.Locale, String> labelMap, String name,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().addObjectEntryFolder(
-			externalReferenceCode, groupId, parentObjectEntryFolderId, labelMap,
-			name, serviceContext);
+			externalReferenceCode, groupId, parentObjectEntryFolderId,
+			description, labelMap, name, serviceContext);
 	}
 
 	public static ObjectEntryFolder deleteObjectEntryFolder(
@@ -49,11 +50,54 @@ public class ObjectEntryFolderServiceUtil {
 		return getService().deleteObjectEntryFolder(objectEntryFolderId);
 	}
 
+	public static ObjectEntryFolder
+			deleteObjectEntryFolderByExternalReferenceCode(
+				String externalReferenceCode, long groupId, long companyId)
+		throws PortalException {
+
+		return getService().deleteObjectEntryFolderByExternalReferenceCode(
+			externalReferenceCode, groupId, companyId);
+	}
+
+	public static ObjectEntryFolder
+			fetchObjectEntryFolderByExternalReferenceCode(
+				String externalReferenceCode, long groupId, long companyId)
+		throws PortalException {
+
+		return getService().fetchObjectEntryFolderByExternalReferenceCode(
+			externalReferenceCode, groupId, companyId);
+	}
+
 	public static ObjectEntryFolder getObjectEntryFolder(
 			long objectEntryFolderId)
 		throws PortalException {
 
 		return getService().getObjectEntryFolder(objectEntryFolderId);
+	}
+
+	public static ObjectEntryFolder getObjectEntryFolderByExternalReferenceCode(
+			String externalReferenceCode, long groupId, long companyId)
+		throws PortalException {
+
+		return getService().getObjectEntryFolderByExternalReferenceCode(
+			externalReferenceCode, groupId, companyId);
+	}
+
+	public static List<ObjectEntryFolder> getObjectEntryFolders(
+			long groupId, long companyId, long parentObjectEntryFolderId,
+			int start, int end)
+		throws PortalException {
+
+		return getService().getObjectEntryFolders(
+			groupId, companyId, parentObjectEntryFolderId, start, end);
+	}
+
+	public static int getObjectEntryFoldersCount(
+			long groupId, long companyId, long parentObjectEntryFolderId)
+		throws PortalException {
+
+		return getService().getObjectEntryFoldersCount(
+			groupId, companyId, parentObjectEntryFolderId);
 	}
 
 	/**
@@ -67,11 +111,14 @@ public class ObjectEntryFolderServiceUtil {
 
 	public static ObjectEntryFolder updateObjectEntryFolder(
 			long objectEntryFolderId, long parentObjectEntryFolderId,
-			Map<java.util.Locale, String> labelMap, String name)
+			String description, Map<java.util.Locale, String> labelMap,
+			String name,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws PortalException {
 
 		return getService().updateObjectEntryFolder(
-			objectEntryFolderId, parentObjectEntryFolderId, labelMap, name);
+			objectEntryFolderId, parentObjectEntryFolderId, description,
+			labelMap, name, serviceContext);
 	}
 
 	public static ObjectEntryFolderService getService() {

@@ -6,7 +6,17 @@
 import React from 'react';
 
 import OrderableTable from '../../../components/OrderableTable';
-import {EFilterType, IFilter, IFilterTypeProps} from '../../../utils/types';
+import Toggle from '../../../components/Toggle';
+import {
+	EFilterType,
+	ESelectionFilterSourceType,
+	IFilter,
+	IFilterTypeProps,
+} from '../../../utils/types';
+
+const isVisible = ({item}: {item: any}): boolean => {
+	return item?.sourceType !== ESelectionFilterSourceType.ITEM_PROXY;
+};
 
 const FilterList = ({
 	createFilter,
@@ -14,6 +24,8 @@ const FilterList = ({
 	editFilter,
 	filterTypes,
 	filters,
+	toogleActiveDisabled,
+	updateActive,
 	updateFiltersOrder,
 }: {
 	createFilter: (filterType: EFilterType) => void;
@@ -21,6 +33,8 @@ const FilterList = ({
 	editFilter: ({item}: {item: IFilter}) => void;
 	filterTypes: Record<EFilterType, IFilterTypeProps>;
 	filters: IFilter[];
+	toogleActiveDisabled: boolean;
+	updateActive: (item: IFilter) => Promise<void>;
 	updateFiltersOrder: ({filtersOrder}: {filtersOrder: string}) => void;
 }) => {
 	return (
@@ -28,11 +42,13 @@ const FilterList = ({
 			actions={[
 				{
 					icon: 'pencil',
+					isVisible,
 					label: Liferay.Language.get('edit'),
 					onClick: editFilter,
 				},
 				{
 					icon: 'trash',
+					isVisible,
 					label: Liferay.Language.get('delete'),
 					onClick: deleteFilter,
 				},
@@ -55,6 +71,18 @@ const FilterList = ({
 				{
 					label: Liferay.Language.get('type'),
 					name: 'displayType',
+				},
+				{
+					contentRenderer: {
+						component: ({item}: any) =>
+							Toggle({
+								disabled: toogleActiveDisabled,
+								item,
+								toggleChange: updateActive,
+							}),
+					},
+					label: Liferay.Language.get('status'),
+					name: 'active',
 				},
 			]}
 			items={filters}

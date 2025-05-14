@@ -150,14 +150,15 @@ public class DisplayPageTemplateSettingsSerDes {
 			if (Objects.equals(jsonParserFieldName, "openGraphSettings")) {
 				if (jsonParserFieldValue != null) {
 					displayPageTemplateSettings.setOpenGraphSettings(
-						OpenGraphSettingsSerDes.toDTO(
+						DisplayPageTemplateOpenGraphSettingsSerDes.toDTO(
 							(String)jsonParserFieldValue));
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "seoSettings")) {
 				if (jsonParserFieldValue != null) {
 					displayPageTemplateSettings.setSeoSettings(
-						SEOSettingsSerDes.toDTO((String)jsonParserFieldValue));
+						DisplayPageTemplateSEOSettingsSerDes.toDTO(
+							(String)jsonParserFieldValue));
 				}
 			}
 		}
@@ -205,6 +206,10 @@ public class DisplayPageTemplateSettingsSerDes {
 	}
 
 	private static String _toJSON(Object value) {
+		if (value == null) {
+			return "null";
+		}
+
 		if (value instanceof Map) {
 			return _toJSON((Map)value);
 		}

@@ -10,15 +10,20 @@ import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.json.JSONObjectImpl;
 import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.Digester;
 import com.liferay.portal.kernel.util.DigesterUtil;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.test.rule.Inject;
 
 import java.net.URI;
 
@@ -131,7 +136,17 @@ public abstract class BaseClientTestCase {
 
 		UriBuilder uriBuilder = runtimeDelegate.createUriBuilder();
 
-		return client.target(uriBuilder.uri("http://localhost:8080"));
+		try {
+			Company company = CompanyLocalServiceUtil.getCompany(
+				TestPropsValues.getCompanyId());
+
+			return client.target(
+				uriBuilder.uri(
+					"http://" + company.getVirtualHostname() + ":8080"));
+		}
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
+		}
 	}
 
 	protected Invocation.Builder authorize(
@@ -661,24 +676,30 @@ public abstract class BaseClientTestCase {
 		return parseJsonField(response, "access_token");
 	}
 
+	protected void revokeOAuth2AuthorizationByAccessToken(String token)
+		throws PortalException {
+
+		_oAuth2AuthorizationLocalService.deleteOAuth2Authorization(
+			_oAuth2AuthorizationLocalService.
+				getOAuth2AuthorizationByAccessTokenContent(token));
+	}
+
 	protected OAuth2Authorization updateOAuth2Authorization(
 		OAuth2Authorization oAuth2Authorization) {
 
-		OAuth2AuthorizationLocalService oAuth2AuthorizationLocalService =
-			_bundleContext.getService(
-				_bundleContext.getServiceReference(
-					OAuth2AuthorizationLocalService.class));
-
-		return oAuth2AuthorizationLocalService.updateOAuth2Authorization(
+		return _oAuth2AuthorizationLocalService.updateOAuth2Authorization(
 			oAuth2Authorization);
 	}
 
 	private static Set<String> _originalRestrictedHeaderSet;
 	private static final Pattern _pAuthTokenPattern = Pattern.compile(
-		"Liferay.authToken\\s*=\\s*(['\"])(((?!\\1).)*)\\1;");
+		"authToken:\\s*(['\"])(((?!\\1).)*)\\1,");
 	private static Set<String> _restrictedHeaderSet;
 
 	private BundleActivator _bundleActivator;
 	private BundleContext _bundleContext;
+
+	@Inject
+	private OAuth2AuthorizationLocalService _oAuth2AuthorizationLocalService;
 
 }

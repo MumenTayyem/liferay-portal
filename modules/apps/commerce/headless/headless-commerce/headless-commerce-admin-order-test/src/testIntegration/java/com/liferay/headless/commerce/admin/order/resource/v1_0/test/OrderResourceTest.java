@@ -47,7 +47,6 @@ import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
-import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.AddressLocalService;
@@ -57,6 +56,7 @@ import com.liferay.portal.kernel.service.RegionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
@@ -68,6 +68,8 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.odata.entity.EntityField;
 import com.liferay.portal.test.rule.Inject;
+import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
 import java.io.Serializable;
 
@@ -78,10 +80,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Ignore;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -94,6 +97,13 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class OrderResourceTest extends BaseOrderResourceTestCase {
 
+	@ClassRule
+	@Rule
+	public static final AggregateTestRule aggregateTestRule =
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
+
 	@Before
 	@Override
 	public void setUp() throws Exception {
@@ -101,16 +111,13 @@ public class OrderResourceTest extends BaseOrderResourceTestCase {
 
 		_user = UserTestUtil.addUser(testCompany);
 
-		_setUpPermissionThreadLocal();
-		_setUpPrincipalThreadLocal();
-
 		_serviceContext = ServiceContextTestUtil.getServiceContext(
 			testCompany.getCompanyId(), testGroup.getGroupId(),
 			_user.getUserId());
 
 		_accountEntry = _accountEntryLocalService.addAccountEntry(
-			_user.getUserId(), 0, RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), null,
+			StringPool.BLANK, _user.getUserId(), 0,
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(), null,
 			RandomTestUtil.randomString() + "@liferay.com", null, null,
 			"business", 1, _serviceContext);
 
@@ -137,12 +144,12 @@ public class OrderResourceTest extends BaseOrderResourceTestCase {
 		_orderAddress = _addressLocalService.addAddress(
 			RandomTestUtil.randomString(), _user.getUserId(),
 			AccountEntry.class.getName(), _accountEntry.getAccountEntryId(),
+			_country.getCountryId(), 0, _region.getRegionId(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(), false,
+			RandomTestUtil.randomString(), true, RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(), null,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), _region.getRegionId(),
-			_country.getCountryId(), 0, false, true,
-			RandomTestUtil.randomString(), _serviceContext);
+			_serviceContext);
 
 		DateConfig displayDateConfig = DateConfig.toDisplayDateConfig(
 			RandomTestUtil.nextDate(), _user.getTimeZone());
@@ -164,15 +171,6 @@ public class OrderResourceTest extends BaseOrderResourceTestCase {
 				RandomTestUtil.randomString(), RandomTestUtil.nextDouble(),
 				RandomTestUtil.randomString(), StringPool.BLANK,
 				_serviceContext);
-	}
-
-	@After
-	@Override
-	public void tearDown() throws Exception {
-		super.tearDown();
-
-		PermissionThreadLocal.setPermissionChecker(_originalPermissionChecker);
-		PrincipalThreadLocal.setName(_originalName);
 	}
 
 	@Ignore
@@ -530,20 +528,6 @@ public class OrderResourceTest extends BaseOrderResourceTestCase {
 		return order;
 	}
 
-	private void _setUpPermissionThreadLocal() {
-		_originalPermissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
-
-		PermissionThreadLocal.setPermissionChecker(
-			PermissionCheckerFactoryUtil.create(_user));
-	}
-
-	private void _setUpPrincipalThreadLocal() {
-		_originalName = PrincipalThreadLocal.getName();
-
-		PrincipalThreadLocal.setName(_user.getUserId());
-	}
-
 	private void _testPatchOrderByExternalReferenceCodeWithMoreExternalReferenceCodes()
 		throws Exception {
 
@@ -554,12 +538,12 @@ public class OrderResourceTest extends BaseOrderResourceTestCase {
 		Address randomAddress = _addressLocalService.addAddress(
 			RandomTestUtil.randomString(), _user.getUserId(),
 			AccountEntry.class.getName(), _accountEntry.getAccountEntryId(),
+			_country.getCountryId(), 0, _region.getRegionId(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(), false,
+			RandomTestUtil.randomString(), true, RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(), null,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), _region.getRegionId(),
-			_country.getCountryId(), 0, false, true,
-			RandomTestUtil.randomString(), _serviceContext);
+			_serviceContext);
 
 		randomPatchOrder.setBillingAddressExternalReferenceCode(
 			randomAddress.getExternalReferenceCode());
@@ -624,12 +608,12 @@ public class OrderResourceTest extends BaseOrderResourceTestCase {
 		Address randomAddress = _addressLocalService.addAddress(
 			RandomTestUtil.randomString(), _user.getUserId(),
 			AccountEntry.class.getName(), _accountEntry.getAccountEntryId(),
+			_country.getCountryId(), 0, _region.getRegionId(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(), false,
+			RandomTestUtil.randomString(), true, RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(), null,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), _region.getRegionId(),
-			_country.getCountryId(), 0, false, true,
-			RandomTestUtil.randomString(), _serviceContext);
+			_serviceContext);
 
 		randomPatchOrder.setBillingAddressExternalReferenceCode(
 			randomAddress.getExternalReferenceCode());
@@ -852,8 +836,6 @@ public class OrderResourceTest extends BaseOrderResourceTestCase {
 	private JSONFactory _jsonFactory;
 
 	private Address _orderAddress;
-	private String _originalName;
-	private PermissionChecker _originalPermissionChecker;
 	private Region _region;
 
 	@Inject

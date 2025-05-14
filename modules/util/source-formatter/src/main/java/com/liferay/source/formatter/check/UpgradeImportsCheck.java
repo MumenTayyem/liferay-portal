@@ -7,7 +7,6 @@ package com.liferay.source.formatter.check;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.source.formatter.JSPImportsFormatter;
 import com.liferay.source.formatter.parser.JavaClass;
@@ -43,6 +42,37 @@ public class UpgradeImportsCheck extends BaseFileCheck {
 		return _fixImports(fileName, content);
 	}
 
+	private static String _fixUtilClassReference(
+		String className, String newClassName, String content,
+		String variableRegex) {
+
+		if (className.endsWith("Util") || !newClassName.endsWith("Util")) {
+			return content;
+		}
+
+		content = content.replaceAll(variableRegex, newClassName);
+
+		String regex = StringBundler.concat(
+			"\\n?\\t@Reference\\s+\\w+\\s+", newClassName, "\\s+[_a-z]*\\w*",
+			newClassName, ";\\n?");
+
+		Pattern pattern = Pattern.compile(regex);
+
+		Matcher matcher = pattern.matcher(content);
+
+		return matcher.replaceAll("");
+	}
+
+	private static String _getImportName(String className) {
+		for (Map.Entry<String, String> entry : _importsMap.entrySet()) {
+			if (StringUtil.endsWith(entry.getValue(), className)) {
+				return entry.getValue();
+			}
+		}
+
+		return null;
+	}
+
 	private static List<String> _getImportNames(String fileName, String content)
 		throws Exception {
 
@@ -68,35 +98,98 @@ public class UpgradeImportsCheck extends BaseFileCheck {
 		return importNames;
 	}
 
+	private static boolean _isValidReplacement(
+			String content, String fileName, Matcher matcher,
+			String newClassName, String newClassNameVariableName,
+			String className)
+		throws Exception {
+
+		if (!StringUtil.equalsIgnoreCase(matcher.group(), newClassName) &&
+			!StringUtil.equals(matcher.group(), newClassNameVariableName) &&
+			!StringUtil.equalsIgnoreCase(
+				matcher.group(), "_" + newClassNameVariableName) &&
+			!StringUtil.equals(
+				matcher.group(), matcher.group(1) + newClassName)) {
+
+			List<String> importNames = _getImportNames(fileName, content);
+
+			String importName = _getImportName(
+				StringUtil.upperCaseFirstLetter(newClassName));
+
+			if ((fileName.endsWith("java") &&
+				 ((importName == null) || !content.contains(importName))) ||
+				importNames.stream(
+				).anyMatch(
+					name -> StringUtil.endsWith(
+						name, "." + StringUtil.upperCaseFirstLetter(className))
+				)) {
+
+				return false;
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
 	private static String _replaceVariables(
-		String content, Map<String, String> variablesMap) {
+			String content, Map<String, String> variablesMap, String fileName)
+		throws Exception {
 
 		if (variablesMap.isEmpty()) {
 			return content;
 		}
 
-		String newContent = StringUtil.replace(
-			content, ArrayUtil.toStringArray(variablesMap.keySet()),
-			ArrayUtil.toStringArray(variablesMap.values()), true);
+		JavaClass javaClass = null;
+
+		String newContent = content;
+
+		if (fileName.endsWith(".java")) {
+			javaClass = JavaClassParser.parseJavaClass(fileName, content);
+
+			newContent = javaClass.getContent();
+		}
 
 		for (Map.Entry<String, String> entry : variablesMap.entrySet()) {
+			String className = entry.getKey();
+
 			String regex = StringBundler.concat(
-				"\\b([_a-z]\\w*)", entry.getKey(), "\\b");
-
-			Pattern pattern = Pattern.compile(regex);
-
-			Matcher variableMatcher = pattern.matcher(newContent);
+				"(?<!\\w)(\\w*)", className, "(?!\\w)");
 
 			String newClassName = entry.getValue();
 
-			if (variableMatcher.find() &&
-				!StringUtil.equals(
-					variableMatcher.group(),
-					StringUtil.lowerCaseFirstLetter(newClassName))) {
-
-				newContent = newContent.replaceAll(
-					regex, variableMatcher.group(1) + newClassName);
+			if (newContent.contains("@Reference")) {
+				newContent = _fixUtilClassReference(
+					className, newClassName, newContent, regex);
 			}
+
+			Pattern pattern = Pattern.compile(regex);
+
+			Matcher matcher = pattern.matcher(newContent);
+
+			String newClassNameVariableName = StringUtil.lowerCaseFirstLetter(
+				newClassName);
+
+			while (matcher.find()) {
+				if (!_isValidReplacement(
+						content, fileName, matcher, newClassName,
+						newClassNameVariableName, className)) {
+
+					continue;
+				}
+
+				newContent = StringUtil.replaceFirst(
+					newContent, matcher.group(),
+					matcher.group(1) + newClassName, matcher.start());
+
+				matcher = pattern.matcher(newContent);
+			}
+		}
+
+		if (javaClass != null) {
+			return StringUtil.replace(
+				content, javaClass.getContent(), newContent);
 		}
 
 		return newContent;
@@ -105,10 +198,10 @@ public class UpgradeImportsCheck extends BaseFileCheck {
 	private synchronized String _fixImports(String fileName, String content)
 		throws Exception {
 
-		Map<String, String> importsMap = _getMap("imports.txt");
+		_importsMap = _getMap("imports.txt");
 
 		for (String importName : _getImportNames(fileName, content)) {
-			String newImportName = importsMap.get(importName);
+			String newImportName = _importsMap.get(importName);
 
 			if (newImportName == null) {
 				continue;
@@ -117,20 +210,8 @@ public class UpgradeImportsCheck extends BaseFileCheck {
 			content = StringUtil.replace(content, importName, newImportName);
 		}
 
-		Map<String, String> variablesMap = _getVariablesMap(importsMap);
-
-		if (fileName.endsWith(".java")) {
-			JavaClass javaClass = JavaClassParser.parseJavaClass(
-				fileName, content);
-
-			String newContent = javaClass.getContent();
-
-			return StringUtil.replace(
-				content, newContent,
-				_replaceVariables(newContent, variablesMap));
-		}
-
-		return _replaceVariables(content, variablesMap);
+		return _replaceVariables(
+			content, _getVariablesMap(_importsMap), fileName);
 	}
 
 	private Map<String, String> _getMap(String fileName) throws Exception {
@@ -173,6 +254,17 @@ public class UpgradeImportsCheck extends BaseFileCheck {
 
 			if (!className.equals(newClassName)) {
 				variablesMap.put(className, newClassName);
+
+				if (!className.endsWith("Util") &&
+					newClassName.endsWith("Util")) {
+
+					variablesMap.put(
+						StringUtil.lowerCaseFirstLetter(className),
+						newClassName);
+
+					continue;
+				}
+
 				variablesMap.put(
 					StringUtil.lowerCaseFirstLetter(className),
 					StringUtil.lowerCaseFirstLetter(newClassName));
@@ -184,5 +276,6 @@ public class UpgradeImportsCheck extends BaseFileCheck {
 
 	private static final Pattern _ftlImportNamePattern = Pattern.compile(
 		"(?:findService|staticUtil)[(\\[]\"([^\\s\"]+)\"[)\\]]");
+	private static Map<String, String> _importsMap;
 
 }

@@ -11,20 +11,20 @@ import {useMemo, useState} from 'react';
 import {useNavigate, useParams} from 'react-router-dom';
 import useSWR, {KeyedMutator} from 'swr';
 
-import {ReviewAndSubmitAppPage} from './AppCreationFlow/ReviewAndSubmitAppPage/ReviewAndSubmitAppPage';
-
-import './App.scss';
 import {useMarketplaceContext} from '../../../../context/MarketplaceContext';
-import {PRODUCT_WORKFLOW_STATUS_CODE} from '../../../../enums/Product';
+import {ProductWorkflowStatusCode} from '../../../../enums/Product';
 import i18n from '../../../../i18n';
 import {Liferay} from '../../../../liferay/liferay';
 import koroneikiOAuth2 from '../../../../services/oauth/Koroneiki';
-import HeadlessCommerceAdminCatalogImpl from '../../../../services/rest/HeadlessCommerceAdminCatalog';
+import HeadlessCommerceAdminCatalog from '../../../../services/rest/HeadlessCommerceAdminCatalog';
 import {
 	getProductVersionFromSpecifications,
 	getThumbnailByProductAttachment,
 	showAppImage,
 } from '../../../../utils/util';
+import {ReviewAndSubmitAppPage} from './AppCreationFlow/ReviewAndSubmitAppPage/ReviewAndSubmitAppPage';
+
+import './App.scss';
 
 type AppProps = {
 	isAdministratorDashboard?: boolean;
@@ -44,14 +44,13 @@ const AdministratorButtons: React.FC<AdministratorButtons> = ({
 	const [loading, setLoading] = useState(false);
 
 	const isDraft =
-		selectedApp.workflowStatusInfo.code ===
-		PRODUCT_WORKFLOW_STATUS_CODE.DRAFT;
+		selectedApp.workflowStatusInfo.code === ProductWorkflowStatusCode.DRAFT;
 
 	const onUpdateRequestStatus = async (
-		workflowStatus: PRODUCT_WORKFLOW_STATUS_CODE
+		workflowStatus: ProductWorkflowStatusCode
 	) => {
 		try {
-			await HeadlessCommerceAdminCatalogImpl.updateProductByExternalReferenceCode(
+			await HeadlessCommerceAdminCatalog.updateProductByExternalReferenceCode(
 				selectedApp.externalReferenceCode,
 				{workflowStatusInfo: workflowStatus}
 			);
@@ -108,7 +107,7 @@ const AdministratorButtons: React.FC<AdministratorButtons> = ({
 					displayType="primary"
 					onClick={() =>
 						onUpdateRequestStatus(
-							PRODUCT_WORKFLOW_STATUS_CODE.APPROVED
+							ProductWorkflowStatusCode.APPROVED
 						)
 					}
 				>
@@ -120,19 +119,17 @@ const AdministratorButtons: React.FC<AdministratorButtons> = ({
 };
 
 const App: React.FC<AppProps> = ({isAdministratorDashboard}) => {
-	const {appId} = useParams();
+	const {appId: productId} = useParams();
 	const {myUserAccount} = useMarketplaceContext();
 	const navigate = useNavigate();
-
-	const productId = Number(appId) + 1;
 
 	const {
 		data: selectedApp,
 		isLoading,
 		mutate,
 	} = useSWR(`/published-app/${productId}`, () =>
-		HeadlessCommerceAdminCatalogImpl.getProduct(
-			productId,
+		HeadlessCommerceAdminCatalog.getProduct(
+			productId as unknown as number,
 			new URLSearchParams({
 				nestedFields: 'attachments,images,productSpecifications',
 			})
@@ -240,13 +237,13 @@ const App: React.FC<AppProps> = ({isAdministratorDashboard}) => {
 				</div>
 
 				{isAdministratorDashboard &&
-					myUserAccount.roleBriefs.some(
+					myUserAccount?.roleBriefs.some(
 						({name}) => name === 'Administrator'
 					) && (
 						<div className="app-details-page-app-info-buttons-container">
 							<AdministratorButtons
 								mutate={mutate}
-								productId={productId}
+								productId={productId as unknown as number}
 								selectedApp={selectedApp}
 							/>
 						</div>

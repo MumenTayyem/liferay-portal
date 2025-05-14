@@ -1,6 +1,6 @@
 Bundle-Name: ${manifest.bundle.name}
 Bundle-SymbolicName: ${manifest.bundle.symbolic.name}
-Bundle-Version: 25.1.2
+Bundle-Version: 28.0.0
 Export-Package:\
 	com.liferay.portal.kernel.dao.db.test,\
 	com.liferay.portal.kernel.test,\
@@ -20,7 +20,6 @@ Export-Package:\
 	com.liferay.portlet.asset.service.persistence.test,\
 	com.liferay.portlet.passwordpoliciesadmin.util.test,\
 	com.liferay.portlet.test,\
-	com.liferay.portletmvc4spring.test.mock.web.portlet,\
 	\
 	junit.*,\
 	\
@@ -43,7 +42,6 @@ Include-Resource:\
 	@${project.dir}/../lib/development/osgi-service-cm.jar,\
 	@${project.dir}/../lib/development/osgi-service-component.jar,\
 	@${project.dir}/../lib/development/osgi-service-log.jar,\
-	@${project.dir}/../lib/development/portletmvc4spring-test.jar,\
 	@${project.dir}/../lib/development/reflections.jar,\
 	@${project.dir}/../lib/development/sling-commons-osgi.jar,\
 	@${project.dir}/../lib/development/sling-testing-osgi-mock-core.jar,\
@@ -54,6 +52,7 @@ Require-Capability:\
 	osgi.extender;\
 		filter:="(&(osgi.extender=osgi.configurator)(version>=1.0)(!(version>=2.0)))"
 -include ~../common.bnd
+-fixupmessages.directory: Classes found in the wrong directory: ...;is:=ignore
 -removeheaders:\
 	Bnd-LastModified,\
 	DSTAMP,\

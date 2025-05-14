@@ -29,11 +29,9 @@ import com.liferay.headless.common.spi.odata.entity.EntityFieldsUtil;
 import com.liferay.headless.common.spi.resource.SPIRatingResource;
 import com.liferay.headless.common.spi.service.context.ServiceContextBuilder;
 import com.liferay.headless.delivery.dto.v1_0.ContentField;
-import com.liferay.headless.delivery.dto.v1_0.CustomField;
 import com.liferay.headless.delivery.dto.v1_0.Document;
 import com.liferay.headless.delivery.dto.v1_0.DocumentType;
 import com.liferay.headless.delivery.dto.v1_0.Rating;
-import com.liferay.headless.delivery.dto.v1_0.util.CustomFieldsUtil;
 import com.liferay.headless.delivery.dto.v1_0.util.DDMFormValuesUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.DisplayPageRendererUtil;
 import com.liferay.headless.delivery.internal.dto.v1_0.util.RatingUtil;
@@ -83,6 +81,8 @@ import com.liferay.portal.search.query.Queries;
 import com.liferay.portal.search.searcher.SearchRequestBuilder;
 import com.liferay.portal.search.sort.Sorts;
 import com.liferay.portal.vulcan.aggregation.Aggregation;
+import com.liferay.portal.vulcan.custom.field.CustomField;
+import com.liferay.portal.vulcan.custom.field.CustomFieldsUtil;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
@@ -574,6 +574,7 @@ public class DocumentResourceImpl extends BaseDocumentResourceImpl {
 
 		String fileName = null;
 		String title = null;
+		String urlTitle = null;
 		String description = null;
 		Date displayDate = null;
 		Date expirationDate = null;
@@ -581,6 +582,7 @@ public class DocumentResourceImpl extends BaseDocumentResourceImpl {
 		if (document != null) {
 			fileName = document.getFileName();
 			title = document.getTitle();
+			urlTitle = document.getFriendlyUrlPath();
 			description = document.getDescription();
 			displayDate = document.getDatePublished();
 			expirationDate = document.getDateExpired();
@@ -612,7 +614,7 @@ public class DocumentResourceImpl extends BaseDocumentResourceImpl {
 		return _toDocument(
 			_dlAppService.addFileEntry(
 				externalReferenceCode, repositoryId, documentFolderId, fileName,
-				contentType, title, null, description, null,
+				contentType, title, urlTitle, description, null,
 				binaryFile.getInputStream(), binaryFile.getSize(), displayDate,
 				expirationDate, null,
 				_createServiceContext(
@@ -1019,6 +1021,7 @@ public class DocumentResourceImpl extends BaseDocumentResourceImpl {
 
 		String fileName = null;
 		String title = null;
+		String urlTitle = null;
 		String description = null;
 		Date displayDate = null;
 		Date expirationDate = null;
@@ -1026,6 +1029,7 @@ public class DocumentResourceImpl extends BaseDocumentResourceImpl {
 		if (document != null) {
 			fileName = document.getFileName();
 			title = document.getTitle();
+			urlTitle = document.getFriendlyUrlPath();
 			description = document.getDescription();
 			displayDate = document.getDatePublished();
 			expirationDate = document.getDateExpired();
@@ -1042,7 +1046,7 @@ public class DocumentResourceImpl extends BaseDocumentResourceImpl {
 		return _toDocument(
 			_dlAppService.updateFileEntry(
 				fileEntry.getFileEntryId(), fileName,
-				binaryFile.getContentType(), title, null, description, null,
+				binaryFile.getContentType(), title, urlTitle, description, null,
 				DLVersionNumberIncrease.AUTOMATIC, binaryFile.getInputStream(),
 				binaryFile.getSize(), displayDate, expirationDate,
 				fileEntry.getReviewDate(),

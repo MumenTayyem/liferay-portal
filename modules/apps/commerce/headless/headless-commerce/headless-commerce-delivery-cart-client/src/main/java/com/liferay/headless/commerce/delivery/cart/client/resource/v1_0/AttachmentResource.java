@@ -35,22 +35,11 @@ public interface AttachmentResource {
 		return new Builder();
 	}
 
-	public Page<Attachment> getCartByExternalReferenceCodeAttachmentsPage(
-			String externalReferenceCode, Pagination pagination)
+	public void deleteCartAttachment(Long attachmentId, Long cartId)
 		throws Exception;
 
-	public HttpInvoker.HttpResponse
-			getCartByExternalReferenceCodeAttachmentsPageHttpResponse(
-				String externalReferenceCode, Pagination pagination)
-		throws Exception;
-
-	public Attachment postCartByExternalReferenceCodeAttachmentByBase64(
-			String externalReferenceCode, AttachmentBase64 attachmentBase64)
-		throws Exception;
-
-	public HttpInvoker.HttpResponse
-			postCartByExternalReferenceCodeAttachmentByBase64HttpResponse(
-				String externalReferenceCode, AttachmentBase64 attachmentBase64)
+	public HttpInvoker.HttpResponse deleteCartAttachmentHttpResponse(
+			Long attachmentId, Long cartId)
 		throws Exception;
 
 	public void
@@ -73,6 +62,23 @@ public interface AttachmentResource {
 			Long cartId, Pagination pagination)
 		throws Exception;
 
+	public Page<Attachment> getCartByExternalReferenceCodeAttachmentsPage(
+			String externalReferenceCode, Pagination pagination)
+		throws Exception;
+
+	public HttpInvoker.HttpResponse
+			getCartByExternalReferenceCodeAttachmentsPageHttpResponse(
+				String externalReferenceCode, Pagination pagination)
+		throws Exception;
+
+	public Attachment postCartAttachmentByBase64(
+			Long cartId, AttachmentBase64 attachmentBase64)
+		throws Exception;
+
+	public HttpInvoker.HttpResponse postCartAttachmentByBase64HttpResponse(
+			Long cartId, AttachmentBase64 attachmentBase64)
+		throws Exception;
+
 	public void postCartAttachmentsPageExportBatch(
 			Long cartId, String callbackURL, String contentType,
 			String fieldNames)
@@ -84,19 +90,13 @@ public interface AttachmentResource {
 				String fieldNames)
 		throws Exception;
 
-	public Attachment postCartAttachmentByBase64(
-			Long cartId, AttachmentBase64 attachmentBase64)
+	public Attachment postCartByExternalReferenceCodeAttachmentByBase64(
+			String externalReferenceCode, AttachmentBase64 attachmentBase64)
 		throws Exception;
 
-	public HttpInvoker.HttpResponse postCartAttachmentByBase64HttpResponse(
-			Long cartId, AttachmentBase64 attachmentBase64)
-		throws Exception;
-
-	public void deleteCartAttachment(Long attachmentId, Long cartId)
-		throws Exception;
-
-	public HttpInvoker.HttpResponse deleteCartAttachmentHttpResponse(
-			Long attachmentId, Long cartId)
+	public HttpInvoker.HttpResponse
+			postCartByExternalReferenceCodeAttachmentByBase64HttpResponse(
+				String externalReferenceCode, AttachmentBase64 attachmentBase64)
 		throws Exception;
 
 	public static class Builder {
@@ -197,8 +197,8 @@ public interface AttachmentResource {
 		private Map<String, String> _headers = new LinkedHashMap<>();
 		private String _host = "localhost";
 		private Locale _locale;
-		private String _login = "";
-		private String _password = "";
+		private String _login;
+		private String _password;
 		private Map<String, String> _parameters = new LinkedHashMap<>();
 		private int _port = 8080;
 		private String _scheme = "http";
@@ -207,13 +207,11 @@ public interface AttachmentResource {
 
 	public static class AttachmentResourceImpl implements AttachmentResource {
 
-		public Page<Attachment> getCartByExternalReferenceCodeAttachmentsPage(
-				String externalReferenceCode, Pagination pagination)
+		public void deleteCartAttachment(Long attachmentId, Long cartId)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse =
-				getCartByExternalReferenceCodeAttachmentsPageHttpResponse(
-					externalReferenceCode, pagination);
+				deleteCartAttachmentHttpResponse(attachmentId, cartId);
 
 			String content = httpResponse.getContent();
 
@@ -263,7 +261,7 @@ public interface AttachmentResource {
 			}
 
 			try {
-				return Page.of(content, AttachmentSerDes::toDTO);
+				return;
 			}
 			catch (Exception e) {
 				_logger.log(
@@ -274,9 +272,8 @@ public interface AttachmentResource {
 			}
 		}
 
-		public HttpInvoker.HttpResponse
-				getCartByExternalReferenceCodeAttachmentsPageHttpResponse(
-					String externalReferenceCode, Pagination pagination)
+		public HttpInvoker.HttpResponse deleteCartAttachmentHttpResponse(
+				Long attachmentId, Long cartId)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -298,133 +295,20 @@ public interface AttachmentResource {
 				httpInvoker.parameter(entry.getKey(), entry.getValue());
 			}
 
-			httpInvoker.httpMethod(HttpInvoker.HttpMethod.GET);
-
-			if (pagination != null) {
-				httpInvoker.parameter(
-					"page", String.valueOf(pagination.getPage()));
-				httpInvoker.parameter(
-					"pageSize", String.valueOf(pagination.getPageSize()));
-			}
+			httpInvoker.httpMethod(HttpInvoker.HttpMethod.DELETE);
 
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
 					_builder._port + _builder._contextPath +
-						"/o/headless-commerce-delivery-cart/v1.0/carts/by-externalReferenceCode/{externalReferenceCode}/attachments");
+						"/o/headless-commerce-delivery-cart/v1.0/carts/{cartId}/attachments/{attachmentId}");
 
-			httpInvoker.path("externalReferenceCode", externalReferenceCode);
+			httpInvoker.path("attachmentId", attachmentId);
+			httpInvoker.path("cartId", cartId);
 
-			httpInvoker.userNameAndPassword(
-				_builder._login + ":" + _builder._password);
-
-			return httpInvoker.invoke();
-		}
-
-		public Attachment postCartByExternalReferenceCodeAttachmentByBase64(
-				String externalReferenceCode, AttachmentBase64 attachmentBase64)
-			throws Exception {
-
-			HttpInvoker.HttpResponse httpResponse =
-				postCartByExternalReferenceCodeAttachmentByBase64HttpResponse(
-					externalReferenceCode, attachmentBase64);
-
-			String content = httpResponse.getContent();
-
-			if ((httpResponse.getStatusCode() / 100) != 2) {
-				_logger.log(
-					Level.WARNING,
-					"Unable to process HTTP response content: " + content);
-				_logger.log(
-					Level.WARNING,
-					"HTTP response message: " + httpResponse.getMessage());
-				_logger.log(
-					Level.WARNING,
-					"HTTP response status code: " +
-						httpResponse.getStatusCode());
-
-				Problem.ProblemException problemException = null;
-
-				if (Objects.equals(
-						httpResponse.getContentType(), "application/json")) {
-
-					problemException = new Problem.ProblemException(
-						Problem.toDTO(content));
-				}
-				else {
-					_logger.log(
-						Level.WARNING,
-						"Unable to process content type: " +
-							httpResponse.getContentType());
-
-					Problem problem = new Problem();
-
-					problem.setStatus(
-						String.valueOf(httpResponse.getStatusCode()));
-
-					problemException = new Problem.ProblemException(problem);
-				}
-
-				throw problemException;
+			if ((_builder._login != null) && (_builder._password != null)) {
+				httpInvoker.userNameAndPassword(
+					_builder._login + ":" + _builder._password);
 			}
-			else {
-				_logger.fine("HTTP response content: " + content);
-				_logger.fine(
-					"HTTP response message: " + httpResponse.getMessage());
-				_logger.fine(
-					"HTTP response status code: " +
-						httpResponse.getStatusCode());
-			}
-
-			try {
-				return AttachmentSerDes.toDTO(content);
-			}
-			catch (Exception e) {
-				_logger.log(
-					Level.WARNING,
-					"Unable to process HTTP response: " + content, e);
-
-				throw new Problem.ProblemException(Problem.toDTO(content));
-			}
-		}
-
-		public HttpInvoker.HttpResponse
-				postCartByExternalReferenceCodeAttachmentByBase64HttpResponse(
-					String externalReferenceCode,
-					AttachmentBase64 attachmentBase64)
-			throws Exception {
-
-			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
-
-			httpInvoker.body(attachmentBase64.toString(), "application/json");
-
-			if (_builder._locale != null) {
-				httpInvoker.header(
-					"Accept-Language", _builder._locale.toLanguageTag());
-			}
-
-			for (Map.Entry<String, String> entry :
-					_builder._headers.entrySet()) {
-
-				httpInvoker.header(entry.getKey(), entry.getValue());
-			}
-
-			for (Map.Entry<String, String> entry :
-					_builder._parameters.entrySet()) {
-
-				httpInvoker.parameter(entry.getKey(), entry.getValue());
-			}
-
-			httpInvoker.httpMethod(HttpInvoker.HttpMethod.POST);
-
-			httpInvoker.path(
-				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port + _builder._contextPath +
-						"/o/headless-commerce-delivery-cart/v1.0/carts/by-externalReferenceCode/{externalReferenceCode}/attachments/by-base64");
-
-			httpInvoker.path("externalReferenceCode", externalReferenceCode);
-
-			httpInvoker.userNameAndPassword(
-				_builder._login + ":" + _builder._password);
 
 			return httpInvoker.invoke();
 		}
@@ -535,8 +419,10 @@ public interface AttachmentResource {
 				attachmentExternalReferenceCode);
 			httpInvoker.path("externalReferenceCode", externalReferenceCode);
 
-			httpInvoker.userNameAndPassword(
-				_builder._login + ":" + _builder._password);
+			if ((_builder._login != null) && (_builder._password != null)) {
+				httpInvoker.userNameAndPassword(
+					_builder._login + ":" + _builder._password);
+			}
 
 			return httpInvoker.invoke();
 		}
@@ -646,8 +532,234 @@ public interface AttachmentResource {
 
 			httpInvoker.path("cartId", cartId);
 
-			httpInvoker.userNameAndPassword(
-				_builder._login + ":" + _builder._password);
+			if ((_builder._login != null) && (_builder._password != null)) {
+				httpInvoker.userNameAndPassword(
+					_builder._login + ":" + _builder._password);
+			}
+
+			return httpInvoker.invoke();
+		}
+
+		public Page<Attachment> getCartByExternalReferenceCodeAttachmentsPage(
+				String externalReferenceCode, Pagination pagination)
+			throws Exception {
+
+			HttpInvoker.HttpResponse httpResponse =
+				getCartByExternalReferenceCodeAttachmentsPageHttpResponse(
+					externalReferenceCode, pagination);
+
+			String content = httpResponse.getContent();
+
+			if ((httpResponse.getStatusCode() / 100) != 2) {
+				_logger.log(
+					Level.WARNING,
+					"Unable to process HTTP response content: " + content);
+				_logger.log(
+					Level.WARNING,
+					"HTTP response message: " + httpResponse.getMessage());
+				_logger.log(
+					Level.WARNING,
+					"HTTP response status code: " +
+						httpResponse.getStatusCode());
+
+				Problem.ProblemException problemException = null;
+
+				if (Objects.equals(
+						httpResponse.getContentType(), "application/json")) {
+
+					problemException = new Problem.ProblemException(
+						Problem.toDTO(content));
+				}
+				else {
+					_logger.log(
+						Level.WARNING,
+						"Unable to process content type: " +
+							httpResponse.getContentType());
+
+					Problem problem = new Problem();
+
+					problem.setStatus(
+						String.valueOf(httpResponse.getStatusCode()));
+
+					problemException = new Problem.ProblemException(problem);
+				}
+
+				throw problemException;
+			}
+			else {
+				_logger.fine("HTTP response content: " + content);
+				_logger.fine(
+					"HTTP response message: " + httpResponse.getMessage());
+				_logger.fine(
+					"HTTP response status code: " +
+						httpResponse.getStatusCode());
+			}
+
+			try {
+				return Page.of(content, AttachmentSerDes::toDTO);
+			}
+			catch (Exception e) {
+				_logger.log(
+					Level.WARNING,
+					"Unable to process HTTP response: " + content, e);
+
+				throw new Problem.ProblemException(Problem.toDTO(content));
+			}
+		}
+
+		public HttpInvoker.HttpResponse
+				getCartByExternalReferenceCodeAttachmentsPageHttpResponse(
+					String externalReferenceCode, Pagination pagination)
+			throws Exception {
+
+			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
+
+			if (_builder._locale != null) {
+				httpInvoker.header(
+					"Accept-Language", _builder._locale.toLanguageTag());
+			}
+
+			for (Map.Entry<String, String> entry :
+					_builder._headers.entrySet()) {
+
+				httpInvoker.header(entry.getKey(), entry.getValue());
+			}
+
+			for (Map.Entry<String, String> entry :
+					_builder._parameters.entrySet()) {
+
+				httpInvoker.parameter(entry.getKey(), entry.getValue());
+			}
+
+			httpInvoker.httpMethod(HttpInvoker.HttpMethod.GET);
+
+			if (pagination != null) {
+				httpInvoker.parameter(
+					"page", String.valueOf(pagination.getPage()));
+				httpInvoker.parameter(
+					"pageSize", String.valueOf(pagination.getPageSize()));
+			}
+
+			httpInvoker.path(
+				_builder._scheme + "://" + _builder._host + ":" +
+					_builder._port + _builder._contextPath +
+						"/o/headless-commerce-delivery-cart/v1.0/carts/by-externalReferenceCode/{externalReferenceCode}/attachments");
+
+			httpInvoker.path("externalReferenceCode", externalReferenceCode);
+
+			if ((_builder._login != null) && (_builder._password != null)) {
+				httpInvoker.userNameAndPassword(
+					_builder._login + ":" + _builder._password);
+			}
+
+			return httpInvoker.invoke();
+		}
+
+		public Attachment postCartAttachmentByBase64(
+				Long cartId, AttachmentBase64 attachmentBase64)
+			throws Exception {
+
+			HttpInvoker.HttpResponse httpResponse =
+				postCartAttachmentByBase64HttpResponse(
+					cartId, attachmentBase64);
+
+			String content = httpResponse.getContent();
+
+			if ((httpResponse.getStatusCode() / 100) != 2) {
+				_logger.log(
+					Level.WARNING,
+					"Unable to process HTTP response content: " + content);
+				_logger.log(
+					Level.WARNING,
+					"HTTP response message: " + httpResponse.getMessage());
+				_logger.log(
+					Level.WARNING,
+					"HTTP response status code: " +
+						httpResponse.getStatusCode());
+
+				Problem.ProblemException problemException = null;
+
+				if (Objects.equals(
+						httpResponse.getContentType(), "application/json")) {
+
+					problemException = new Problem.ProblemException(
+						Problem.toDTO(content));
+				}
+				else {
+					_logger.log(
+						Level.WARNING,
+						"Unable to process content type: " +
+							httpResponse.getContentType());
+
+					Problem problem = new Problem();
+
+					problem.setStatus(
+						String.valueOf(httpResponse.getStatusCode()));
+
+					problemException = new Problem.ProblemException(problem);
+				}
+
+				throw problemException;
+			}
+			else {
+				_logger.fine("HTTP response content: " + content);
+				_logger.fine(
+					"HTTP response message: " + httpResponse.getMessage());
+				_logger.fine(
+					"HTTP response status code: " +
+						httpResponse.getStatusCode());
+			}
+
+			try {
+				return AttachmentSerDes.toDTO(content);
+			}
+			catch (Exception e) {
+				_logger.log(
+					Level.WARNING,
+					"Unable to process HTTP response: " + content, e);
+
+				throw new Problem.ProblemException(Problem.toDTO(content));
+			}
+		}
+
+		public HttpInvoker.HttpResponse postCartAttachmentByBase64HttpResponse(
+				Long cartId, AttachmentBase64 attachmentBase64)
+			throws Exception {
+
+			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
+
+			httpInvoker.body(attachmentBase64.toString(), "application/json");
+
+			if (_builder._locale != null) {
+				httpInvoker.header(
+					"Accept-Language", _builder._locale.toLanguageTag());
+			}
+
+			for (Map.Entry<String, String> entry :
+					_builder._headers.entrySet()) {
+
+				httpInvoker.header(entry.getKey(), entry.getValue());
+			}
+
+			for (Map.Entry<String, String> entry :
+					_builder._parameters.entrySet()) {
+
+				httpInvoker.parameter(entry.getKey(), entry.getValue());
+			}
+
+			httpInvoker.httpMethod(HttpInvoker.HttpMethod.POST);
+
+			httpInvoker.path(
+				_builder._scheme + "://" + _builder._host + ":" +
+					_builder._port + _builder._contextPath +
+						"/o/headless-commerce-delivery-cart/v1.0/carts/{cartId}/attachments/by-base64");
+
+			httpInvoker.path("cartId", cartId);
+
+			if ((_builder._login != null) && (_builder._password != null)) {
+				httpInvoker.userNameAndPassword(
+					_builder._login + ":" + _builder._password);
+			}
 
 			return httpInvoker.invoke();
 		}
@@ -759,19 +871,21 @@ public interface AttachmentResource {
 
 			httpInvoker.path("cartId", cartId);
 
-			httpInvoker.userNameAndPassword(
-				_builder._login + ":" + _builder._password);
+			if ((_builder._login != null) && (_builder._password != null)) {
+				httpInvoker.userNameAndPassword(
+					_builder._login + ":" + _builder._password);
+			}
 
 			return httpInvoker.invoke();
 		}
 
-		public Attachment postCartAttachmentByBase64(
-				Long cartId, AttachmentBase64 attachmentBase64)
+		public Attachment postCartByExternalReferenceCodeAttachmentByBase64(
+				String externalReferenceCode, AttachmentBase64 attachmentBase64)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse =
-				postCartAttachmentByBase64HttpResponse(
-					cartId, attachmentBase64);
+				postCartByExternalReferenceCodeAttachmentByBase64HttpResponse(
+					externalReferenceCode, attachmentBase64);
 
 			String content = httpResponse.getContent();
 
@@ -832,8 +946,10 @@ public interface AttachmentResource {
 			}
 		}
 
-		public HttpInvoker.HttpResponse postCartAttachmentByBase64HttpResponse(
-				Long cartId, AttachmentBase64 attachmentBase64)
+		public HttpInvoker.HttpResponse
+				postCartByExternalReferenceCodeAttachmentByBase64HttpResponse(
+					String externalReferenceCode,
+					AttachmentBase64 attachmentBase64)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -862,116 +978,14 @@ public interface AttachmentResource {
 			httpInvoker.path(
 				_builder._scheme + "://" + _builder._host + ":" +
 					_builder._port + _builder._contextPath +
-						"/o/headless-commerce-delivery-cart/v1.0/carts/{cartId}/attachments/by-base64");
+						"/o/headless-commerce-delivery-cart/v1.0/carts/by-externalReferenceCode/{externalReferenceCode}/attachments/by-base64");
 
-			httpInvoker.path("cartId", cartId);
+			httpInvoker.path("externalReferenceCode", externalReferenceCode);
 
-			httpInvoker.userNameAndPassword(
-				_builder._login + ":" + _builder._password);
-
-			return httpInvoker.invoke();
-		}
-
-		public void deleteCartAttachment(Long attachmentId, Long cartId)
-			throws Exception {
-
-			HttpInvoker.HttpResponse httpResponse =
-				deleteCartAttachmentHttpResponse(attachmentId, cartId);
-
-			String content = httpResponse.getContent();
-
-			if ((httpResponse.getStatusCode() / 100) != 2) {
-				_logger.log(
-					Level.WARNING,
-					"Unable to process HTTP response content: " + content);
-				_logger.log(
-					Level.WARNING,
-					"HTTP response message: " + httpResponse.getMessage());
-				_logger.log(
-					Level.WARNING,
-					"HTTP response status code: " +
-						httpResponse.getStatusCode());
-
-				Problem.ProblemException problemException = null;
-
-				if (Objects.equals(
-						httpResponse.getContentType(), "application/json")) {
-
-					problemException = new Problem.ProblemException(
-						Problem.toDTO(content));
-				}
-				else {
-					_logger.log(
-						Level.WARNING,
-						"Unable to process content type: " +
-							httpResponse.getContentType());
-
-					Problem problem = new Problem();
-
-					problem.setStatus(
-						String.valueOf(httpResponse.getStatusCode()));
-
-					problemException = new Problem.ProblemException(problem);
-				}
-
-				throw problemException;
+			if ((_builder._login != null) && (_builder._password != null)) {
+				httpInvoker.userNameAndPassword(
+					_builder._login + ":" + _builder._password);
 			}
-			else {
-				_logger.fine("HTTP response content: " + content);
-				_logger.fine(
-					"HTTP response message: " + httpResponse.getMessage());
-				_logger.fine(
-					"HTTP response status code: " +
-						httpResponse.getStatusCode());
-			}
-
-			try {
-				return;
-			}
-			catch (Exception e) {
-				_logger.log(
-					Level.WARNING,
-					"Unable to process HTTP response: " + content, e);
-
-				throw new Problem.ProblemException(Problem.toDTO(content));
-			}
-		}
-
-		public HttpInvoker.HttpResponse deleteCartAttachmentHttpResponse(
-				Long attachmentId, Long cartId)
-			throws Exception {
-
-			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
-
-			if (_builder._locale != null) {
-				httpInvoker.header(
-					"Accept-Language", _builder._locale.toLanguageTag());
-			}
-
-			for (Map.Entry<String, String> entry :
-					_builder._headers.entrySet()) {
-
-				httpInvoker.header(entry.getKey(), entry.getValue());
-			}
-
-			for (Map.Entry<String, String> entry :
-					_builder._parameters.entrySet()) {
-
-				httpInvoker.parameter(entry.getKey(), entry.getValue());
-			}
-
-			httpInvoker.httpMethod(HttpInvoker.HttpMethod.DELETE);
-
-			httpInvoker.path(
-				_builder._scheme + "://" + _builder._host + ":" +
-					_builder._port + _builder._contextPath +
-						"/o/headless-commerce-delivery-cart/v1.0/carts/{cartId}/attachments/{attachmentId}");
-
-			httpInvoker.path("attachmentId", attachmentId);
-			httpInvoker.path("cartId", cartId);
-
-			httpInvoker.userNameAndPassword(
-				_builder._login + ":" + _builder._password);
 
 			return httpInvoker.invoke();
 		}

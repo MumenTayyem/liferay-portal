@@ -4,15 +4,12 @@
  */
 
 import {API} from '@liferay/object-js-components-web';
-import {createResourceURL, openModal, sub} from 'frontend-js-web';
+import {openModal} from 'frontend-js-components-web';
+import {createResourceURL, sub} from 'frontend-js-web';
 import {SetStateAction} from 'react';
 
 import {exportObjectEntity} from '../../utils/exportObjectEntity';
 import {formatActionURL} from '../../utils/fds';
-import {
-	firstLetterUppercase,
-	removeAllSpecialCharacters,
-} from '../../utils/string';
 import {TYPES} from '../ModelBuilder/ModelBuilderContext/typesEnum';
 import {DropDownItems, TAction} from '../ModelBuilder/types';
 import {ModalImportProperties} from './ViewObjectDefinitions';
@@ -26,12 +23,19 @@ type DeleteObjectDefinitionProps = {
 	onAfterDeleteObjectDefinition?: () => void;
 };
 
+export type ObjectDefinitionInfo = {
+	isWorkflowSupported: boolean;
+	tableName: string;
+	workflowDefinitionTitle: string;
+};
+
 type ObjectDefinitionNodeActionsProps = {
 	baseResourceURL: string;
 	dispatch: React.Dispatch<TAction>;
 	hasObjectDefinitionDeleteResourcePermission: boolean;
 	hasObjectDefinitionManagePermissionsResourcePermission: boolean;
 	hasObjectDefinitionUpdateResourcePermission: boolean;
+	isTreeStructure: boolean;
 	objectDefinitionId: number;
 	objectDefinitionName: string;
 	objectDefinitionPermissionsURL: string;
@@ -163,7 +167,7 @@ export async function deleteRelationship(
 	}
 }
 
-export async function getDbTableName({
+export async function getObjectDefinitionInfo({
 	baseResourceURL,
 	objectDefinitionId,
 }: {
@@ -175,11 +179,10 @@ export async function getDbTableName({
 		p_p_resource_id: '/object_definitions/get_object_definition_info',
 	}).href;
 
-	const objectDefinitionInfoResponse = await API.fetchJSON<{
-		tableName: string;
-	}>(objectDefinitionInfoURL);
+	const objectDefinitionInfoResponse =
+		await API.fetchJSON<ObjectDefinitionInfo>(objectDefinitionInfoURL);
 
-	return objectDefinitionInfoResponse.tableName;
+	return objectDefinitionInfoResponse;
 }
 
 export function getObjectDefinitionNodeActions({
@@ -188,6 +191,7 @@ export function getObjectDefinitionNodeActions({
 	hasObjectDefinitionDeleteResourcePermission,
 	hasObjectDefinitionManagePermissionsResourcePermission,
 	hasObjectDefinitionUpdateResourcePermission,
+	isTreeStructure,
 	objectDefinitionId,
 	objectDefinitionName,
 	objectDefinitionPermissionsURL,
@@ -310,27 +314,41 @@ export function getObjectDefinitionNodeActions({
 				Liferay.Language.get('object')
 			),
 			onClick: async () => {
-				const deletedObjectDefinition = await deleteObjectDefinition({
-					baseResourceURL,
-					objectDefinitionId,
-					objectDefinitionName,
-				});
-
-				if (deletedObjectDefinition) {
-					dispatch({
-						payload: {
-							deletedObjectDefinition,
-						},
-						type: TYPES.SET_DELETE_OBJECT_DEFINITION,
-					});
+				if (isTreeStructure) {
 					dispatch({
 						payload: {
 							updatedModelBuilderModals: {
-								deleteObjectDefinition: true,
+								objectDefinitionOnRootModelDeletionNotAllowed:
+									true,
 							},
 						},
 						type: TYPES.UPDATE_VISIBILITY_MODEL_BUILDER_MODALS,
 					});
+				}
+				else {
+					const deletedObjectDefinition =
+						await deleteObjectDefinition({
+							baseResourceURL,
+							objectDefinitionId,
+							objectDefinitionName,
+						});
+
+					if (deletedObjectDefinition) {
+						dispatch({
+							payload: {
+								deletedObjectDefinition,
+							},
+							type: TYPES.SET_DELETE_OBJECT_DEFINITION,
+						});
+						dispatch({
+							payload: {
+								updatedModelBuilderModals: {
+									deleteObjectDefinition: true,
+								},
+							},
+							type: TYPES.UPDATE_VISIBILITY_MODEL_BUILDER_MODALS,
+						});
+					}
 				}
 			},
 			symbolLeft: 'trash',
@@ -516,15 +534,16 @@ export async function getUpdatedModelBuilderStructurePayload(
 										objectDefinition.externalReferenceCode
 								);
 
-							const dbTableName = await getDbTableName({
-								baseResourceURL,
-								objectDefinitionId: objectDefinition.id,
-							});
+							const objectDefinitionInfo =
+								await getObjectDefinitionInfo({
+									baseResourceURL,
+									objectDefinitionId: objectDefinition.id,
+								});
 
 							if (objectFolderItem) {
 								objectFolderWithObjectDefinitions.push({
 									...objectDefinition,
-									dbTableName,
+									dbTableName: objectDefinitionInfo.tableName,
 									hasObjectDefinitionDeleteResourcePermission:
 										!!objectDefinition.actions.delete,
 									hasObjectDefinitionManagePermissionsResourcePermission:
@@ -590,14 +609,4 @@ export async function getUpdatedModelBuilderStructurePayload(
 		objectFolders: [],
 		selectedObjectFolderName: '',
 	};
-}
-
-export function normalizeName(str: string) {
-	const split = str.split(' ');
-	const capitalizeFirstLetters = split.map((str: string) =>
-		firstLetterUppercase(str)
-	);
-	const join = capitalizeFirstLetters.join('');
-
-	return removeAllSpecialCharacters(join);
 }

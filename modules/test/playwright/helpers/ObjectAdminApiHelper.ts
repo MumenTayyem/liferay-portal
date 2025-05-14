@@ -5,10 +5,10 @@
 
 import {
 	ObjectDefinition,
-	ObjectDefinitionApi,
+	ObjectDefinitionAPI,
 	ObjectField,
 	ObjectFolder,
-	ObjectFolderApi,
+	ObjectFolderAPI,
 } from '@liferay/object-admin-rest-client-js';
 
 import {getRandomInt} from '../utils/getRandomInt';
@@ -16,6 +16,7 @@ import {ApiHelpers} from './ApiHelpers';
 
 export interface CreateObjectField {
 	attachmentSource?: string;
+	formulaFieldOutput?: 'Decimal' | 'Integer';
 	listTypeDefinitionName?: string;
 	mandatory?: boolean;
 	objectDefinitionLabel?: string;
@@ -34,6 +35,12 @@ export class ObjectAdminApiHelper {
 		this.basePath = 'object-admin/v1.0';
 	}
 
+	async getAllObjectDefinitions() {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/object-definitions`
+		);
+	}
+
 	async postObjectDefinitionObjectFieldBatch(
 		objectDefinitionId: number,
 		objectFields: Partial<ObjectField>[]
@@ -45,6 +52,7 @@ export class ObjectAdminApiHelper {
 	}
 
 	async postRandomObjectDefinition({
+		className,
 		objectFields,
 		objectFolderExternalReferenceCode,
 		panelCategoryKey,
@@ -52,6 +60,7 @@ export class ObjectAdminApiHelper {
 		status,
 		titleObjectFieldName,
 	}: {
+		className?: string;
 		objectFields?: Partial<ObjectField>[];
 		objectFolderExternalReferenceCode?: string;
 		panelCategoryKey?: string;
@@ -64,6 +73,7 @@ export class ObjectAdminApiHelper {
 
 		const requestBody: ObjectDefinition = {
 			active: true,
+			className,
 			externalReferenceCode: objectDefinitionExternalReferenceCode,
 			label: {
 				en_US: objectDefinitionExternalReferenceCode,
@@ -71,8 +81,8 @@ export class ObjectAdminApiHelper {
 			name: objectDefinitionExternalReferenceCode,
 			objectFields: objectFields ?? [
 				{
-					DBType: ObjectField.DBTypeEnum.String,
-					businessType: ObjectField.BusinessTypeEnum.Text,
+					DBType: 'String',
+					businessType: 'Text',
 					externalReferenceCode: 'textField',
 					indexed: true,
 					indexedAsKeyword: false,
@@ -83,7 +93,7 @@ export class ObjectAdminApiHelper {
 					name: 'textField',
 					required: false,
 					system: false,
-					type: ObjectField.TypeEnum.String,
+					type: 'String',
 				},
 			],
 			objectFolderExternalReferenceCode,
@@ -101,11 +111,11 @@ export class ObjectAdminApiHelper {
 				objectFolderExternalReferenceCode;
 		}
 
-		const objectDefinitionApiClient =
-			await this.apiHelpers.buildRestClient(ObjectDefinitionApi);
+		const objectDefinitionAPIClient =
+			await this.apiHelpers.buildRestClient(ObjectDefinitionAPI);
 
 		return (
-			await objectDefinitionApiClient.postObjectDefinition(requestBody)
+			await objectDefinitionAPIClient.postObjectDefinition(requestBody)
 		).body;
 	}
 
@@ -113,11 +123,11 @@ export class ObjectAdminApiHelper {
 		const objectFolderExternalReferenceCode =
 			'objectFolder' + getRandomInt();
 
-		const objectFolderApiClient =
-			await this.apiHelpers.buildRestClient(ObjectFolderApi);
+		const objectFolderAPIClient =
+			await this.apiHelpers.buildRestClient(ObjectFolderAPI);
 
 		return (
-			await objectFolderApiClient.postObjectFolder({
+			await objectFolderAPIClient.postObjectFolder({
 				externalReferenceCode: objectFolderExternalReferenceCode,
 				label: {
 					en_US: objectFolderExternalReferenceCode,

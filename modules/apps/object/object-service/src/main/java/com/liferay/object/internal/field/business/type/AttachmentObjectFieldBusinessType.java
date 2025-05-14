@@ -74,6 +74,18 @@ public class AttachmentObjectFieldBusinessType
 	}
 
 	@Override
+	public Object getDisplayContextValue(
+			ObjectField objectField, long userId, Map<String, Object> values)
+		throws PortalException {
+
+		if (objectField.isLocalized()) {
+			return getLocalizedValues(objectField, userId, values);
+		}
+
+		return super.getDisplayContextValue(objectField, userId, values);
+	}
+
+	@Override
 	public String getLabel(Locale locale) {
 		return _language.get(locale, "attachment");
 	}
@@ -160,11 +172,6 @@ public class AttachmentObjectFieldBusinessType
 		throws PortalException {
 
 		return _getFileEntryId(super.getValue(objectField, userId, values));
-	}
-
-	@Override
-	public boolean isLocalizable() {
-		return true;
 	}
 
 	@Override

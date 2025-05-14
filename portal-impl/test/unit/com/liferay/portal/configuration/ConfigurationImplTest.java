@@ -8,7 +8,6 @@ package com.liferay.portal.configuration;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.configuration.Filter;
 import com.liferay.portal.kernel.io.unsync.UnsyncByteArrayInputStream;
-import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.test.rule.NewEnv;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.util.PropsFiles;
@@ -76,7 +75,7 @@ public class ConfigurationImplTest {
 		testResourceClassLoader.addPropertiesResource("testName", "");
 
 		ConfigurationImpl configurationImpl = new ConfigurationImpl(
-			testResourceClassLoader, "testName", CompanyConstants.SYSTEM, null);
+			testResourceClassLoader, "testName");
 
 		Assert.assertEquals("/liferay", configurationImpl.get("liferay.home"));
 		Assert.assertEquals(
@@ -103,8 +102,7 @@ public class ConfigurationImplTest {
 			new String[0], configurationImpl.getArray("include-and-override"));
 
 		configurationImpl = new ConfigurationImpl(
-			testResourceClassLoader, PropsFiles.PORTAL, CompanyConstants.SYSTEM,
-			null);
+			testResourceClassLoader, PropsFiles.PORTAL);
 
 		String[] includeAndOverrides = configurationImpl.getArray(
 			"include-and-override");
@@ -128,7 +126,7 @@ public class ConfigurationImplTest {
 			"testName", "namespace.key1=value1\nnamespace.key2=value2");
 
 		ConfigurationImpl configurationImpl = new ConfigurationImpl(
-			testResourceClassLoader, "testName", CompanyConstants.SYSTEM, null);
+			testResourceClassLoader, "testName");
 
 		Properties properties = configurationImpl.getProperties(
 			"namespace.", false);
@@ -155,8 +153,7 @@ public class ConfigurationImplTest {
 			ConfigurationImplTest.class.getName(), StringPool.BLANK);
 
 		ConfigurationImpl configurationImpl = new ConfigurationImpl(
-			testResourceClassLoader, ConfigurationImplTest.class.getName(),
-			CompanyConstants.SYSTEM, null);
+			testResourceClassLoader, ConfigurationImplTest.class.getName());
 
 		Properties properties = configurationImpl.getProperties();
 
@@ -173,8 +170,7 @@ public class ConfigurationImplTest {
 			"key1=value1,value2\nkey2=value3\nkey2=value4");
 
 		ConfigurationImpl configurationImpl = new ConfigurationImpl(
-			testResourceClassLoader, ConfigurationImplTest.class.getName(),
-			CompanyConstants.SYSTEM, null);
+			testResourceClassLoader, ConfigurationImplTest.class.getName());
 
 		Assert.assertEquals("value1,value2", configurationImpl.get("key1"));
 		Assert.assertEquals("value3,value4", configurationImpl.get("key2"));
@@ -198,8 +194,7 @@ public class ConfigurationImplTest {
 			"key1=value1\nkey2=${key1},value2");
 
 		ConfigurationImpl configurationImpl = new ConfigurationImpl(
-			testResourceClassLoader, ConfigurationImplTest.class.getName(),
-			CompanyConstants.SYSTEM, null);
+			testResourceClassLoader, ConfigurationImplTest.class.getName());
 
 		Assert.assertEquals("value1", configurationImpl.get("key1"));
 
@@ -224,8 +219,7 @@ public class ConfigurationImplTest {
 			"key1=value1\nkey2=${key1}value2");
 
 		ConfigurationImpl configurationImpl = new ConfigurationImpl(
-			testResourceClassLoader, ConfigurationImplTest.class.getName(),
-			CompanyConstants.SYSTEM, null);
+			testResourceClassLoader, ConfigurationImplTest.class.getName());
 
 		Assert.assertEquals("value1", configurationImpl.get("key1"));
 		Assert.assertEquals("value1value2", configurationImpl.get("key2"));
@@ -240,8 +234,7 @@ public class ConfigurationImplTest {
 			ConfigurationImplTest.class.getName(), StringPool.BLANK);
 
 		ConfigurationImpl configurationImpl = new ConfigurationImpl(
-			testResourceClassLoader, ConfigurationImplTest.class.getName(),
-			CompanyConstants.SYSTEM, null);
+			testResourceClassLoader, ConfigurationImplTest.class.getName());
 
 		configurationImpl.set("key", "value1");
 
@@ -270,8 +263,7 @@ public class ConfigurationImplTest {
 			"key=value1\nkey[filter]=value2");
 
 		ConfigurationImpl configurationImpl = new ConfigurationImpl(
-			testResourceClassLoader, ConfigurationImplTest.class.getName(),
-			CompanyConstants.SYSTEM, null);
+			testResourceClassLoader, ConfigurationImplTest.class.getName());
 
 		Assert.assertArrayEquals(
 			new String[] {"value1"}, configurationImpl.getArray("key"));
@@ -296,8 +288,7 @@ public class ConfigurationImplTest {
 			ConfigurationImplTest.class.getName(), StringPool.BLANK);
 
 		ConfigurationImpl configurationImpl = new ConfigurationImpl(
-			testResourceClassLoader, ConfigurationImplTest.class.getName(),
-			CompanyConstants.SYSTEM, null);
+			testResourceClassLoader, ConfigurationImplTest.class.getName());
 
 		configurationImpl.set("key", "value1");
 
@@ -322,8 +313,7 @@ public class ConfigurationImplTest {
 			"namespace.key1=value1\nnamespace.key2=value2");
 
 		ConfigurationImpl configurationImpl = new ConfigurationImpl(
-			testResourceClassLoader, ConfigurationImplTest.class.getName(),
-			CompanyConstants.SYSTEM, null);
+			testResourceClassLoader, ConfigurationImplTest.class.getName());
 
 		Properties properties = configurationImpl.getProperties(
 			"namespace.", false);
@@ -379,8 +369,7 @@ public class ConfigurationImplTest {
 			ConfigurationImplTest.class.getName(), "key1=value1\nkey2=value2");
 
 		ConfigurationImpl configurationImpl = new ConfigurationImpl(
-			testResourceClassLoader, ConfigurationImplTest.class.getName(),
-			CompanyConstants.SYSTEM, null);
+			testResourceClassLoader, ConfigurationImplTest.class.getName());
 
 		Assert.assertEquals("value1", configurationImpl.get("key1"));
 		Assert.assertEquals("value2", configurationImpl.get("key2"));

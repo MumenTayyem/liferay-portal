@@ -60,10 +60,12 @@ import com.liferay.expando.kernel.service.ExpandoRowLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.expando.kernel.util.ExpandoBridgeUtil;
 import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanReference;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.comment.CommentManagerUtil;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.DefaultActionableDynamicQuery;
@@ -262,8 +264,9 @@ public class DLFileEntryLocalServiceImpl
 			fileEntryTypeId);
 
 		_validateFile(
-			groupId, folderId, 0, fileEntryTypeId, fileName, extension,
-			inputStreamExtension, title, displayDate, expirationDate);
+			user.getCompanyId(), groupId, folderId, 0, fileEntryTypeId,
+			fileName, extension, inputStream, inputStreamExtension, mimeType,
+			title, displayDate, expirationDate);
 
 		long fileEntryId = counterLocalService.increment();
 
@@ -374,12 +377,18 @@ public class DLFileEntryLocalServiceImpl
 		DLFileEntry dlFileEntry = dlFileEntryPersistence.findByPrimaryKey(
 			fileEntryId);
 
-		DLFileVersion dlFileVersion =
-			_dlFileVersionLocalService.getLatestFileVersion(fileEntryId, false);
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					dlFileEntry.getCtCollectionId())) {
 
-		_removeFileVersion(dlFileEntry, dlFileVersion);
+			DLFileVersion dlFileVersion =
+				_dlFileVersionLocalService.getLatestFileVersion(
+					fileEntryId, false);
 
-		return dlFileVersion;
+			_removeFileVersion(dlFileEntry, dlFileVersion);
+
+			return dlFileVersion;
+		}
 	}
 
 	@Override
@@ -555,16 +564,21 @@ public class DLFileEntryLocalServiceImpl
 		DLFileVersion dlFileVersion =
 			_dlFileVersionLocalService.getLatestFileVersion(fileEntryId, false);
 
-		DLFileEntry dlFileEntry = _checkOutDLFileEntryModel(
-			userId, fileEntryId, fileEntryTypeId, owner, expirationTime,
-			serviceContext);
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					dlFileVersion.getCtCollectionId())) {
 
-		DLFileVersion latestDLFileVersion = dlFileEntry.getLatestFileVersion(
-			true);
+			DLFileEntry dlFileEntry = _checkOutDLFileEntryModel(
+				userId, fileEntryId, fileEntryTypeId, owner, expirationTime,
+				serviceContext);
 
-		_copyFileVersion(dlFileEntry, dlFileVersion, latestDLFileVersion);
+			DLFileVersion latestDLFileVersion =
+				dlFileEntry.getLatestFileVersion(true);
 
-		return dlFileEntry;
+			_copyFileVersion(dlFileEntry, dlFileVersion, latestDLFileVersion);
+
+			return dlFileEntry;
+		}
 	}
 
 	@Override
@@ -3814,9 +3828,10 @@ public class DLFileEntryLocalServiceImpl
 			Date date = new Date();
 
 			_validateFile(
-				dlFileEntry.getGroupId(), dlFileEntry.getFolderId(),
-				dlFileEntry.getFileEntryId(), fileEntryTypeId, fileName,
-				extension, inputStreamExtension, title, displayDate,
+				user.getCompanyId(), dlFileEntry.getGroupId(),
+				dlFileEntry.getFolderId(), dlFileEntry.getFileEntryId(),
+				fileEntryTypeId, fileName, extension, inputStream,
+				inputStreamExtension, mimeType, title, displayDate,
 				expirationDate);
 
 			// File version
@@ -3993,9 +4008,11 @@ public class DLFileEntryLocalServiceImpl
 	}
 
 	private void _validateFile(
-			long groupId, long folderId, long fileEntryId, long fileEntryTypeId,
-			String fileName, String extension, String inputStreamExtension,
-			String title, Date displayDate, Date expirationDate)
+			long companyId, long groupId, long folderId, long fileEntryId,
+			long fileEntryTypeId, String fileName, String extension,
+			InputStream inputStream, String inputStreamExtension,
+			String mimeType, String title, Date displayDate,
+			Date expirationDate)
 		throws PortalException {
 
 		DLValidatorUtil.validateFileName(fileName);
@@ -4008,6 +4025,13 @@ public class DLFileEntryLocalServiceImpl
 			Validator.isNotNull(extension)) {
 
 			_validateFileExtension(fileName, extension, inputStreamExtension);
+		}
+
+		if ((dlFileEntryType.getScope() !=
+				DLFileEntryTypeConstants.FILE_ENTRY_TYPE_SCOPE_SYSTEM) &&
+			(inputStream != null) && Validator.isNotNull(mimeType)) {
+
+			_validateFileMimeType(companyId, mimeType);
 		}
 
 		validateFile(groupId, folderId, fileEntryId, fileName, title);
@@ -4078,6 +4102,16 @@ public class DLFileEntryLocalServiceImpl
 					extension, " of file ", fileName, " exceeds max length of ",
 					maxLength));
 		}
+	}
+
+	private void _validateFileMimeType(long companyId, String mimeType)
+		throws PortalException {
+
+		if (!DLAppHelperThreadLocal.isEnabled()) {
+			return;
+		}
+
+		DLValidatorUtil.validateFileMimeType(companyId, mimeType);
 	}
 
 	private void _validateFolder(long groupId, long folderId, String title)

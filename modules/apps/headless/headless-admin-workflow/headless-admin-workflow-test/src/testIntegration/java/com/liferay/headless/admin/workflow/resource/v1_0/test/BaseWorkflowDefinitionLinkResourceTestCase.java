@@ -31,7 +31,7 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -44,7 +44,7 @@ import com.liferay.portal.vulcan.resource.EntityModelResource;
 
 import java.lang.reflect.Method;
 
-import java.text.DateFormat;
+import java.text.Format;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,7 +83,7 @@ public abstract class BaseWorkflowDefinitionLinkResourceTestCase {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		_dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
@@ -97,12 +97,12 @@ public abstract class BaseWorkflowDefinitionLinkResourceTestCase {
 
 		_workflowDefinitionLinkResource.setContextCompany(testCompany);
 
-		com.liferay.portal.kernel.model.User testCompanyAdminUser =
-			UserTestUtil.getAdminUser(testCompany.getCompanyId());
+		_testCompanyAdminUser = UserTestUtil.getAdminUser(
+			testCompany.getCompanyId());
 
 		workflowDefinitionLinkResource = WorkflowDefinitionLinkResource.builder(
 		).authentication(
-			testCompanyAdminUser.getEmailAddress(),
+			_testCompanyAdminUser.getEmailAddress(),
 			PropsValues.DEFAULT_ADMIN_PASSWORD
 		).endpoint(
 			testCompany.getVirtualHostname(), 8080, "http"
@@ -195,78 +195,6 @@ public abstract class BaseWorkflowDefinitionLinkResourceTestCase {
 	}
 
 	@Test
-	public void testPutWorkflowDefinitionLinkByExternalReferenceCode()
-		throws Exception {
-
-		WorkflowDefinitionLink postWorkflowDefinitionLink =
-			testPutWorkflowDefinitionLinkByExternalReferenceCode_addWorkflowDefinitionLink();
-
-		WorkflowDefinitionLink randomWorkflowDefinitionLink =
-			randomWorkflowDefinitionLink();
-
-		WorkflowDefinitionLink putWorkflowDefinitionLink =
-			workflowDefinitionLinkResource.
-				putWorkflowDefinitionLinkByExternalReferenceCode(
-					postWorkflowDefinitionLink.getExternalReferenceCode(),
-					randomWorkflowDefinitionLink);
-
-		assertEquals(randomWorkflowDefinitionLink, putWorkflowDefinitionLink);
-		assertValid(putWorkflowDefinitionLink);
-
-		WorkflowDefinitionLink getWorkflowDefinitionLink =
-			testPutWorkflowDefinitionLinkByExternalReferenceCode_getWorkflowDefinitionLink(
-				putWorkflowDefinitionLink.getExternalReferenceCode());
-
-		assertEquals(randomWorkflowDefinitionLink, getWorkflowDefinitionLink);
-		assertValid(getWorkflowDefinitionLink);
-
-		WorkflowDefinitionLink newWorkflowDefinitionLink =
-			testPutWorkflowDefinitionLinkByExternalReferenceCode_createWorkflowDefinitionLink();
-
-		putWorkflowDefinitionLink =
-			workflowDefinitionLinkResource.
-				putWorkflowDefinitionLinkByExternalReferenceCode(
-					newWorkflowDefinitionLink.getExternalReferenceCode(),
-					newWorkflowDefinitionLink);
-
-		assertEquals(newWorkflowDefinitionLink, putWorkflowDefinitionLink);
-		assertValid(putWorkflowDefinitionLink);
-
-		getWorkflowDefinitionLink =
-			testPutWorkflowDefinitionLinkByExternalReferenceCode_getWorkflowDefinitionLink(
-				putWorkflowDefinitionLink.getExternalReferenceCode());
-
-		assertEquals(newWorkflowDefinitionLink, getWorkflowDefinitionLink);
-
-		Assert.assertEquals(
-			newWorkflowDefinitionLink.getExternalReferenceCode(),
-			putWorkflowDefinitionLink.getExternalReferenceCode());
-	}
-
-	protected WorkflowDefinitionLink
-		testPutWorkflowDefinitionLinkByExternalReferenceCode_getWorkflowDefinitionLink(
-			String externalReferenceCode) {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	protected WorkflowDefinitionLink
-			testPutWorkflowDefinitionLinkByExternalReferenceCode_createWorkflowDefinitionLink()
-		throws Exception {
-
-		return randomWorkflowDefinitionLink();
-	}
-
-	protected WorkflowDefinitionLink
-			testPutWorkflowDefinitionLinkByExternalReferenceCode_addWorkflowDefinitionLink()
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	@Test
 	public void testGetWorkflowDefinitionByExternalReferenceCodeWorkflowDefinitionLinksPage()
 		throws Exception {
 
@@ -349,13 +277,13 @@ public abstract class BaseWorkflowDefinitionLinkResourceTestCase {
 		String externalReferenceCode =
 			testGetWorkflowDefinitionByExternalReferenceCodeWorkflowDefinitionLinksPage_getExternalReferenceCode();
 
-		Page<WorkflowDefinitionLink> workflowDefinitionLinkPage =
+		Page<WorkflowDefinitionLink> workflowDefinitionLinksPage =
 			workflowDefinitionLinkResource.
 				getWorkflowDefinitionByExternalReferenceCodeWorkflowDefinitionLinksPage(
 					externalReferenceCode, null);
 
 		int totalCount = GetterUtil.getInteger(
-			workflowDefinitionLinkPage.getTotalCount());
+			workflowDefinitionLinksPage.getTotalCount());
 
 		WorkflowDefinitionLink workflowDefinitionLink1 =
 			testGetWorkflowDefinitionByExternalReferenceCodeWorkflowDefinitionLinksPage_addWorkflowDefinitionLink(
@@ -485,30 +413,6 @@ public abstract class BaseWorkflowDefinitionLinkResourceTestCase {
 	}
 
 	@Test
-	public void testPostWorkflowDefinitionByExternalReferenceCodeWorkflowDefinitionLink()
-		throws Exception {
-
-		WorkflowDefinitionLink randomWorkflowDefinitionLink =
-			randomWorkflowDefinitionLink();
-
-		WorkflowDefinitionLink postWorkflowDefinitionLink =
-			testPostWorkflowDefinitionByExternalReferenceCodeWorkflowDefinitionLink_addWorkflowDefinitionLink(
-				randomWorkflowDefinitionLink);
-
-		assertEquals(randomWorkflowDefinitionLink, postWorkflowDefinitionLink);
-		assertValid(postWorkflowDefinitionLink);
-	}
-
-	protected WorkflowDefinitionLink
-			testPostWorkflowDefinitionByExternalReferenceCodeWorkflowDefinitionLink_addWorkflowDefinitionLink(
-				WorkflowDefinitionLink workflowDefinitionLink)
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	@Test
 	public void testGetWorkflowDefinitionWorkflowDefinitionLinksPage()
 		throws Exception {
 
@@ -602,13 +506,13 @@ public abstract class BaseWorkflowDefinitionLinkResourceTestCase {
 		Long workflowDefinitionId =
 			testGetWorkflowDefinitionWorkflowDefinitionLinksPage_getWorkflowDefinitionId();
 
-		Page<WorkflowDefinitionLink> workflowDefinitionLinkPage =
+		Page<WorkflowDefinitionLink> workflowDefinitionLinksPage =
 			workflowDefinitionLinkResource.
 				getWorkflowDefinitionWorkflowDefinitionLinksPage(
 					workflowDefinitionId, null);
 
 		int totalCount = GetterUtil.getInteger(
-			workflowDefinitionLinkPage.getTotalCount());
+			workflowDefinitionLinksPage.getTotalCount());
 
 		WorkflowDefinitionLink workflowDefinitionLink1 =
 			testGetWorkflowDefinitionWorkflowDefinitionLinksPage_addWorkflowDefinitionLink(
@@ -737,6 +641,30 @@ public abstract class BaseWorkflowDefinitionLinkResourceTestCase {
 	}
 
 	@Test
+	public void testPostWorkflowDefinitionByExternalReferenceCodeWorkflowDefinitionLink()
+		throws Exception {
+
+		WorkflowDefinitionLink randomWorkflowDefinitionLink =
+			randomWorkflowDefinitionLink();
+
+		WorkflowDefinitionLink postWorkflowDefinitionLink =
+			testPostWorkflowDefinitionByExternalReferenceCodeWorkflowDefinitionLink_addWorkflowDefinitionLink(
+				randomWorkflowDefinitionLink);
+
+		assertEquals(randomWorkflowDefinitionLink, postWorkflowDefinitionLink);
+		assertValid(postWorkflowDefinitionLink);
+	}
+
+	protected WorkflowDefinitionLink
+			testPostWorkflowDefinitionByExternalReferenceCodeWorkflowDefinitionLink_addWorkflowDefinitionLink(
+				WorkflowDefinitionLink workflowDefinitionLink)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
 	public void testPostWorkflowDefinitionWorkflowDefinitionLink()
 		throws Exception {
 
@@ -760,6 +688,78 @@ public abstract class BaseWorkflowDefinitionLinkResourceTestCase {
 			postWorkflowDefinitionWorkflowDefinitionLink(
 				testGetWorkflowDefinitionWorkflowDefinitionLinksPage_getWorkflowDefinitionId(),
 				workflowDefinitionLink);
+	}
+
+	@Test
+	public void testPutWorkflowDefinitionLinkByExternalReferenceCode()
+		throws Exception {
+
+		WorkflowDefinitionLink postWorkflowDefinitionLink =
+			testPutWorkflowDefinitionLinkByExternalReferenceCode_addWorkflowDefinitionLink();
+
+		WorkflowDefinitionLink randomWorkflowDefinitionLink =
+			randomWorkflowDefinitionLink();
+
+		WorkflowDefinitionLink putWorkflowDefinitionLink =
+			workflowDefinitionLinkResource.
+				putWorkflowDefinitionLinkByExternalReferenceCode(
+					postWorkflowDefinitionLink.getExternalReferenceCode(),
+					randomWorkflowDefinitionLink);
+
+		assertEquals(randomWorkflowDefinitionLink, putWorkflowDefinitionLink);
+		assertValid(putWorkflowDefinitionLink);
+
+		WorkflowDefinitionLink getWorkflowDefinitionLink =
+			testPutWorkflowDefinitionLinkByExternalReferenceCode_getWorkflowDefinitionLink(
+				putWorkflowDefinitionLink.getExternalReferenceCode());
+
+		assertEquals(randomWorkflowDefinitionLink, getWorkflowDefinitionLink);
+		assertValid(getWorkflowDefinitionLink);
+
+		WorkflowDefinitionLink newWorkflowDefinitionLink =
+			testPutWorkflowDefinitionLinkByExternalReferenceCode_createWorkflowDefinitionLink();
+
+		putWorkflowDefinitionLink =
+			workflowDefinitionLinkResource.
+				putWorkflowDefinitionLinkByExternalReferenceCode(
+					newWorkflowDefinitionLink.getExternalReferenceCode(),
+					newWorkflowDefinitionLink);
+
+		assertEquals(newWorkflowDefinitionLink, putWorkflowDefinitionLink);
+		assertValid(putWorkflowDefinitionLink);
+
+		getWorkflowDefinitionLink =
+			testPutWorkflowDefinitionLinkByExternalReferenceCode_getWorkflowDefinitionLink(
+				putWorkflowDefinitionLink.getExternalReferenceCode());
+
+		assertEquals(newWorkflowDefinitionLink, getWorkflowDefinitionLink);
+
+		Assert.assertEquals(
+			newWorkflowDefinitionLink.getExternalReferenceCode(),
+			putWorkflowDefinitionLink.getExternalReferenceCode());
+	}
+
+	protected WorkflowDefinitionLink
+		testPutWorkflowDefinitionLinkByExternalReferenceCode_getWorkflowDefinitionLink(
+			String externalReferenceCode) {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected WorkflowDefinitionLink
+			testPutWorkflowDefinitionLinkByExternalReferenceCode_createWorkflowDefinitionLink()
+		throws Exception {
+
+		return randomWorkflowDefinitionLink();
+	}
+
+	protected WorkflowDefinitionLink
+			testPutWorkflowDefinitionLinkByExternalReferenceCode_addWorkflowDefinitionLink()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
 	}
 
 	protected WorkflowDefinitionLink
@@ -1725,7 +1725,9 @@ public abstract class BaseWorkflowDefinitionLinkResourceTestCase {
 	private static final com.liferay.portal.kernel.log.Log _log =
 		LogFactoryUtil.getLog(BaseWorkflowDefinitionLinkResourceTestCase.class);
 
-	private static DateFormat _dateFormat;
+	private static Format _format;
+
+	private com.liferay.portal.kernel.model.User _testCompanyAdminUser;
 
 	@Inject
 	private com.liferay.headless.admin.workflow.resource.v1_0.

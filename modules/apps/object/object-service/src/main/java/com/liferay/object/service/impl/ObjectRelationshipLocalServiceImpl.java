@@ -7,6 +7,7 @@ package com.liferay.object.service.impl;
 
 import com.liferay.info.collection.provider.RelatedInfoItemCollectionProvider;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
+import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFieldSettingConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
@@ -14,6 +15,7 @@ import com.liferay.object.definition.util.ObjectDefinitionUtil;
 import com.liferay.object.exception.DuplicateObjectRelationshipException;
 import com.liferay.object.exception.DuplicateObjectRelationshipExternalReferenceCodeException;
 import com.liferay.object.exception.NoSuchObjectRelationshipException;
+import com.liferay.object.exception.ObjectDefinitionScopeException;
 import com.liferay.object.exception.ObjectRelationshipDeletionTypeException;
 import com.liferay.object.exception.ObjectRelationshipEdgeException;
 import com.liferay.object.exception.ObjectRelationshipNameException;
@@ -41,11 +43,11 @@ import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
 import com.liferay.object.service.ObjectFolderItemLocalService;
+import com.liferay.object.service.ObjectLayoutTabLocalService;
 import com.liferay.object.service.base.ObjectRelationshipLocalServiceBaseImpl;
 import com.liferay.object.service.persistence.ObjectActionPersistence;
 import com.liferay.object.service.persistence.ObjectDefinitionPersistence;
 import com.liferay.object.service.persistence.ObjectFieldPersistence;
-import com.liferay.object.service.persistence.ObjectLayoutTabPersistence;
 import com.liferay.object.system.JaxRsApplicationDescriptor;
 import com.liferay.object.system.SystemObjectDefinitionManager;
 import com.liferay.object.system.SystemObjectDefinitionManagerRegistry;
@@ -75,6 +77,8 @@ import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.WorkflowDefinitionLink;
+import com.liferay.portal.kernel.model.WorkflowInstanceLink;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
@@ -86,6 +90,8 @@ import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
+import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
 import com.liferay.portal.kernel.systemevent.SystemEvent;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -95,6 +101,8 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.workflow.WorkflowInstance;
+import com.liferay.portal.kernel.workflow.WorkflowInstanceManagerUtil;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.io.Serializable;
@@ -104,6 +112,7 @@ import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -157,13 +166,15 @@ public class ObjectRelationshipLocalServiceImpl
 			externalReferenceCode, 0L, user.getCompanyId(),
 			objectDefinitionId1);
 
+		String objectFieldName = objectField.getName();
+
 		return _addObjectRelationship(
 			externalReferenceCode, user,
 			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId1),
 			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId2),
 			0, ObjectRelationshipConstants.DELETION_TYPE_PREVENT, false,
 			LocalizedMapUtil.getLocalizedMap(externalReferenceCode),
-			externalReferenceCode, false, false,
+			objectFieldName.split(StringPool.UNDERLINE)[1], false, false,
 			ObjectRelationshipConstants.TYPE_ONE_TO_MANY, objectField);
 	}
 
@@ -395,7 +406,7 @@ public class ObjectRelationshipLocalServiceImpl
 			objectRelationship.getObjectDefinitionId1(),
 			objectDefinition2.getObjectFolderId());
 
-		_objectLayoutTabPersistence.removeByObjectRelationshipId(
+		_objectLayoutTabLocalService.deleteObjectRelationshipObjectLayoutTabs(
 			objectRelationship.getObjectRelationshipId());
 
 		if (Objects.equals(
@@ -427,8 +438,9 @@ public class ObjectRelationshipLocalServiceImpl
 			ObjectRelationship reverseObjectRelationship =
 				fetchReverseObjectRelationship(objectRelationship, true);
 
-			_objectLayoutTabPersistence.removeByObjectRelationshipId(
-				reverseObjectRelationship.getObjectRelationshipId());
+			_objectLayoutTabLocalService.
+				deleteObjectRelationshipObjectLayoutTabs(
+					reverseObjectRelationship.getObjectRelationshipId());
 
 			objectRelationshipPersistence.remove(
 				reverseObjectRelationship.getObjectRelationshipId());
@@ -825,6 +837,14 @@ public class ObjectRelationshipLocalServiceImpl
 	}
 
 	@Override
+	public List<ObjectRelationship> getObjectRelationshipsByObjectDefinitionId2(
+		long objectDefinitionId2, String type) {
+
+		return objectRelationshipPersistence.findByODI2_R_T(
+			objectDefinitionId2, false, type);
+	}
+
+	@Override
 	public Map<Long, List<ObjectRelationship>> getObjectRelationshipsMap(
 		long companyId) {
 
@@ -1047,6 +1067,30 @@ public class ObjectRelationshipLocalServiceImpl
 		super.runSQL(sql);
 	}
 
+	private void _addArguments(
+			List<Object> arguments, ObjectDefinition objectDefinition)
+		throws PortalException {
+
+		int incompleteWorkflowInstancesCount = 0;
+
+		if (objectDefinition.isRootDescendantNode()) {
+			incompleteWorkflowInstancesCount =
+				_getIncompleteWorkflowInstancesCount(
+					_objectDefinitionPersistence.fetchByPrimaryKey(
+						objectDefinition.getRootObjectDefinitionId()));
+		}
+		else {
+			incompleteWorkflowInstancesCount =
+				_getIncompleteWorkflowInstancesCount(objectDefinition);
+		}
+
+		if (incompleteWorkflowInstancesCount > 0) {
+			arguments.add(
+				objectDefinition.getLabel(LocaleUtil.getSiteDefault()));
+			arguments.add(incompleteWorkflowInstancesCount);
+		}
+	}
+
 	private ObjectField _addObjectField(
 			String externalReferenceCode, User user,
 			ObjectDefinition objectDefinition1,
@@ -1081,8 +1125,9 @@ public class ObjectRelationshipLocalServiceImpl
 		objectField.setSystem(system);
 
 		if (Validator.isNull(dbColumnName)) {
-			dbColumnName = StringBundler.concat(
-				"r_", name, "_", objectDefinition1.getPKObjectFieldName());
+			dbColumnName =
+				ObjectRelationshipUtil.getObjectRelationshipFieldName(
+					objectDefinition1, name);
 		}
 
 		objectField.setDBColumnName(dbColumnName);
@@ -1202,6 +1247,8 @@ public class ObjectRelationshipLocalServiceImpl
 			String name, boolean reverse, boolean system, String type,
 			ObjectField objectField)
 		throws PortalException {
+
+		_validateScope(objectDefinition1, objectDefinition2);
 
 		ObjectRelationship objectRelationship =
 			objectRelationshipPersistence.create(
@@ -1525,6 +1572,32 @@ public class ObjectRelationshipLocalServiceImpl
 			objectDefinition2.getResourceName(), null);
 	}
 
+	private void _copyWorkflowDefinitionLinks(
+			ObjectDefinition objectDefinition1,
+			ObjectDefinition objectDefinition2)
+		throws PortalException {
+
+		if (!objectDefinition1.isApproved() ||
+			!objectDefinition2.isApproved()) {
+
+			return;
+		}
+
+		for (WorkflowDefinitionLink workflowDefinitionLink :
+				_workflowDefinitionLinkLocalService.getWorkflowDefinitionLinks(
+					objectDefinition1.getCompanyId(),
+					objectDefinition1.getClassName())) {
+
+			_workflowDefinitionLinkLocalService.updateWorkflowDefinitionLink(
+				workflowDefinitionLink.getUserId(),
+				workflowDefinitionLink.getCompanyId(),
+				workflowDefinitionLink.getGroupId(),
+				objectDefinition2.getClassName(), 0, 0,
+				workflowDefinitionLink.getWorkflowDefinitionName(),
+				workflowDefinitionLink.getWorkflowDefinitionVersion());
+		}
+	}
+
 	private void _deleteObjectFields(
 			long objectDefinitionId, ObjectRelationship objectRelationship)
 		throws PortalException {
@@ -1559,6 +1632,32 @@ public class ObjectRelationshipLocalServiceImpl
 			_objectDefinitionLocalServiceSnapshot.get();
 
 		objectDefinitionLocalService.deployObjectDefinition(objectDefinition);
+	}
+
+	private int _getIncompleteWorkflowInstancesCount(
+			ObjectDefinition objectDefinition)
+		throws PortalException {
+
+		Set<Long> classPKs = new HashSet<>();
+
+		for (WorkflowInstanceLink workflowInstanceLink :
+				_workflowInstanceLinkLocalService.getWorkflowInstanceLinks(
+					objectDefinition.getCompanyId(),
+					objectDefinition.getClassName())) {
+
+			WorkflowInstance workflowInstance =
+				WorkflowInstanceManagerUtil.getWorkflowInstance(
+					objectDefinition.getCompanyId(),
+					workflowInstanceLink.getWorkflowInstanceId());
+
+			if (workflowInstance.isComplete()) {
+				continue;
+			}
+
+			classPKs.add(workflowInstanceLink.getClassPK());
+		}
+
+		return classPKs.size();
 	}
 
 	private long _getRootObjectDefinitionId(ObjectDefinition objectDefinition)
@@ -1746,6 +1845,8 @@ public class ObjectRelationshipLocalServiceImpl
 			objectDefinition2, oldRootObjectDefinitionId2,
 			newRootObjectDefinitionId2);
 
+		_copyWorkflowDefinitionLinks(objectDefinition1, objectDefinition2);
+
 		if (objectDefinition2.isRootNode()) {
 			_deployObjectDefinition(objectDefinition2);
 		}
@@ -1912,10 +2013,37 @@ public class ObjectRelationshipLocalServiceImpl
 			ObjectRelationship objectRelationship, String type)
 		throws PortalException {
 
-		if (!edge ||
-			((objectRelationship != null) && objectRelationship.isEdge()) ||
-			!FeatureFlagManagerUtil.isEnabled(
+		if (!FeatureFlagManagerUtil.isEnabled(
 				objectDefinition1.getCompanyId(), "LPD-34594")) {
+
+			return;
+		}
+
+		if (!edge && (objectRelationship != null) &&
+			objectRelationship.isEdge()) {
+
+			List<Object> arguments = new ArrayList<>();
+
+			_addArguments(
+				arguments,
+				_objectDefinitionPersistence.fetchByPrimaryKey(
+					objectDefinition1.getRootObjectDefinitionId()));
+
+			if (ListUtil.isNotEmpty(arguments)) {
+				throw new ObjectRelationshipEdgeException(
+					arguments,
+					String.format(
+						"These ongoing workflow instances must be completed " +
+							"to disable inheritance: \"%s\" (\"%s\" object " +
+								"entries)",
+						arguments.get(0), arguments.get(1)),
+					"these-ongoing-workflow-instances-must-be-completed-to-" +
+						"disable-inheritance-x-(x-object-entries)");
+			}
+		}
+
+		if (!edge ||
+			((objectRelationship != null) && objectRelationship.isEdge())) {
 
 			return;
 		}
@@ -2004,24 +2132,58 @@ public class ObjectRelationshipLocalServiceImpl
 						"height");
 		}
 
-		if (objectDefinition1.isApproved() && objectDefinition2.isApproved() &&
-			(objectRelationship != null) &&
-			(objectRelationship.getObjectRelationshipId() != 0)) {
+		if (objectDefinition1.isApproved() && objectDefinition2.isApproved()) {
+			if ((objectRelationship != null) &&
+				(objectRelationship.getObjectRelationshipId() != 0)) {
 
-			int relatedObjectEntriesCount =
-				_objectEntryLocalService.getOneToManyObjectEntriesCount(
-					0, objectRelationship.getObjectRelationshipId(), 0L, false,
-					null);
+				int relatedObjectEntriesCount =
+					_objectEntryLocalService.getOneToManyObjectEntriesCount(
+						0, objectRelationship.getObjectRelationshipId(), 0L,
+						false, null);
 
-			if (relatedObjectEntriesCount > 0) {
+				if (relatedObjectEntriesCount > 0) {
+					throw new ObjectRelationshipEdgeException(
+						StringBundler.concat(
+							"There must be no unrelated object entries when ",
+							"both object definitions are published so that ",
+							"the object relationship can be an edge to a root ",
+							"context"),
+						StringBundler.concat(
+							"there-must-be-no-unrelated-object-entries-when-",
+							"both-object-definitions-are-published-so-that-",
+							"the-object-relationship-can-be-an-edge-to-a-root-",
+							"context"));
+				}
+			}
+
+			List<Object> arguments = new ArrayList<>();
+
+			_addArguments(arguments, objectDefinition1);
+			_addArguments(arguments, objectDefinition2);
+
+			if (arguments.size() == 2) {
 				throw new ObjectRelationshipEdgeException(
-					StringBundler.concat(
-						"There must be no unrelated object entries when both ",
-						"object definitions are published so that the object ",
-						"relationship can be an edge to a root context"),
-					"there-must-be-no-unrelated-object-entries-when-both-" +
-						"object-definitions-are-published-so-that-the-object-" +
-							"relationship-can-be-an-edge-to-a-root-context");
+					arguments,
+					String.format(
+						"These ongoing workflow instances must be completed " +
+							"to enable inheritance: \"%s\" (\"%s\" object " +
+								"entries)",
+						arguments.get(0), arguments.get(1)),
+					"these-ongoing-workflow-instances-must-be-completed-to-" +
+						"enable-inheritance-x-(x-object-entries)");
+			}
+			else if (arguments.size() == 4) {
+				throw new ObjectRelationshipEdgeException(
+					arguments,
+					String.format(
+						"These ongoing workflow instances must be completed " +
+							"to enable inheritance: \"%s\" (\"%s\" object " +
+								"entries) and \"%s\" (\"%s\" object entries)",
+						arguments.get(0), arguments.get(1), arguments.get(2),
+						arguments.get(3)),
+					"these-ongoing-workflow-instances-must-be-completed-to-" +
+						"enable-inheritance-x-(x-object-entries)-and-x-(x-" +
+							"object-entries)");
 			}
 		}
 
@@ -2277,6 +2439,26 @@ public class ObjectRelationshipLocalServiceImpl
 		}
 	}
 
+	private void _validateScope(
+			ObjectDefinition objectDefinition1,
+			ObjectDefinition objectDefinition2)
+		throws PortalException {
+
+		if ((StringUtil.equals(
+				objectDefinition1.getScope(),
+				ObjectDefinitionConstants.SCOPE_DEPOT) ||
+			 StringUtil.equals(
+				 objectDefinition2.getScope(),
+				 ObjectDefinitionConstants.SCOPE_DEPOT)) &&
+			!StringUtil.equals(
+				objectDefinition1.getScope(), objectDefinition2.getScope())) {
+
+			throw new ObjectDefinitionScopeException(
+				"An object definition scoped by depot can only be related to " +
+					"object definitions of the same scope");
+		}
+	}
+
 	private void _validateType(
 			ObjectDefinition objectDefinition1,
 			ObjectDefinition objectDefinition2, String name,
@@ -2365,7 +2547,7 @@ public class ObjectRelationshipLocalServiceImpl
 	private ObjectFolderItemLocalService _objectFolderItemLocalService;
 
 	@Reference
-	private ObjectLayoutTabPersistence _objectLayoutTabPersistence;
+	private ObjectLayoutTabLocalService _objectLayoutTabLocalService;
 
 	@Reference
 	private RelatedInfoCollectionProviderFactory
@@ -2389,5 +2571,12 @@ public class ObjectRelationshipLocalServiceImpl
 
 	@Reference
 	private UserLocalService _userLocalService;
+
+	@Reference
+	private WorkflowDefinitionLinkLocalService
+		_workflowDefinitionLinkLocalService;
+
+	@Reference
+	private WorkflowInstanceLinkLocalService _workflowInstanceLinkLocalService;
 
 }

@@ -6,12 +6,8 @@
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
 import {useIsMounted, useThunk} from '@liferay/frontend-js-react-web';
-import {
-	fetch,
-	loadClientExtensions,
-	loadModule,
-	openToast,
-} from 'frontend-js-web';
+import {openToast} from 'frontend-js-components-web';
+import {fetch, loadClientExtensions, loadModule} from 'frontend-js-web';
 import React, {
 	useCallback,
 	useEffect,
@@ -33,11 +29,8 @@ import SidePanel from './side_panel/SidePanel';
 import filterCreationActions from './utils/actionItems/filterCreationActions';
 import EVENTS from './utils/eventsDefinitions';
 import getRandomId from './utils/getRandomId';
-import {
-	formatItemChanges,
-	getCurrentItemUpdates,
-	loadData,
-} from './utils/index';
+import {formatItemChanges, getCurrentItemUpdates} from './utils/index';
+import {loadData} from './utils/loadData';
 import {logError} from './utils/logError';
 import ViewsContext from './views/ViewsContext';
 import getViewComponent from './views/getViewComponent';
@@ -87,6 +80,7 @@ const FrontendDataSet = ({
 	showManagementBar,
 	showPagination,
 	showSearch,
+	showSelectAll,
 	sidePanelId,
 	sorts: sortsProp,
 	style,
@@ -110,6 +104,9 @@ const FrontendDataSet = ({
 			(pagination?.initialPageNumber || DEFAULT_PAGINATION_PAGE_NUMBER)
 	);
 	const [searchParam, setSearchParam] = useState('');
+
+	const [allItemsSelectedActive, setAllItemsSelectedActive] = useState(false);
+
 	const [selectedItemsValue, setSelectedItemsValue] = useState(
 		initialSelectedItemsValues || []
 	);
@@ -231,16 +228,16 @@ const FrontendDataSet = ({
 		const activeSorts =
 			sorts.length > 1 ? sorts.filter((sort) => sort.active) : sorts;
 
-		return loadData(
+		return loadData({
+			additionalAPIURLParameters,
 			apiURL,
 			currentURL,
-			activeFiltersOdataStrings,
+			delta: paginationDelta,
+			odataFiltersStrings: activeFiltersOdataStrings,
+			page: pageNumber,
 			searchParam,
-			paginationDelta,
-			pageNumber,
-			activeSorts,
-			additionalAPIURLParameters
-		);
+			sorts: activeSorts,
+		});
 	}, [
 		additionalAPIURLParameters,
 		apiURL,
@@ -255,7 +252,24 @@ const FrontendDataSet = ({
 	const isMounted = useIsMounted();
 
 	function updateDataSetItems(dataSetData) {
-		setItems(dataSetData.items);
+		const remappedItems = dataSetData.items.map((item) => {
+			if (item.embedded && item.embedded.actions) {
+				const actions = item.embedded.actions;
+
+				delete item.embedded.actions;
+
+				return {
+					...item,
+					actions,
+				};
+			}
+
+			return {
+				...item,
+			};
+		});
+
+		setItems(remappedItems);
 		setTotal(dataSetData.totalCount);
 
 		if (!dataSetData.items.length && dataSetData.totalCount > 0) {
@@ -346,24 +360,40 @@ const FrontendDataSet = ({
 		}
 	}, [itemsProp]);
 
-	function selectItems(value) {
+	function deselectItems(value) {
 		if (Array.isArray(value)) {
-			return setSelectedItemsValue(value);
+			return setSelectedItemsValue(
+				selectedItemsValue.filter((item) => !value.includes(item))
+			);
 		}
 
+		setSelectedItemsValue(
+			selectedItemsValue.filter((item) => item !== value)
+		);
+	}
+
+	function selectItems(value) {
 		if (selectionType === 'single') {
-			return setSelectedItemsValue([value]);
+			return setSelectedItemsValue(
+				Array.isArray(value) ? value : [value]
+			);
 		}
 
-		const itemAdded = selectedItemsValue.find((item) => item === value);
+		if (Array.isArray(value)) {
+			const newItems = value.filter(
+				(item) => !selectedItemsValue.includes(item)
+			);
 
-		if (itemAdded) {
+			return setSelectedItemsValue([...selectedItemsValue, ...newItems]);
+		}
+
+		if (selectedItemsValue.includes(value)) {
 			setSelectedItemsValue(
-				selectedItemsValue.filter((element) => element !== value)
+				selectedItemsValue.filter((item) => item !== value)
 			);
 		}
 		else {
-			setSelectedItemsValue(selectedItemsValue.concat(value));
+			setSelectedItemsValue([...selectedItemsValue, value]);
 		}
 	}
 
@@ -566,15 +596,28 @@ const FrontendDataSet = ({
 			<ManagementBar
 				bulkActions={bulkActions}
 				creationMenu={creationMenu}
+				deselectItems={(items) => {
+					deselectItems(items);
+
+					if (allItemsSelectedActive) {
+						setAllItemsSelectedActive(false);
+					}
+				}}
 				fluid={style === 'fluid'}
-				selectAllItems={() =>
-					selectItems(items.map((item) => item[selectedItemsKey]))
-				}
+				items={items}
+				onBulkActionsClear={() => {
+					deselectItems(selectedItemsValue);
+
+					setAllItemsSelectedActive(false);
+				}}
+				onSelectAll={(value) => setAllItemsSelectedActive(value)}
+				selectItems={(items) => selectItems(items)}
 				selectedItems={selectedItems}
 				selectedItemsKey={selectedItemsKey}
 				selectedItemsValue={selectedItemsValue}
 				selectionType={selectionType}
 				showSearch={showSearch}
+				showSelectAll={showSelectAll}
 				sidePanelId={dataSetSupportSidePanelId}
 				total={total}
 			/>
@@ -601,6 +644,24 @@ const FrontendDataSet = ({
 						header={header}
 						items={items}
 						itemsActions={itemsActions}
+						onItemSelectionChange={(selectedItem) => {
+							if (allItemsSelectedActive) {
+								setSelectedItemsValue(
+									items
+										.filter(
+											(item) =>
+												item[selectedItemsKey] !==
+												selectedItem[selectedItemsKey]
+										)
+										.map((item) => item[selectedItemsKey])
+								);
+
+								setAllItemsSelectedActive(false);
+							}
+							else {
+								selectItems(selectedItem[selectedItemsKey]);
+							}
+						}}
 						style={style}
 						{...currentViewProps}
 					/>
@@ -737,6 +798,14 @@ const FrontendDataSet = ({
 			onSubmit: refreshData,
 			...config,
 		});
+	}
+
+	function onItemsChange({itemKey = 'id', items: itemsChanged}) {
+		const updatedItems = new Map(
+			[...items, ...itemsChanged].map((item) => [item[itemKey], item])
+		);
+
+		setItems(Array.from(updatedItems.values()));
 	}
 
 	function updateItem(itemKey, property, valuePath, value = null) {
@@ -887,6 +956,7 @@ const FrontendDataSet = ({
 		<FrontendDataSetContext.Provider
 			value={{
 				actionParameterName,
+				allItemsSelectedActive,
 				apiURL,
 				appURL,
 				applyItemInlineUpdates,
@@ -910,6 +980,7 @@ const FrontendDataSet = ({
 				nestedItemsReferenceKey,
 				onActionDropdownItemClick,
 				onBulkActionItemClick,
+				onItemsChange,
 				onSearch,
 				onSelect,
 				openModal,
@@ -975,7 +1046,7 @@ const FrontendDataSet = ({
 							<div className="data-set data-set-fluid">
 								{managementBar}
 
-								<div className="container-fluid container-xl mt-3">
+								<div className="container-fluid mt-3">
 									{view}
 
 									{paginationComponent}
@@ -1004,6 +1075,7 @@ FrontendDataSet.defaultProps = {
 	showManagementBar: true,
 	showPagination: true,
 	showSearch: true,
+	showSelectAll: false,
 	sorts: [],
 	style: 'default',
 };

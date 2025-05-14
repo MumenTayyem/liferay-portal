@@ -33,8 +33,8 @@ const fetchHeadless = async ({
 	return response;
 };
 
-const getBusinessEvents = async () => {
-	return fetcher(`${HEADLESS_BASE_URL}${`c/businessevents`}`, {
+const getBusinessEventById = async (id: string | number) => {
+	return fetcher(`${HEADLESS_BASE_URL}${`c/businessevents/${id}`}`, {
 		headers: {
 			'Accept-Language': Liferay.ThemeDisplay.getBCP47LanguageId(),
 			'Content-Type': 'application/json',
@@ -42,6 +42,31 @@ const getBusinessEvents = async () => {
 		},
 		method: 'GET',
 	});
+};
+
+const getBusinessEvents = async (filters: string) => {
+	return fetcher(`${HEADLESS_BASE_URL}${`c/businessevents?${filters}`}`, {
+		headers: {
+			'Accept-Language': Liferay.ThemeDisplay.getBCP47LanguageId(),
+			'Content-Type': 'application/json',
+			'x-csrf-token': Liferay.authToken,
+		},
+		method: 'GET',
+	});
+};
+
+const getBusinessEventVersions = async (filters: string) => {
+	return fetcher(
+		`${HEADLESS_BASE_URL}${`c/businesseventversions?${filters}`}`,
+		{
+			headers: {
+				'Accept-Language': Liferay.ThemeDisplay.getBCP47LanguageId(),
+				'Content-Type': 'application/json',
+				'x-csrf-token': Liferay.authToken,
+			},
+			method: 'GET',
+		}
+	);
 };
 
 const getHighPriorityContacts = async (filter: string) => {
@@ -75,9 +100,27 @@ const getTicketAttachments = async (filter: string) => {
 	);
 };
 
+const updateBusinessEventItem = async (
+	id: string | number,
+	fieldsToPatch: any
+) => {
+	return fetcher(`${HEADLESS_BASE_URL}c/businessevents/${id}`, {
+		body: JSON.stringify(fieldsToPatch),
+		headers: {
+			'Accept-Language': Liferay.ThemeDisplay.getBCP47LanguageId(),
+			'Content-Type': 'application/json',
+			'x-csrf-token': Liferay.authToken,
+		},
+		method: 'PATCH',
+	});
+};
+
 export {
+	getBusinessEventById,
 	getBusinessEvents,
+	getBusinessEventVersions,
 	getHighPriorityContacts,
 	getTicketAttachments,
 	fetchHeadless,
+	updateBusinessEventItem,
 };

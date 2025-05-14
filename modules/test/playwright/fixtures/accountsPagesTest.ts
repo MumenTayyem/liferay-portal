@@ -11,6 +11,10 @@ import {AccountCategorySelectorPage} from '../pages/account-admin-web/AccountCat
 import {AccountContactAddressPage} from '../pages/account-admin-web/AccountContactAddressPage';
 import {AccountDefaultAddressSelectorPage} from '../pages/account-admin-web/AccountDefaultAddressSelectorPage';
 import {AccountEntriesManagementPortletPage} from '../pages/account-admin-web/AccountEntriesManagementPortletPage';
+import {AccountGroupAccountSelectorPage} from '../pages/account-admin-web/AccountGroupAccountSelectorPage';
+import {AccountGroupAccountsPage} from '../pages/account-admin-web/AccountGroupAccountsPage';
+import {AccountGroupsPage} from '../pages/account-admin-web/AccountGroupsPage';
+import {AccountInstanceSettingsAccountAddressSubtypePage} from '../pages/account-admin-web/AccountInstanceSettingsAccountAddressSubtypePage';
 import {AccountManagementWidgetPage} from '../pages/account-admin-web/AccountManagementWidgetPage';
 import {AccountOrganizationSelectorPage} from '../pages/account-admin-web/AccountOrganizationSelectorPage';
 import {AccountOrganizationsPage} from '../pages/account-admin-web/AccountOrganizationsPage';
@@ -20,6 +24,7 @@ import {AccountRolesPage} from '../pages/account-admin-web/AccountRolesPage';
 import {AccountTagSelectorPage} from '../pages/account-admin-web/AccountTagSelectorPage';
 import {AccountUserInvitePage} from '../pages/account-admin-web/AccountUserInvitePage';
 import {AccountUserSelectorPage} from '../pages/account-admin-web/AccountUserSelectorPage';
+import {AccountUsersAccountSelectorPage} from '../pages/account-admin-web/AccountUsersAccountSelectorPage';
 import {AccountUsersPage} from '../pages/account-admin-web/AccountUsersPage';
 import {AccountsPage} from '../pages/account-admin-web/AccountsPage';
 import {EditAccountAddressPage} from '../pages/account-admin-web/EditAccountAddressPage';
@@ -28,6 +33,7 @@ import {EditAccountContactAddressPage} from '../pages/account-admin-web/EditAcco
 import {EditAccountContactInformationPage} from '../pages/account-admin-web/EditAccountContactInformationPage';
 import {EditAccountContactPage} from '../pages/account-admin-web/EditAccountContactPage';
 import {EditAccountEmailAddressPage} from '../pages/account-admin-web/EditAccountEmailAddressPage';
+import {EditAccountGroupPage} from '../pages/account-admin-web/EditAccountGroupPage';
 import {EditAccountPage} from '../pages/account-admin-web/EditAccountPage';
 import {EditAccountPhonePage} from '../pages/account-admin-web/EditAccountPhonePage';
 import {EditAccountRolePage} from '../pages/account-admin-web/EditAccountRolePage';
@@ -41,6 +47,10 @@ const accountsPagesTest = test.extend<{
 	accountContactAddressPage: AccountContactAddressPage;
 	accountDefaultAddressSelectorPage: AccountDefaultAddressSelectorPage;
 	accountEntriesManagementPortletPage: AccountEntriesManagementPortletPage;
+	accountGroupAccountSelectorPage: AccountGroupAccountSelectorPage;
+	accountGroupAccountsPage: AccountGroupAccountsPage;
+	accountGroupsPage: AccountGroupsPage;
+	accountInstanceSettingsAccountAddressSubtypePage: AccountInstanceSettingsAccountAddressSubtypePage;
 	accountManagementWidgetPage: AccountManagementWidgetPage;
 	accountOrganizationSelectorPage: AccountOrganizationSelectorPage;
 	accountOrganizationsPage: AccountOrganizationsPage;
@@ -50,6 +60,7 @@ const accountsPagesTest = test.extend<{
 	accountTagSelectorPage: AccountTagSelectorPage;
 	accountUserInvitePage: AccountUserInvitePage;
 	accountUserSelectorPage: AccountUserSelectorPage;
+	accountUsersAccountSelectorPage: AccountUsersAccountSelectorPage;
 	accountUsersPage: AccountUsersPage;
 	accountsPage: AccountsPage;
 	editAccountAddressPage: EditAccountAddressPage;
@@ -58,6 +69,7 @@ const accountsPagesTest = test.extend<{
 	editAccountContactInformationPage: EditAccountContactInformationPage;
 	editAccountContactPage: EditAccountContactPage;
 	editAccountEmailAddressPage: EditAccountEmailAddressPage;
+	editAccountGroupPage: EditAccountGroupPage;
 	editAccountPage: EditAccountPage;
 	editAccountPhonePage: EditAccountPhonePage;
 	editAccountRolePage: EditAccountRolePage;
@@ -81,6 +93,18 @@ const accountsPagesTest = test.extend<{
 	},
 	accountEntriesManagementPortletPage: async ({page}, use) => {
 		await use(new AccountEntriesManagementPortletPage(page));
+	},
+	accountGroupAccountSelectorPage: async ({page}, use) => {
+		await use(new AccountGroupAccountSelectorPage(page));
+	},
+	accountGroupAccountsPage: async ({page}, use) => {
+		await use(new AccountGroupAccountsPage(page));
+	},
+	accountGroupsPage: async ({page}, use) => {
+		await use(new AccountGroupsPage(page));
+	},
+	accountInstanceSettingsAccountAddressSubtypePage: async ({page}, use) => {
+		await use(new AccountInstanceSettingsAccountAddressSubtypePage(page));
 	},
 	accountManagementWidgetPage: async ({page}, use) => {
 		await use(new AccountManagementWidgetPage(page));
@@ -109,6 +133,9 @@ const accountsPagesTest = test.extend<{
 	accountUserSelectorPage: async ({page}, use) => {
 		await use(new AccountUserSelectorPage(page));
 	},
+	accountUsersAccountSelectorPage: async ({page}, use) => {
+		await use(new AccountUsersAccountSelectorPage(page));
+	},
 	accountUsersPage: async ({page}, use) => {
 		await use(new AccountUsersPage(page));
 	},
@@ -132,6 +159,9 @@ const accountsPagesTest = test.extend<{
 	},
 	editAccountEmailAddressPage: async ({page}, use) => {
 		await use(new EditAccountEmailAddressPage(page));
+	},
+	editAccountGroupPage: async ({page}, use) => {
+		await use(new EditAccountGroupPage(page));
 	},
 	editAccountPage: async ({page}, use) => {
 		await use(new EditAccountPage(page));

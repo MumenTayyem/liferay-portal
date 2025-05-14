@@ -12,11 +12,11 @@ import getRandomString from '../../../utils/getRandomString';
 import {performLogout} from '../../../utils/performLogin';
 import {openProductMenu} from '../../../utils/productMenu';
 import {waitForAlert} from '../../../utils/waitForAlert';
-import {ORDER_WORKFLOW_STATUS_CODE} from '../../workspaces/liferay-workspace-marketplace/utils/constants';
+import {ORDER_WORKFLOW_STATUS_CODE} from '../../workspaces/liferay-workspace-marketplace/main/utils/constants';
 
 export async function classicCommerceSetUp(
 	apiHelpers: DataApiHelpers,
-	siteName: string
+	siteName?: string
 ) {
 	return initializerSetUp(
 		apiHelpers,
@@ -169,8 +169,6 @@ export async function completedVirtualOrderItemSetUp(
 		name: getRandomString(),
 		type: 'person',
 	});
-
-	apiHelpers.data.push({id: account.id, type: 'account'});
 
 	await apiHelpers.headlessAdminUser.assignUserToAccountByEmailAddress(
 		account.id,

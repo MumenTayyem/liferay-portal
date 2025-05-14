@@ -48,6 +48,7 @@ create table ObjectDefinition (
 	enableLocalization BOOLEAN,
 	enableObjectEntryDraft BOOLEAN,
 	enableObjectEntryHistory BOOLEAN,
+	enableObjectEntryVersioning BOOLEAN,
 	label STRING null,
 	modifiable BOOLEAN,
 	name VARCHAR(75) null,
@@ -64,6 +65,20 @@ create table ObjectDefinition (
 	status INTEGER
 );
 
+create table ObjectDefinitionSetting (
+	mvccVersion LONG default 0 not null,
+	uuid_ VARCHAR(75) null,
+	objectDefinitionSettingId LONG not null primary key,
+	companyId LONG,
+	userId LONG,
+	userName VARCHAR(75) null,
+	createDate DATE null,
+	modifiedDate DATE null,
+	objectDefinitionId LONG,
+	name VARCHAR(75) null,
+	value VARCHAR(75) null
+);
+
 create table ObjectEntry (
 	mvccVersion LONG default 0 not null,
 	uuid_ VARCHAR(75) null,
@@ -78,7 +93,10 @@ create table ObjectEntry (
 	objectDefinitionId LONG,
 	objectEntryFolderId LONG,
 	rootObjectEntryId LONG,
+	defaultLanguageId VARCHAR(75) null,
+	expirationDate DATE null,
 	treePath STRING null,
+	version INTEGER,
 	lastPublishDate DATE null,
 	status INTEGER,
 	statusByUserId LONG,
@@ -98,9 +116,30 @@ create table ObjectEntryFolder (
 	createDate DATE null,
 	modifiedDate DATE null,
 	parentObjectEntryFolderId LONG,
+	description STRING null,
 	label STRING null,
 	name VARCHAR(75) null,
 	treePath STRING null
+);
+
+create table ObjectEntryVersion (
+	mvccVersion LONG default 0 not null,
+	uuid_ VARCHAR(75) null,
+	objectEntryVersionId LONG not null primary key,
+	companyId LONG,
+	userId LONG,
+	userName VARCHAR(75) null,
+	createDate DATE null,
+	modifiedDate DATE null,
+	objectDefinitionId LONG,
+	objectEntryId LONG,
+	content TEXT null,
+	expirationDate DATE null,
+	version INTEGER,
+	status INTEGER,
+	statusByUserId LONG,
+	statusByUserName VARCHAR(75) null,
+	statusDate DATE null
 );
 
 create table ObjectField (

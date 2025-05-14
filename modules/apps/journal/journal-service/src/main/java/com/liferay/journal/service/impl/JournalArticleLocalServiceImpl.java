@@ -1382,8 +1382,9 @@ public class JournalArticleLocalServiceImpl
 
 		if (articleResource != null) {
 			_systemEventLocalService.addSystemEvent(
-				0, article.getGroupId(), article.getModelClassName(),
-				article.getPrimaryKey(), articleResource.getUuid(), null,
+				0, article.getGroupId(), StringPool.BLANK,
+				article.getModelClassName(), article.getPrimaryKey(),
+				articleResource.getUuid(), null,
 				SystemEventConstants.TYPE_DELETE,
 				JSONUtil.put(
 					"assetTitle",
@@ -1469,7 +1470,7 @@ public class JournalArticleLocalServiceImpl
 
 		if (articleResource != null) {
 			_systemEventLocalService.addSystemEvent(
-				0, groupId, JournalArticle.class.getName(),
+				0, groupId, StringPool.BLANK, JournalArticle.class.getName(),
 				articleResource.getResourcePrimKey(), articleResource.getUuid(),
 				null, SystemEventConstants.TYPE_DELETE,
 				JSONUtil.put(
@@ -1526,7 +1527,7 @@ public class JournalArticleLocalServiceImpl
 
 		for (JournalArticleResource articleResource : articleResources) {
 			_systemEventLocalService.addSystemEvent(
-				0, groupId, JournalArticle.class.getName(),
+				0, groupId, StringPool.BLANK, JournalArticle.class.getName(),
 				articleResource.getResourcePrimKey(), articleResource.getUuid(),
 				null, SystemEventConstants.TYPE_DELETE, StringPool.BLANK);
 		}
@@ -1600,7 +1601,7 @@ public class JournalArticleLocalServiceImpl
 
 		for (JournalArticleResource articleResource : articleResources) {
 			_systemEventLocalService.addSystemEvent(
-				0, groupId, JournalArticle.class.getName(),
+				0, groupId, StringPool.BLANK, JournalArticle.class.getName(),
 				articleResource.getResourcePrimKey(), articleResource.getUuid(),
 				null, SystemEventConstants.TYPE_DELETE, StringPool.BLANK);
 		}
@@ -4250,12 +4251,6 @@ public class JournalArticleLocalServiceImpl
 
 		int oldStatus = article.getStatus();
 
-		if (oldStatus == WorkflowConstants.STATUS_PENDING) {
-			article.setStatus(WorkflowConstants.STATUS_DRAFT);
-
-			article = journalArticlePersistence.update(article);
-		}
-
 		article = updateStatus(
 			userId, article.getId(), WorkflowConstants.STATUS_IN_TRASH,
 			new HashMap<>(), new ServiceContext());
@@ -5961,7 +5956,10 @@ public class JournalArticleLocalServiceImpl
 
 		Group group = _groupLocalService.getGroup(article.getGroupId());
 
-		if (!group.isStaged() || group.isStagingGroup()) {
+		if ((!group.isStaged() || group.isStagingGroup()) &&
+			!((oldStatus == WorkflowConstants.STATUS_PENDING) &&
+			  action.equals("move_to_trash"))) {
+
 			notifySubscribers(
 				user.getUserId(), article, action, serviceContext);
 		}
@@ -6211,6 +6209,10 @@ public class JournalArticleLocalServiceImpl
 					article = journalArticleLocalService.updateJournalArticle(
 						article);
 
+					sendEmail(
+						article, _getArticleURL(article), "expired",
+						new ServiceContext());
+
 					notifySubscribers(
 						0, article, "expired", new ServiceContext());
 
@@ -6358,22 +6360,11 @@ public class JournalArticleLocalServiceImpl
 						article.getId());
 			}
 
-			String portletId = PortletProviderUtil.getPortletId(
-				JournalArticle.class.getName(), PortletProvider.Action.EDIT);
+			sendEmail(
+				article, _getArticleURL(article), "review",
+				new ServiceContext());
 
-			String articleURL = _portal.getControlPanelFullURL(
-				article.getGroupId(), portletId, null);
-
-			articleURL = HttpComponentsUtil.addParameter(
-				articleURL,
-				_portal.getPortletNamespace(portletId) + "mvcRenderCommandName",
-				"/journal/edit_article");
-
-			articleURL = buildArticleURL(
-				articleURL, article.getGroupId(), article.getFolderId(),
-				article.getArticleId());
-
-			sendEmail(article, articleURL, "review", new ServiceContext());
+			notifySubscribers(0, article, "review", new ServiceContext());
 		}
 	}
 
@@ -6676,23 +6667,17 @@ public class JournalArticleLocalServiceImpl
 	protected List<ObjectValuePair<Long, Integer>> getArticleVersionStatuses(
 		List<JournalArticle> articles) {
 
-		List<ObjectValuePair<Long, Integer>> articleVersionStatusOVPs =
-			new ArrayList<>(articles.size());
+		return TransformUtil.transform(
+			articles,
+			article -> {
+				int status = article.getStatus();
 
-		for (JournalArticle article : articles) {
-			int status = article.getStatus();
+				if (status == WorkflowConstants.STATUS_PENDING) {
+					status = WorkflowConstants.STATUS_DRAFT;
+				}
 
-			if (status == WorkflowConstants.STATUS_PENDING) {
-				status = WorkflowConstants.STATUS_DRAFT;
-			}
-
-			ObjectValuePair<Long, Integer> articleVersionStatusOVP =
-				new ObjectValuePair<>(article.getId(), status);
-
-			articleVersionStatusOVPs.add(articleVersionStatusOVP);
-		}
-
-		return articleVersionStatusOVPs;
+				return new ObjectValuePair<>(article.getId(), status);
+			});
 	}
 
 	protected JournalArticle getFirstArticle(
@@ -6842,6 +6827,10 @@ public class JournalArticleLocalServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
+		if (article.isPending()) {
+			return;
+		}
+
 		JournalGroupServiceConfiguration journalGroupServiceConfiguration =
 			getJournalGroupServiceConfiguration(article.getGroupId());
 
@@ -6867,6 +6856,9 @@ public class JournalArticleLocalServiceImpl
 		else if (action.equals("move_from_trash") &&
 				 journalGroupServiceConfiguration.
 					 emailArticleMovedToTrashEnabled()) {
+		}
+		else if (action.equals("review") &&
+				 journalGroupServiceConfiguration.emailArticleReviewEnabled()) {
 		}
 		else if (action.equals("update") &&
 				 journalGroupServiceConfiguration.
@@ -6993,7 +6985,9 @@ public class JournalArticleLocalServiceImpl
 		subscriptionSender.setNotificationType(_getNotificationType(action));
 		subscriptionSender.setReplyToAddress(fromAddress);
 
-		if (action.equals("expired") && (serviceContext.getUserId() == 0)) {
+		if ((action.equals("expired") || action.equals("review")) &&
+			(serviceContext.getUserId() == 0)) {
+
 			subscriptionSender.setSendToCurrentUser(true);
 		}
 
@@ -7068,6 +7062,10 @@ public class JournalArticleLocalServiceImpl
 			journalGroupServiceConfiguration.
 				emailArticleApprovalDeniedEnabled()) {
 		}
+		else if (emailType.equals("expired") &&
+				 journalGroupServiceConfiguration.
+					 emailArticleExpiredEnabled()) {
+		}
 		else if (emailType.equals("granted") &&
 				 journalGroupServiceConfiguration.
 					 emailArticleApprovalGrantedEnabled()) {
@@ -7120,7 +7118,9 @@ public class JournalArticleLocalServiceImpl
 		subscriptionSender.setEntryTitle(article.getTitle(user.getLocale()));
 		subscriptionSender.setNotificationType(_getNotificationType(emailType));
 
-		if (emailType.equals("review") && (serviceContext.getUserId() == 0)) {
+		if ((emailType.equals("expired") || emailType.equals("review")) &&
+			(serviceContext.getUserId() == 0)) {
+
 			subscriptionSender.setSendToCurrentUser(true);
 		}
 
@@ -7456,39 +7456,33 @@ public class JournalArticleLocalServiceImpl
 		long companyId, long articlePK, Map<Locale, String> titleMap,
 		Map<Locale, String> descriptionMap) {
 
-		Set<Locale> localeSet = new HashSet<>();
+		Set<Locale> locales = new HashSet<>();
 
-		localeSet.addAll(titleMap.keySet());
+		locales.addAll(titleMap.keySet());
 
 		if (descriptionMap != null) {
-			localeSet.addAll(descriptionMap.keySet());
+			locales.addAll(descriptionMap.keySet());
 		}
 
-		List<JournalArticleLocalization> journalArticleLocalizations =
-			new ArrayList<>();
+		return TransformUtil.transform(
+			locales,
+			locale -> {
+				String title = titleMap.get(locale);
 
-		for (Locale locale : localeSet) {
-			String title = titleMap.get(locale);
+				String description = null;
 
-			String description = null;
+				if (descriptionMap != null) {
+					description = descriptionMap.get(locale);
+				}
 
-			if (descriptionMap != null) {
-				description = descriptionMap.get(locale);
-			}
+				if (Validator.isNull(title) && Validator.isNull(description)) {
+					return null;
+				}
 
-			if (Validator.isNull(title) && Validator.isNull(description)) {
-				continue;
-			}
-
-			JournalArticleLocalization journalArticleLocalization =
-				_addArticleLocalizedFields(
+				return _addArticleLocalizedFields(
 					companyId, articlePK, title, description,
 					LocaleUtil.toLanguageId(locale));
-
-			journalArticleLocalizations.add(journalArticleLocalization);
-		}
-
-		return journalArticleLocalizations;
+			});
 	}
 
 	private JournalArticleLocalization _addArticleLocalizedFields(
@@ -7777,6 +7771,27 @@ public class JournalArticleLocalServiceImpl
 		}
 
 		return StringPool.BLANK;
+	}
+
+	private String _getArticleURL(JournalArticle article)
+		throws PortalException {
+
+		String portletId = PortletProviderUtil.getPortletId(
+			JournalArticle.class.getName(), PortletProvider.Action.EDIT);
+
+		String articleURL = _portal.getControlPanelFullURL(
+			article.getGroupId(), portletId, null);
+
+		articleURL = HttpComponentsUtil.addParameter(
+			articleURL,
+			_portal.getPortletNamespace(portletId) + "mvcRenderCommandName",
+			"/journal/edit_article");
+
+		articleURL = buildArticleURL(
+			articleURL, article.getGroupId(), article.getFolderId(),
+			article.getArticleId());
+
+		return articleURL;
 	}
 
 	private Predicate<String> _getEmptyValuePredicate(String fieldType) {

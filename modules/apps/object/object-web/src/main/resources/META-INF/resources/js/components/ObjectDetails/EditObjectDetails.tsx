@@ -5,7 +5,6 @@
 
 import ClayPanel from '@clayui/panel';
 import {API, openToast, stringUtils} from '@liferay/object-js-components-web';
-import {FeatureIndicator} from 'frontend-js-components-web';
 import React, {useEffect, useState} from 'react';
 
 import ObjectManagementToolbar from '../ObjectManagementToolbar';
@@ -20,6 +19,11 @@ import {TranslationsContainer} from './TranslationsContainer';
 import {useObjectDetailsForm} from './useObjectDetailsForm';
 
 import './ObjectDetails.scss';
+import {
+	ObjectDefinitionInfo,
+	getObjectDefinitionInfo,
+} from '../ViewObjectDefinitions/objectDefinitionUtil';
+import WorkflowContainer from '../WorkflowContainer';
 import {SeoContainer} from './SeoContainer';
 
 export type Scope = {
@@ -28,6 +32,7 @@ export type Scope = {
 };
 interface EditObjectDetailsProps {
 	backURL: string;
+	baseResourceURL: string;
 	companies: Scope[];
 	dbTableName: string;
 	hasPublishObjectPermission: boolean;
@@ -36,7 +41,6 @@ interface EditObjectDetailsProps {
 	isRootDescendantNode: boolean;
 	isRootNode: boolean;
 	label: LocalizedValue<string>;
-	learnResourceContext: any;
 	nonRelationshipObjectFieldsInfo: {
 		label: LocalizedValue<string>;
 		name: string;
@@ -74,6 +78,7 @@ function setAccountRelationshipFieldMandatory(
 
 export default function EditObjectDetails({
 	backURL,
+	baseResourceURL,
 	companies,
 	dbTableName,
 	hasPublishObjectPermission,
@@ -82,7 +87,6 @@ export default function EditObjectDetails({
 	isRootDescendantNode,
 	isRootNode,
 	label,
-	learnResourceContext,
 	nonRelationshipObjectFieldsInfo,
 	objectDefinitionExternalReferenceCode,
 	objectDefinitionId,
@@ -93,6 +97,11 @@ export default function EditObjectDetails({
 	storageTypes,
 }: EditObjectDetailsProps) {
 	const [objectFields, setObjectFields] = useState<ObjectField[]>([]);
+	const [workflowInfo, setWorkflowInfo] = useState<ObjectDefinitionInfo>({
+		isWorkflowSupported: false,
+		tableName: '',
+		workflowDefinitionTitle: '',
+	});
 
 	const {errors, handleChange, handleValidate, setValues, values} =
 		useObjectDetailsForm({
@@ -137,9 +146,8 @@ export default function EditObjectDetails({
 			}
 
 			if (!draft) {
-				const publishResponse = await API.postObjectDefinitionPublish(
-					values.id as number
-				);
+				const publishResponse: any =
+					await API.postObjectDefinitionPublish(values.id as number);
 
 				if (!publishResponse.ok) {
 					const {title} = (await publishResponse.json()) as {
@@ -189,14 +197,26 @@ export default function EditObjectDetails({
 					objectDefinitionExternalReferenceCode
 				);
 
+			const objectDefinitionInfo = await getObjectDefinitionInfo({
+				baseResourceURL,
+				objectDefinitionId,
+			});
+
 			setValues(objectDefinitionResponse);
 			setObjectFields(objectFieldsResponse);
+			setWorkflowInfo(objectDefinitionInfo);
 		};
 
 		makeFetch();
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [objectDefinitionId]);
+
+	const showWorkflowSection =
+		Liferay.FeatureFlags['LPD-34594'] &&
+		workflowInfo.isWorkflowSupported &&
+		values.scope === 'company' &&
+		isApproved;
 
 	return (
 		<>
@@ -210,11 +230,12 @@ export default function EditObjectDetails({
 					isApproved={isApproved}
 					isRootDescendantNode={isRootDescendantNode}
 					isRootNode={isRootNode}
-					label={stringUtils.getLocalizableLabel(
-						values.defaultLanguageId as Liferay.Language.Locale,
-						values.label,
-						values.name
-					)}
+					label={stringUtils.getLocalizableLabel({
+						fallbackLabel: values.name,
+						fallbackLanguageId:
+							values.defaultLanguageId as Liferay.Language.Locale,
+						labels: values.label,
+					})}
 					objectDefinitionExternalReferenceCode={
 						objectDefinitionExternalReferenceCode
 					}
@@ -279,18 +300,6 @@ export default function EditObjectDetails({
 											'external-data-source'
 										)}
 									</span>
-
-									{values.storageType === 'salesforce' && (
-										<div className="lfr__object-web-edit-object-details-external-data-source-panel-container-beta">
-											<FeatureIndicator
-												interactive
-												learnResourceContext={
-													learnResourceContext
-												}
-												type="beta"
-											/>
-										</div>
-									)}
 								</div>
 							}
 							displayType="unstyled"
@@ -346,6 +355,27 @@ export default function EditObjectDetails({
 									objectFields={objectFields}
 									setValues={setValues}
 									values={values}
+								/>
+							</ClayPanel.Body>
+						</ClayPanel>
+					)}
+
+					{showWorkflowSection && (
+						<ClayPanel
+							collapsable
+							defaultExpanded
+							displayTitle={Liferay.Language.get('workflow')}
+							displayType="unstyled"
+						>
+							<ClayPanel.Body>
+								<WorkflowContainer
+									baseResourceURL={baseResourceURL}
+									className="lfr-objects__object-definition-details-section"
+									isRootDescendantNode={isRootDescendantNode}
+									objectDefinitionId={objectDefinitionId}
+									workflowLabel={
+										workflowInfo.workflowDefinitionTitle
+									}
 								/>
 							</ClayPanel.Body>
 						</ClayPanel>

@@ -6,7 +6,7 @@
 import ClayButton from '@clayui/button';
 import ClayDropDown, {Align} from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
-import {openModal, openToast} from 'frontend-js-web';
+import {openModal, openToast} from 'frontend-js-components-web';
 import PropTypes from 'prop-types';
 import React, {useMemo, useState} from 'react';
 
@@ -14,16 +14,14 @@ import {getLayoutDataItemPropTypes} from '../../../prop_types/index';
 import {FRAGMENT_ENTRY_TYPES} from '../../config/constants/fragmentEntryTypes';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../config/constants/layoutDataItemTypes';
 import {useClipboard, useSetClipboard} from '../../contexts/ClipboardContext';
-import {
-	useSelectItem,
-	useSelectMultipleItems,
-} from '../../contexts/ControlsContext';
+import {useSelectMultipleItems} from '../../contexts/ControlsContext';
 import {
 	useDispatch,
 	useSelector,
 	useSelectorCallback,
 } from '../../contexts/StoreContext';
 import {useGetWidgets} from '../../contexts/WidgetsContext';
+import selectCanManageFragmentEntries from '../../selectors/selectCanManageFragmentEntries';
 import deleteItem from '../../thunks/deleteItem';
 import duplicateItem from '../../thunks/duplicateItem';
 import pasteItems from '../../thunks/pasteItems';
@@ -49,16 +47,15 @@ import hasDropZoneChild from '../layout_data_items/hasDropZoneChild';
 export default function TopperItemActions({disabled, item}) {
 	const dispatch = useDispatch();
 	const hasRequiredChild = useHasRequiredChild(item.itemId);
-	const selectItem = useSelectItem();
 	const selectMultipleItems = useSelectMultipleItems();
 	const getWidgets = useGetWidgets();
 
 	const clipboard = useClipboard();
 	const setClipboard = useSetClipboard();
 
-	const selectItems = Liferay.FeatureFlags['LPD-18221']
-		? selectMultipleItems
-		: selectItem;
+	const selectItems = selectMultipleItems;
+
+	const canManageFragments = useSelector(selectCanManageFragmentEntries);
 
 	const {fragmentEntryLinks, layoutData, selectedViewportSize} = useSelector(
 		(state) => state
@@ -118,7 +115,7 @@ export default function TopperItemActions({disabled, item}) {
 			});
 		}
 
-		if (canBeSaved(item, layoutData)) {
+		if (canBeSaved(item, layoutData) && canManageFragments) {
 			items.push({
 				action: () => setOpenSaveModal(true),
 				group: 0,
@@ -175,10 +172,7 @@ export default function TopperItemActions({disabled, item}) {
 			});
 		}
 
-		if (
-			Liferay.FeatureFlags['LPD-18221'] &&
-			!isStepper(fragmentEntryLinks[item.config.fragmentEntryLinkId])
-		) {
+		if (!isStepper(fragmentEntryLinks[item.config.fragmentEntryLinkId])) {
 			items.push({
 				action: () => {
 					if (
@@ -238,6 +232,7 @@ export default function TopperItemActions({disabled, item}) {
 
 		return sortItems(items);
 	}, [
+		canManageFragments,
 		clipboard,
 		dispatch,
 		fragmentEntryLink,

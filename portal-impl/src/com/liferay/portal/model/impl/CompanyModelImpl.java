@@ -149,20 +149,14 @@ public class CompanyModelImpl
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long MX_COLUMN_BITMASK = 2L;
-
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
-	 */
-	@Deprecated
-	public static final long WEBID_COLUMN_BITMASK = 4L;
+	public static final long WEBID_COLUMN_BITMASK = 2L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
 	 *		#getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long COMPANYID_COLUMN_BITMASK = 8L;
+	public static final long COMPANYID_COLUMN_BITMASK = 4L;
 
 	public static final long LOCK_EXPIRATION_TIME = GetterUtil.getLong(
 		com.liferay.portal.util.PropsUtil.get(
@@ -532,15 +526,6 @@ public class CompanyModelImpl
 		_mx = mx;
 	}
 
-	/**
-	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
-	 *             #getColumnOriginalValue(String)}
-	 */
-	@Deprecated
-	public String getOriginalMx() {
-		return getColumnOriginalValue("mx");
-	}
-
 	@JSON
 	@Override
 	public String getHomeURL() {
@@ -841,14 +826,6 @@ public class CompanyModelImpl
 		_indexNameNext = indexNameNext;
 	}
 
-	public CompanyImpl.CompanySecurityBag getCompanySecurityBag() {
-		return null;
-	}
-
-	public void setCompanySecurityBag(
-		CompanyImpl.CompanySecurityBag companySecurityBag) {
-	}
-
 	public long getGroupId() {
 		return 0;
 	}
@@ -1057,8 +1034,6 @@ public class CompanyModelImpl
 
 		_setModifiedDate = false;
 
-		setCompanySecurityBag(null);
-
 		setVirtualHostname(null);
 
 		_columnBitmask = 0;
@@ -1217,10 +1192,6 @@ public class CompanyModelImpl
 		if ((indexNameNext != null) && (indexNameNext.length() == 0)) {
 			companyCacheModel.indexNameNext = null;
 		}
-
-		setCompanySecurityBag(null);
-
-		companyCacheModel._companySecurityBag = getCompanySecurityBag();
 
 		companyCacheModel._groupId = getGroupId();
 

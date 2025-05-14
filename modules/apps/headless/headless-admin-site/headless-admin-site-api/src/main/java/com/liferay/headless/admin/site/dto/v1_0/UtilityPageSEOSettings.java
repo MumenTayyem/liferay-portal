@@ -16,8 +16,6 @@ import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLName;
 import com.liferay.portal.vulcan.util.ObjectMapperUtil;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.io.Serializable;
 
 import java.util.Iterator;
@@ -38,7 +36,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  */
 @Generated("")
 @GraphQLName(
-	description = "Settings related with SEO of an utility page.",
+	description = "Settings related with SEO of a utility page.",
 	value = "UtilityPageSEOSettings"
 )
 @JsonFilter("Liferay.Vulcan")
@@ -54,7 +52,7 @@ public class UtilityPageSEOSettings implements Serializable {
 			UtilityPageSEOSettings.class, json);
 	}
 
-	@Schema(
+	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The localized descriptions of the utility page to be used as summary for search engines."
 	)
 	@Valid
@@ -101,7 +99,7 @@ public class UtilityPageSEOSettings implements Serializable {
 	@JsonIgnore
 	private Supplier<Map<String, String>> _description_i18nSupplier;
 
-	@Schema(
+	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The localized main titles of the utility page to be used by search engines."
 	)
 	@Valid
@@ -205,8 +203,8 @@ public class UtilityPageSEOSettings implements Serializable {
 		return sb.toString();
 	}
 
-	@Schema(
-		accessMode = Schema.AccessMode.READ_ONLY,
+	@io.swagger.v3.oas.annotations.media.Schema(
+		accessMode = io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY,
 		defaultValue = "com.liferay.headless.admin.site.dto.v1_0.UtilityPageSEOSettings",
 		name = "x-class-name"
 	)

@@ -13,7 +13,6 @@ import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
-import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -53,8 +52,7 @@ public class FDSAPIURLBuilderTest {
 			ServiceTrackerCustomizerFactory.<FDSAPIURLResolver>serviceWrapper(
 				_bundleContext));
 
-		ReflectionTestUtil.setFieldValue(
-			_fdsAPIURLResolverRegistry, "_serviceTrackerMap",
+		_fdsAPIURLResolverRegistry = new FDSAPIURLResolverRegistryImpl(
 			_serviceTrackerMap);
 
 		ThemeDisplay themeDisplay = Mockito.mock(ThemeDisplay.class);
@@ -149,11 +147,36 @@ public class FDSAPIURLBuilderTest {
 				"/{foo}/endpoint", "schema"
 			).addParameter(
 				"siteId", "{siteId}"
-			).addParameter(
-				"foo", "{foo}"
+			).addQueryString(
+				"foo={foo}"
 			).addParameter(
 				"{foo}", "{userId}"
 			).build());
+		Assert.assertEquals(
+			"siteId=12345&foo=bar&bar=67890",
+			new FDSAPIURLBuilder(
+				_fdsAPIURLResolverRegistry, _httpServletRequest, "/app",
+				"/endpoint", "schema"
+			).addParameter(
+				"siteId", "{siteId}"
+			).addQueryString(
+				"foo={foo}"
+			).addParameter(
+				"{foo}", "{userId}"
+			).buildQueryString());
+		Assert.assertNull(
+			new FDSAPIURLBuilder(
+				_fdsAPIURLResolverRegistry, _httpServletRequest, "/app",
+				"/endpoint", "schema"
+			).addParameter(
+				"", ""
+			).addQueryString(
+				""
+			).addParameter(
+				"foo", ""
+			).addParameter(
+				"", "foo"
+			).buildQueryString());
 
 		serviceRegistration1.unregister();
 
@@ -182,6 +205,18 @@ public class FDSAPIURLBuilderTest {
 				"/app2", "schema2", new String[] {"{foo}"},
 				new String[] {"bar"});
 
+		Assert.assertEquals(
+			"/o/app1/bar/endpoint",
+			new FDSAPIURLBuilder(
+				_fdsAPIURLResolverRegistry, _httpServletRequest, "/app1",
+				"/{foo}/endpoint", "schema1"
+			).build());
+		Assert.assertEquals(
+			"/o/app2/bar/endpoint",
+			new FDSAPIURLBuilder(
+				_fdsAPIURLResolverRegistry, _httpServletRequest, "/app2",
+				"/{foo}/endpoint", "schema2"
+			).build());
 		Assert.assertEquals(
 			"/o/app2/{foo}/endpoint",
 			new FDSAPIURLBuilder(
@@ -232,12 +267,11 @@ public class FDSAPIURLBuilderTest {
 			).build());
 	}
 
-	private static BundleContext _bundleContext;
-	private static final FDSAPIURLResolverRegistry _fdsAPIURLResolverRegistry =
-		new FDSAPIURLResolverRegistryImpl();
-	private static final HttpServletRequest _httpServletRequest = Mockito.mock(
+	private BundleContext _bundleContext;
+	private FDSAPIURLResolverRegistry _fdsAPIURLResolverRegistry;
+	private final HttpServletRequest _httpServletRequest = Mockito.mock(
 		HttpServletRequest.class);
-	private static ServiceTrackerMap<String, ServiceWrapper<FDSAPIURLResolver>>
+	private ServiceTrackerMap<String, ServiceWrapper<FDSAPIURLResolver>>
 		_serviceTrackerMap;
 
 }

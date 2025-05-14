@@ -6,7 +6,7 @@
 package com.liferay.partner;
 
 import com.liferay.client.extension.util.spring.boot3.BaseRestController;
-import com.liferay.client.extension.util.spring.boot3.LiferayOAuth2AccessTokenManager;
+import com.liferay.client.extension.util.spring.boot3.client.LiferayOAuth2AccessTokenManager;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringUtil;
 
@@ -583,7 +583,7 @@ public class QueueListener extends BaseRestController {
 		}
 
 		delete(
-			_getAuthorization(), null,
+			_getAuthorization(), "",
 			StringBundler.concat(
 				"/o/headless-admin-user/v1.0/accounts",
 				"/by-external-reference-code/", accountExternalReferenceCode,
@@ -609,7 +609,7 @@ public class QueueListener extends BaseRestController {
 		}
 
 		delete(
-			_getAuthorization(), null,
+			_getAuthorization(), "",
 			StringBundler.concat(
 				"/o/headless-admin-user/v1.0/accounts",
 				"/by-external-reference-code/", accountExternalReferenceCode,
@@ -650,7 +650,7 @@ public class QueueListener extends BaseRestController {
 		}
 
 		delete(
-			_getAuthorization(), null,
+			_getAuthorization(), "",
 			StringBundler.concat(
 				"/o/headless-admin-user/v1.0/roles/", roleId,
 				"/association/user-account/", userAccountId));

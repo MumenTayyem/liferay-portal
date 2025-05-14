@@ -40,7 +40,7 @@ public class LayoutPageTemplateTestUtil {
 				null, TestPropsValues.getUserId(), groupId,
 				LayoutPageTemplateConstants.
 					PARENT_LAYOUT_PAGE_TEMPLATE_COLLECTION_ID_DEFAULT,
-				RandomTestUtil.randomString(), StringPool.BLANK,
+				null, RandomTestUtil.randomString(), StringPool.BLANK,
 				LayoutPageTemplateCollectionTypeConstants.BASIC,
 				serviceContext);
 	}
@@ -78,8 +78,8 @@ public class LayoutPageTemplateTestUtil {
 		return LayoutPageTemplateEntryLocalServiceUtil.
 			addLayoutPageTemplateEntry(
 				null, TestPropsValues.getUserId(), groupId,
-				layoutPageTemplateCollectionId, RandomTestUtil.randomString(),
-				type, 0, status,
+				layoutPageTemplateCollectionId, null,
+				RandomTestUtil.randomString(), type, 0, status,
 				ServiceContextTestUtil.getServiceContext(
 					groupId, TestPropsValues.getUserId()));
 	}
@@ -107,7 +107,7 @@ public class LayoutPageTemplateTestUtil {
 			addLayoutPageTemplateEntry(
 				null, TestPropsValues.getUserId(),
 				layoutPageTemplateCollection.getGroupId(),
-				layoutPageTemplateCollectionId, name, type, 0, status,
+				layoutPageTemplateCollectionId, null, name, type, 0, status,
 				ServiceContextTestUtil.getServiceContext(
 					layoutPageTemplateCollection.getGroupId(),
 					TestPropsValues.getUserId()));

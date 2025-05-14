@@ -31,7 +31,7 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -44,7 +44,7 @@ import com.liferay.portal.vulcan.resource.EntityModelResource;
 
 import java.lang.reflect.Method;
 
-import java.text.DateFormat;
+import java.text.Format;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -83,7 +83,7 @@ public abstract class BaseAttachmentResourceTestCase {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		_dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
@@ -97,12 +97,12 @@ public abstract class BaseAttachmentResourceTestCase {
 
 		_attachmentResource.setContextCompany(testCompany);
 
-		com.liferay.portal.kernel.model.User testCompanyAdminUser =
-			UserTestUtil.getAdminUser(testCompany.getCompanyId());
+		_testCompanyAdminUser = UserTestUtil.getAdminUser(
+			testCompany.getCompanyId());
 
 		attachmentResource = AttachmentResource.builder(
 		).authentication(
-			testCompanyAdminUser.getEmailAddress(),
+			_testCompanyAdminUser.getEmailAddress(),
 			PropsValues.DEFAULT_ADMIN_PASSWORD
 		).endpoint(
 			testCompany.getVirtualHostname(), 8080, "http"
@@ -183,6 +183,221 @@ public abstract class BaseAttachmentResourceTestCase {
 	}
 
 	@Test
+	public void testDeleteCartAttachment() throws Exception {
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Attachment attachment = testDeleteCartAttachment_addAttachment();
+
+		assertHttpResponseStatusCode(
+			204,
+			attachmentResource.deleteCartAttachmentHttpResponse(
+				attachment.getId(), testDeleteCartAttachment_getCartId()));
+	}
+
+	protected Long testDeleteCartAttachment_getCartId() throws Exception {
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected Attachment testDeleteCartAttachment_addAttachment()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode()
+		throws Exception {
+
+		@SuppressWarnings("PMD.UnusedLocalVariable")
+		Attachment attachment =
+			testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode_addAttachment();
+
+		assertHttpResponseStatusCode(
+			204,
+			attachmentResource.
+				deleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCodeHttpResponse(
+					testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode_getAttachmentExternalReferenceCode(),
+					testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode_getExternalReferenceCode(
+						attachment)));
+	}
+
+	protected String
+			testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode_getAttachmentExternalReferenceCode()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected String
+			testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode_getExternalReferenceCode(
+				Attachment attachment)
+		throws Exception {
+
+		return attachment.getExternalReferenceCode();
+	}
+
+	protected Attachment
+			testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode_addAttachment()
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
+	public void testGetCartAttachmentsPage() throws Exception {
+		Long cartId = testGetCartAttachmentsPage_getCartId();
+		Long irrelevantCartId =
+			testGetCartAttachmentsPage_getIrrelevantCartId();
+
+		Page<Attachment> page = attachmentResource.getCartAttachmentsPage(
+			cartId, Pagination.of(1, 10));
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantCartId != null) {
+			Attachment irrelevantAttachment =
+				testGetCartAttachmentsPage_addAttachment(
+					irrelevantCartId, randomIrrelevantAttachment());
+
+			page = attachmentResource.getCartAttachmentsPage(
+				irrelevantCartId, Pagination.of(1, (int)totalCount + 1));
+
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
+
+			assertContains(
+				irrelevantAttachment, (List<Attachment>)page.getItems());
+			assertValid(
+				page,
+				testGetCartAttachmentsPage_getExpectedActions(
+					irrelevantCartId));
+		}
+
+		Attachment attachment1 = testGetCartAttachmentsPage_addAttachment(
+			cartId, randomAttachment());
+
+		Attachment attachment2 = testGetCartAttachmentsPage_addAttachment(
+			cartId, randomAttachment());
+
+		page = attachmentResource.getCartAttachmentsPage(
+			cartId, Pagination.of(1, 10));
+
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
+
+		assertContains(attachment1, (List<Attachment>)page.getItems());
+		assertContains(attachment2, (List<Attachment>)page.getItems());
+		assertValid(
+			page, testGetCartAttachmentsPage_getExpectedActions(cartId));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetCartAttachmentsPage_getExpectedActions(Long cartId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		return expectedActions;
+	}
+
+	@Test
+	public void testGetCartAttachmentsPageWithPagination() throws Exception {
+		Long cartId = testGetCartAttachmentsPage_getCartId();
+
+		Page<Attachment> attachmentsPage =
+			attachmentResource.getCartAttachmentsPage(cartId, null);
+
+		int totalCount = GetterUtil.getInteger(attachmentsPage.getTotalCount());
+
+		Attachment attachment1 = testGetCartAttachmentsPage_addAttachment(
+			cartId, randomAttachment());
+
+		Attachment attachment2 = testGetCartAttachmentsPage_addAttachment(
+			cartId, randomAttachment());
+
+		Attachment attachment3 = testGetCartAttachmentsPage_addAttachment(
+			cartId, randomAttachment());
+
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
+
+		int pageSizeLimit = 500;
+
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<Attachment> page1 = attachmentResource.getCartAttachmentsPage(
+				cartId,
+				Pagination.of(
+					(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+					pageSizeLimit));
+
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
+
+			assertContains(attachment1, (List<Attachment>)page1.getItems());
+
+			Page<Attachment> page2 = attachmentResource.getCartAttachmentsPage(
+				cartId,
+				Pagination.of(
+					(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+					pageSizeLimit));
+
+			assertContains(attachment2, (List<Attachment>)page2.getItems());
+
+			Page<Attachment> page3 = attachmentResource.getCartAttachmentsPage(
+				cartId,
+				Pagination.of(
+					(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+					pageSizeLimit));
+
+			assertContains(attachment3, (List<Attachment>)page3.getItems());
+		}
+		else {
+			Page<Attachment> page1 = attachmentResource.getCartAttachmentsPage(
+				cartId, Pagination.of(1, totalCount + 2));
+
+			List<Attachment> attachments1 = (List<Attachment>)page1.getItems();
+
+			Assert.assertEquals(
+				attachments1.toString(), totalCount + 2, attachments1.size());
+
+			Page<Attachment> page2 = attachmentResource.getCartAttachmentsPage(
+				cartId, Pagination.of(2, totalCount + 2));
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<Attachment> attachments2 = (List<Attachment>)page2.getItems();
+
+			Assert.assertEquals(
+				attachments2.toString(), 1, attachments2.size());
+
+			Page<Attachment> page3 = attachmentResource.getCartAttachmentsPage(
+				cartId, Pagination.of(1, (int)totalCount + 3));
+
+			assertContains(attachment1, (List<Attachment>)page3.getItems());
+			assertContains(attachment2, (List<Attachment>)page3.getItems());
+			assertContains(attachment3, (List<Attachment>)page3.getItems());
+		}
+	}
+
+	protected Attachment testGetCartAttachmentsPage_addAttachment(
+			Long cartId, Attachment attachment)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected Long testGetCartAttachmentsPage_getCartId() throws Exception {
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	protected Long testGetCartAttachmentsPage_getIrrelevantCartId()
+		throws Exception {
+
+		return null;
+	}
+
+	@Test
 	public void testGetCartByExternalReferenceCodeAttachmentsPage()
 		throws Exception {
 
@@ -257,11 +472,11 @@ public abstract class BaseAttachmentResourceTestCase {
 		String externalReferenceCode =
 			testGetCartByExternalReferenceCodeAttachmentsPage_getExternalReferenceCode();
 
-		Page<Attachment> attachmentPage =
+		Page<Attachment> attachmentsPage =
 			attachmentResource.getCartByExternalReferenceCodeAttachmentsPage(
 				externalReferenceCode, null);
 
-		int totalCount = GetterUtil.getInteger(attachmentPage.getTotalCount());
+		int totalCount = GetterUtil.getInteger(attachmentsPage.getTotalCount());
 
 		Attachment attachment1 =
 			testGetCartByExternalReferenceCodeAttachmentsPage_addAttachment(
@@ -374,221 +589,6 @@ public abstract class BaseAttachmentResourceTestCase {
 	}
 
 	@Test
-	public void testPostCartByExternalReferenceCodeAttachmentByBase64()
-		throws Exception {
-
-		Attachment randomAttachment = randomAttachment();
-
-		Attachment postAttachment =
-			testPostCartByExternalReferenceCodeAttachmentByBase64_addAttachment(
-				randomAttachment);
-
-		assertEquals(randomAttachment, postAttachment);
-		assertValid(postAttachment);
-	}
-
-	protected Attachment
-			testPostCartByExternalReferenceCodeAttachmentByBase64_addAttachment(
-				Attachment attachment)
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	@Test
-	public void testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode()
-		throws Exception {
-
-		@SuppressWarnings("PMD.UnusedLocalVariable")
-		Attachment attachment =
-			testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode_addAttachment();
-
-		assertHttpResponseStatusCode(
-			204,
-			attachmentResource.
-				deleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCodeHttpResponse(
-					testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode_getAttachmentExternalReferenceCode(),
-					testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode_getExternalReferenceCode(
-						attachment)));
-	}
-
-	protected String
-			testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode_getAttachmentExternalReferenceCode()
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	protected String
-			testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode_getExternalReferenceCode(
-				Attachment attachment)
-		throws Exception {
-
-		return attachment.getExternalReferenceCode();
-	}
-
-	protected Attachment
-			testDeleteCartByExternalReferenceCodeAttachmentByExternalReferenceCodeAttachmentExternalReferenceCode_addAttachment()
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	@Test
-	public void testGetCartAttachmentsPage() throws Exception {
-		Long cartId = testGetCartAttachmentsPage_getCartId();
-		Long irrelevantCartId =
-			testGetCartAttachmentsPage_getIrrelevantCartId();
-
-		Page<Attachment> page = attachmentResource.getCartAttachmentsPage(
-			cartId, Pagination.of(1, 10));
-
-		long totalCount = page.getTotalCount();
-
-		if (irrelevantCartId != null) {
-			Attachment irrelevantAttachment =
-				testGetCartAttachmentsPage_addAttachment(
-					irrelevantCartId, randomIrrelevantAttachment());
-
-			page = attachmentResource.getCartAttachmentsPage(
-				irrelevantCartId, Pagination.of(1, (int)totalCount + 1));
-
-			Assert.assertEquals(totalCount + 1, page.getTotalCount());
-
-			assertContains(
-				irrelevantAttachment, (List<Attachment>)page.getItems());
-			assertValid(
-				page,
-				testGetCartAttachmentsPage_getExpectedActions(
-					irrelevantCartId));
-		}
-
-		Attachment attachment1 = testGetCartAttachmentsPage_addAttachment(
-			cartId, randomAttachment());
-
-		Attachment attachment2 = testGetCartAttachmentsPage_addAttachment(
-			cartId, randomAttachment());
-
-		page = attachmentResource.getCartAttachmentsPage(
-			cartId, Pagination.of(1, 10));
-
-		Assert.assertEquals(totalCount + 2, page.getTotalCount());
-
-		assertContains(attachment1, (List<Attachment>)page.getItems());
-		assertContains(attachment2, (List<Attachment>)page.getItems());
-		assertValid(
-			page, testGetCartAttachmentsPage_getExpectedActions(cartId));
-	}
-
-	protected Map<String, Map<String, String>>
-			testGetCartAttachmentsPage_getExpectedActions(Long cartId)
-		throws Exception {
-
-		Map<String, Map<String, String>> expectedActions = new HashMap<>();
-
-		return expectedActions;
-	}
-
-	@Test
-	public void testGetCartAttachmentsPageWithPagination() throws Exception {
-		Long cartId = testGetCartAttachmentsPage_getCartId();
-
-		Page<Attachment> attachmentPage =
-			attachmentResource.getCartAttachmentsPage(cartId, null);
-
-		int totalCount = GetterUtil.getInteger(attachmentPage.getTotalCount());
-
-		Attachment attachment1 = testGetCartAttachmentsPage_addAttachment(
-			cartId, randomAttachment());
-
-		Attachment attachment2 = testGetCartAttachmentsPage_addAttachment(
-			cartId, randomAttachment());
-
-		Attachment attachment3 = testGetCartAttachmentsPage_addAttachment(
-			cartId, randomAttachment());
-
-		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
-
-		int pageSizeLimit = 500;
-
-		if (totalCount >= (pageSizeLimit - 2)) {
-			Page<Attachment> page1 = attachmentResource.getCartAttachmentsPage(
-				cartId,
-				Pagination.of(
-					(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
-					pageSizeLimit));
-
-			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
-
-			assertContains(attachment1, (List<Attachment>)page1.getItems());
-
-			Page<Attachment> page2 = attachmentResource.getCartAttachmentsPage(
-				cartId,
-				Pagination.of(
-					(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
-					pageSizeLimit));
-
-			assertContains(attachment2, (List<Attachment>)page2.getItems());
-
-			Page<Attachment> page3 = attachmentResource.getCartAttachmentsPage(
-				cartId,
-				Pagination.of(
-					(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
-					pageSizeLimit));
-
-			assertContains(attachment3, (List<Attachment>)page3.getItems());
-		}
-		else {
-			Page<Attachment> page1 = attachmentResource.getCartAttachmentsPage(
-				cartId, Pagination.of(1, totalCount + 2));
-
-			List<Attachment> attachments1 = (List<Attachment>)page1.getItems();
-
-			Assert.assertEquals(
-				attachments1.toString(), totalCount + 2, attachments1.size());
-
-			Page<Attachment> page2 = attachmentResource.getCartAttachmentsPage(
-				cartId, Pagination.of(2, totalCount + 2));
-
-			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
-
-			List<Attachment> attachments2 = (List<Attachment>)page2.getItems();
-
-			Assert.assertEquals(
-				attachments2.toString(), 1, attachments2.size());
-
-			Page<Attachment> page3 = attachmentResource.getCartAttachmentsPage(
-				cartId, Pagination.of(1, (int)totalCount + 3));
-
-			assertContains(attachment1, (List<Attachment>)page3.getItems());
-			assertContains(attachment2, (List<Attachment>)page3.getItems());
-			assertContains(attachment3, (List<Attachment>)page3.getItems());
-		}
-	}
-
-	protected Attachment testGetCartAttachmentsPage_addAttachment(
-			Long cartId, Attachment attachment)
-		throws Exception {
-
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	protected Long testGetCartAttachmentsPage_getCartId() throws Exception {
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	protected Long testGetCartAttachmentsPage_getIrrelevantCartId()
-		throws Exception {
-
-		return null;
-	}
-
-	@Test
 	public void testPostCartAttachmentByBase64() throws Exception {
 		Attachment randomAttachment = randomAttachment();
 
@@ -608,22 +608,22 @@ public abstract class BaseAttachmentResourceTestCase {
 	}
 
 	@Test
-	public void testDeleteCartAttachment() throws Exception {
-		@SuppressWarnings("PMD.UnusedLocalVariable")
-		Attachment attachment = testDeleteCartAttachment_addAttachment();
+	public void testPostCartByExternalReferenceCodeAttachmentByBase64()
+		throws Exception {
 
-		assertHttpResponseStatusCode(
-			204,
-			attachmentResource.deleteCartAttachmentHttpResponse(
-				attachment.getId(), testDeleteCartAttachment_getCartId()));
+		Attachment randomAttachment = randomAttachment();
+
+		Attachment postAttachment =
+			testPostCartByExternalReferenceCodeAttachmentByBase64_addAttachment(
+				randomAttachment);
+
+		assertEquals(randomAttachment, postAttachment);
+		assertValid(postAttachment);
 	}
 
-	protected Long testDeleteCartAttachment_getCartId() throws Exception {
-		throw new UnsupportedOperationException(
-			"This method needs to be implemented");
-	}
-
-	protected Attachment testDeleteCartAttachment_addAttachment()
+	protected Attachment
+			testPostCartByExternalReferenceCodeAttachmentByBase64_addAttachment(
+				Attachment attachment)
 		throws Exception {
 
 		throw new UnsupportedOperationException(
@@ -1440,7 +1440,9 @@ public abstract class BaseAttachmentResourceTestCase {
 	private static final com.liferay.portal.kernel.log.Log _log =
 		LogFactoryUtil.getLog(BaseAttachmentResourceTestCase.class);
 
-	private static DateFormat _dateFormat;
+	private static Format _format;
+
+	private com.liferay.portal.kernel.model.User _testCompanyAdminUser;
 
 	@Inject
 	private

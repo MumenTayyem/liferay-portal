@@ -258,14 +258,14 @@ public class LayoutPageTemplateEntryStagedModelDataHandlerTest
 					null, userId, group.getGroupId(),
 					LayoutPageTemplateConstants.
 						PARENT_LAYOUT_PAGE_TEMPLATE_COLLECTION_ID_DEFAULT,
-					"Test Collection", StringPool.BLANK,
+					null, "Test Collection", StringPool.BLANK,
 					LayoutPageTemplateCollectionTypeConstants.BASIC,
 					serviceContext);
 
 		return _layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
 			null, userId, group.getGroupId(),
 			layoutPageTemplateCollection.getLayoutPageTemplateCollectionId(),
-			"Test Entry", LayoutPageTemplateEntryTypeConstants.BASIC, 0,
+			null, "Test Entry", LayoutPageTemplateEntryTypeConstants.BASIC, 0,
 			WorkflowConstants.STATUS_APPROVED, serviceContext);
 	}
 

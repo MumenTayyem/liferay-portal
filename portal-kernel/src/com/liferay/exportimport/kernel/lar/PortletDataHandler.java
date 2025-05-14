@@ -266,7 +266,7 @@ public interface PortletDataHandler {
 			PortletPreferences portletPreferences, String data)
 		throws PortletDataException;
 
-	public default boolean isCompany() {
+	public default boolean isBatch() {
 		return false;
 	}
 
@@ -286,9 +286,13 @@ public interface PortletDataHandler {
 
 	public boolean isDisplayPortlet();
 
+	public boolean isEmptyControlsAllowed();
+
 	public default boolean isEnabled(long companyId) {
 		return true;
 	}
+
+	public boolean isModelCountSupported();
 
 	/**
 	 * Returns whether the data exported by this handler should be included by

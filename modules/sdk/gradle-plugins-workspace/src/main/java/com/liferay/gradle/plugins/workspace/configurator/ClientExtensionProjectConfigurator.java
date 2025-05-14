@@ -80,10 +80,12 @@ import org.gradle.api.invocation.Gradle;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.ExtensionAware;
+import org.gradle.api.plugins.PluginManager;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Copy;
 import org.gradle.api.tasks.Delete;
+import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskInputs;
 import org.gradle.api.tasks.TaskOutputs;
@@ -316,6 +318,8 @@ public class ClientExtensionProjectConfigurator
 
 			_configureLanguageProject(project);
 		}
+
+		_configureSpringBootPlugin(project);
 	}
 
 	@Override
@@ -1087,6 +1091,52 @@ public class ClientExtensionProjectConfigurator
 					copySpec.from(buildClientExtensionZipTaskProvider);
 				}
 
+			});
+	}
+
+	private void _configureSpringBootPlugin(Project project) {
+		PluginManager pluginManager = project.getPluginManager();
+
+		Map<String, String> environmentMap = Collections.singletonMap(
+			"JDK_JAVA_OPTIONS",
+			StringUtil.concat(
+				"--add-opens=java.base/java.lang.reflect=ALL-UNNAMED ",
+				"--add-opens=java.base/java.net=ALL-UNNAMED ",
+				"--add-opens=java.base/sun.net.www.protocol.http=ALL-UNNAMED ",
+				"--add-opens=java.base/sun.net.www.protocol.https=ALL-UNNAMED ",
+				"--add-opens=java.base/sun.util.calendar=ALL-UNNAMED ",
+				"--add-opens=jdk.zipfs/jdk.nio.zipfs=ALL-UNNAMED"));
+
+		pluginManager.withPlugin(
+			"org.springframework.boot",
+			appliedPlugin -> {
+				TaskContainer taskContainer = project.getTasks();
+
+				taskContainer.withType(
+					JavaExec.class,
+					javaExecTask -> {
+						javaExecTask.environment(environmentMap);
+
+						Logger logger = javaExecTask.getLogger();
+
+						if (!logger.isInfoEnabled()) {
+							return;
+						}
+
+						logger.info(
+							StringUtil.concat(
+								"Injected the environment variable ",
+								" \"JDK_JAVA_OPTIONS\" into the process ",
+								"invoked by the task {}"),
+							javaExecTask.getPath());
+
+						for (Map.Entry<String, String> entry :
+								environmentMap.entrySet()) {
+
+							logger.info(
+								"{}: {}", entry.getKey(), entry.getValue());
+						}
+					});
 			});
 	}
 

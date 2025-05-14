@@ -275,10 +275,22 @@ AUI.add(
 				_uiSetColor(value) {
 					const instance = this;
 					const node = instance.get('node');
+					const eventStatus = instance.get('status');
+					const isPastEvent = instance._isPastEvent();
 
-					node.setStyles({
-						backgroundColor: value,
-					});
+					if (eventStatus === 0 && !isPastEvent) {
+						node.setStyles({
+							backgroundColor: value,
+						});
+					}
+					else {
+						node.setStyles({
+							backgroundColor: value,
+							opacity: '0.8',
+						});
+
+						node.toggleClass('scheduler-event-past', isPastEvent);
+					}
 				},
 
 				_uiSetEndDate(val) {

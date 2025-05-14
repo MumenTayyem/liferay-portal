@@ -7,7 +7,7 @@ definition {
 	property portal.suite.search.engine = "elasticsearch7,opensearch2";
 	property portal.upstream = "true";
 	property test.run.environment = "EE";
-	property testray.main.component.name = "Search Experiences";
+	property testray.main.component.name = "Search Blueprints";
 
 	setUp {
 		TestCase.setUpPortalInstance();
@@ -2155,6 +2155,8 @@ definition {
 
 	@priority = 3
 	test PaginateBlueprintsAdmin {
+		property custom.properties = "search.container.page.delta.values=4,8,20,40,60";
+
 		Blueprints.openBlueprintsAdmin();
 
 		for (var index : list "One,Two,Three,Four,Five") {
@@ -2298,6 +2300,8 @@ definition {
 
 	@priority = 3
 	test PaginateElementsAdmin {
+		property custom.properties = "search.container.page.delta.values=4,8,20,40,60";
+
 		Blueprints.openBlueprintsAdmin();
 
 		Navigator.gotoNavItem(navItem = "Elements");

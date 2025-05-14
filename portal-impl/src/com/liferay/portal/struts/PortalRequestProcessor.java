@@ -8,6 +8,7 @@ package com.liferay.portal.struts;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.action.UpdatePasswordActionUtil;
 import com.liferay.portal.kernel.exception.LayoutPermissionException;
 import com.liferay.portal.kernel.exception.PortletActiveException;
 import com.liferay.portal.kernel.exception.UserActiveException;
@@ -125,6 +126,34 @@ public class PortalRequestProcessor {
 		throws IOException, ServletException {
 
 		String path = _processPath(httpServletRequest);
+
+		try {
+			User user = PortalUtil.getUser(httpServletRequest);
+
+			if (path.equals(_PATH_PORTAL_UPDATE_PASSWORD) &&
+				Validator.isNull(
+					ParamUtil.getString(httpServletRequest, "ticketId")) &&
+				(user != null) && !user.isGuestUser() &&
+				user.isPasswordReset()) {
+
+				String updatePasswordURL =
+					UpdatePasswordActionUtil.generateUpdatePasswordURL(
+						httpServletRequest, user);
+
+				if (_log.isDebugEnabled()) {
+					_log.debug("Update password URL " + updatePasswordURL);
+				}
+
+				httpServletResponse.sendRedirect(updatePasswordURL);
+
+				return;
+			}
+		}
+		catch (Exception exception) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(exception);
+			}
+		}
 
 		ActionMapping actionMapping = _moduleConfig.getActionMapping(path);
 
@@ -635,7 +664,7 @@ public class PortalRequestProcessor {
 					return _PATH_PORTAL_UPDATE_PASSWORD;
 				}
 				else if (path.equals(_PATH_PORTAL_UPDATE_PASSWORD)) {
-					return _PATH_PORTAL_LAYOUT;
+					return _PATH_PORTAL_UPDATE_PASSWORD;
 				}
 
 				// Authenticated users must have an email address

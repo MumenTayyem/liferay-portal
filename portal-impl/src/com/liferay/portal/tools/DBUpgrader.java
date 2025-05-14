@@ -172,7 +172,7 @@ public class DBUpgrader {
 
 			InitUtil.registerContext();
 
-			upgradeModules();
+			upgradeModules(() -> StartupHelperUtil.setUpgrading(false));
 
 			BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
@@ -189,8 +189,6 @@ public class DBUpgrader {
 			result = "Failed";
 		}
 		finally {
-			StartupHelperUtil.setUpgrading(false);
-
 			System.out.println(
 				StringBundler.concat(
 					"\n", result, " Liferay upgrade process in ",
@@ -201,9 +199,7 @@ public class DBUpgrader {
 	}
 
 	public static void startUpgradeLogAppender() {
-		if (_stopWatch == null) {
-			_initUpgradeStopwatch();
-		}
+		_initUpgradeStopwatch();
 
 		ServiceLatch serviceLatch = SystemBundleUtil.newServiceLatch();
 
@@ -229,8 +225,9 @@ public class DBUpgrader {
 		}
 	}
 
-	public static void upgradeModules() {
-		_registerModuleServiceLifecycle("portal.initialized");
+	public static void upgradeModules(Runnable upgradeModulesCallbackRunnable) {
+		_registerModuleServiceLifecycle(
+			moduleServiceLifecyclePortalInitialized);
 
 		if (_upgradeClient) {
 			DependencyManagerSyncUtil.sync();
@@ -239,11 +236,14 @@ public class DBUpgrader {
 		PortalCacheHelperUtil.clearPortalCaches(
 			PortalCacheManagerNames.MULTI_VM);
 
-		_registerModuleServiceLifecycle("portlets.initialized");
-
 		if (_upgradeClient || StartupHelperUtil.isNewRelease()) {
 			IndexUpdaterUtil.updateAllIndexes();
 		}
+
+		upgradeModulesCallbackRunnable.run();
+
+		_registerModuleServiceLifecycle(
+			moduleServiceLifecyclePortletsInitialized);
 	}
 
 	public static void upgradePortal() throws Exception {
@@ -354,6 +354,11 @@ public class DBUpgrader {
 
 		verifyProcessSuite.verify();
 	}
+
+	protected static String moduleServiceLifecyclePortalInitialized =
+		"portal.initialized";
+	protected static String moduleServiceLifecyclePortletsInitialized =
+		"portlets.initialized";
 
 	private static void _checkClassNamesAndResourceActions() {
 		if (_log.isDebugEnabled()) {

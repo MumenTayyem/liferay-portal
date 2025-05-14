@@ -9,13 +9,12 @@ import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.kernel.exception.NoSuchModelException;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Resource;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.ResourcePermission;
-import com.liferay.portal.kernel.search.Sort;
-import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -39,12 +38,15 @@ import com.liferay.portal.odata.filter.FilterParserProvider;
 import com.liferay.portal.odata.sort.SortField;
 import com.liferay.portal.odata.sort.SortParser;
 import com.liferay.portal.odata.sort.SortParserProvider;
+import com.liferay.portal.tools.rest.builder.test.dto.v1_0.Filter;
 import com.liferay.portal.tools.rest.builder.test.dto.v1_0.SiteTestEntity;
+import com.liferay.portal.tools.rest.builder.test.dto.v1_0.Sort;
 import com.liferay.portal.tools.rest.builder.test.resource.v1_0.SiteTestEntityResource;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.batch.engine.VulcanBatchEngineTaskItemDelegate;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineExportTaskResource;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineImportTaskResource;
+import com.liferay.portal.vulcan.crud.VulcanCRUDItemDelegate;
 import com.liferay.portal.vulcan.fields.NestedFieldsSupplier;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
@@ -52,6 +54,7 @@ import com.liferay.portal.vulcan.permission.ModelPermissionsUtil;
 import com.liferay.portal.vulcan.permission.Permission;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.ActionUtil;
+import com.liferay.portal.vulcan.util.UriInfoUtil;
 
 import java.io.Serializable;
 
@@ -83,7 +86,130 @@ import javax.ws.rs.core.UriInfo;
 @javax.ws.rs.Path("/v1.0")
 public abstract class BaseSiteTestEntityResourceImpl
 	implements EntityModelResource, SiteTestEntityResource,
-			   VulcanBatchEngineTaskItemDelegate<SiteTestEntity> {
+			   VulcanBatchEngineTaskItemDelegate<SiteTestEntity>,
+			   VulcanCRUDItemDelegate<SiteTestEntity> {
+
+	protected abstract Page<SiteTestEntity> doGetSiteSiteTestEntitiesPage(
+			Long siteId)
+		throws Exception;
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'GET' 'http://localhost:8080/o/test/v1.0/sites/{siteId}/site-test-entities'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "siteId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "SiteTestEntity")
+		}
+	)
+	@javax.ws.rs.GET
+	@javax.ws.rs.Path("/sites/{siteId}/site-test-entities")
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public final Page<SiteTestEntity> getSiteSiteTestEntitiesPage(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("siteId")
+			Long siteId)
+		throws Exception {
+
+		Page<SiteTestEntity> siteTestEntitiesPage =
+			doGetSiteSiteTestEntitiesPage(siteId);
+
+		for (SiteTestEntity siteTestEntity : siteTestEntitiesPage.getItems()) {
+			siteTestEntity.setPermissions(
+				() -> NestedFieldsSupplier.supply(
+					"permissions",
+					nestedField -> {
+						Page<Permission> permissionsPage =
+							getSiteTestEntityPermissionsPage(
+								siteTestEntity.getId(), null);
+
+						Collection<Permission> permissions =
+							permissionsPage.getItems();
+
+						return permissions.toArray(
+							new Permission[permissions.size()]);
+					}));
+		}
+
+		return siteTestEntitiesPage;
+	}
+
+	protected abstract SiteTestEntity
+			doGetSiteSiteTestEntityByExternalReferenceCode(
+				String externalReferenceCode, Long siteId)
+		throws Exception;
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'GET' 'http://localhost:8080/o/test/v1.0/sites/{siteId}/site-test-entities/by-external-reference-code/{externalReferenceCode}'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "externalReferenceCode"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "siteId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "SiteTestEntity")
+		}
+	)
+	@javax.ws.rs.GET
+	@javax.ws.rs.Path(
+		"/sites/{siteId}/site-test-entities/by-external-reference-code/{externalReferenceCode}"
+	)
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public final SiteTestEntity getSiteSiteTestEntityByExternalReferenceCode(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("externalReferenceCode")
+			String externalReferenceCode,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("siteId")
+			Long siteId)
+		throws Exception {
+
+		SiteTestEntity getSiteTestEntity =
+			doGetSiteSiteTestEntityByExternalReferenceCode(
+				externalReferenceCode, siteId);
+
+		getSiteTestEntity.setPermissions(
+			() -> NestedFieldsSupplier.supply(
+				"permissions",
+				nestedField -> {
+					Page<Permission> permissionsPage =
+						getSiteTestEntityPermissionsPage(
+							getSiteTestEntity.getId(), null);
+
+					Collection<Permission> permissions =
+						permissionsPage.getItems();
+
+					return permissions.toArray(
+						new Permission[permissions.size()]);
+				}));
+
+		return getSiteTestEntity;
+	}
 
 	protected abstract SiteTestEntity doGetSiteTestEntity(Long siteTestEntityId)
 		throws Exception;
@@ -124,123 +250,18 @@ public abstract class BaseSiteTestEntityResourceImpl
 			() -> NestedFieldsSupplier.supply(
 				"permissions",
 				nestedField -> {
-					Page<Permission> permissionPage =
+					Page<Permission> permissionsPage =
 						getSiteTestEntityPermissionsPage(
 							getSiteTestEntity.getId(), null);
 
 					Collection<Permission> permissions =
-						permissionPage.getItems();
+						permissionsPage.getItems();
 
 					return permissions.toArray(
 						new Permission[permissions.size()]);
 				}));
 
 		return getSiteTestEntity;
-	}
-
-	protected abstract SiteTestEntity doPutSiteTestEntity(
-			Long siteTestEntityId, SiteTestEntity siteTestEntity)
-		throws Exception;
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/test/v1.0/site-test-entities/{siteTestEntityId}' -d $'{"dateCreated": ___, "dateModified": ___, "description": ___, "externalReferenceCode": ___, "permissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "siteTestEntityId"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "SiteTestEntity")
-		}
-	)
-	@javax.ws.rs.Consumes({"application/json", "application/xml"})
-	@javax.ws.rs.Path("/site-test-entities/{siteTestEntityId}")
-	@javax.ws.rs.Produces({"application/json", "application/xml"})
-	@javax.ws.rs.PUT
-	@Override
-	public final SiteTestEntity putSiteTestEntity(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@javax.validation.constraints.NotNull
-			@javax.ws.rs.PathParam("siteTestEntityId")
-			Long siteTestEntityId,
-			SiteTestEntity siteTestEntity)
-		throws Exception {
-
-		Permission[] permissions = siteTestEntity.getPermissions();
-
-		SiteTestEntity putSiteTestEntity = doPutSiteTestEntity(
-			siteTestEntityId, siteTestEntity);
-
-		if (permissions != null) {
-			Page<Permission> permissionPage = putSiteTestEntityPermissionsPage(
-				putSiteTestEntity.getId(), permissions);
-
-			putSiteTestEntity.setPermissions(
-				() -> NestedFieldsSupplier.supply(
-					"permissions",
-					nestedField -> {
-						Collection<Permission> collection =
-							permissionPage.getItems();
-
-						return collection.toArray(
-							new Permission[collection.size()]);
-					}));
-		}
-
-		return putSiteTestEntity;
-	}
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/test/v1.0/site-test-entities/batch'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "callbackURL"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "SiteTestEntity")
-		}
-	)
-	@javax.ws.rs.Consumes("application/json")
-	@javax.ws.rs.Path("/site-test-entities/batch")
-	@javax.ws.rs.Produces("application/json")
-	@javax.ws.rs.PUT
-	@Override
-	public Response putSiteTestEntityBatch(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@javax.ws.rs.QueryParam("callbackURL")
-			String callbackURL,
-			Object object)
-		throws Exception {
-
-		vulcanBatchEngineImportTaskResource.setContextAcceptLanguage(
-			contextAcceptLanguage);
-		vulcanBatchEngineImportTaskResource.setContextCompany(contextCompany);
-		vulcanBatchEngineImportTaskResource.setContextHttpServletRequest(
-			contextHttpServletRequest);
-		vulcanBatchEngineImportTaskResource.setContextUriInfo(contextUriInfo);
-		vulcanBatchEngineImportTaskResource.setContextUser(contextUser);
-
-		Response.ResponseBuilder responseBuilder = Response.accepted();
-
-		return responseBuilder.entity(
-			vulcanBatchEngineImportTaskResource.putImportTask(
-				SiteTestEntity.class.getName(), callbackURL, object)
-		).build();
 	}
 
 	/**
@@ -305,8 +326,11 @@ public abstract class BaseSiteTestEntityResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/test/v1.0/site-test-entities/{siteTestEntityId}/permissions'  -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/test/v1.0/site-test-entities/{siteTestEntityId}' -d $'{"dateCreated": ___, "dateModified": ___, "description": ___, "externalReferenceCode": ___, "permissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
+	@io.swagger.v3.oas.annotations.Operation(
+		description = "Updates only the fields received in the request body, leaving any other fields untouched."
+	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -321,133 +345,49 @@ public abstract class BaseSiteTestEntityResourceImpl
 		}
 	)
 	@javax.ws.rs.Consumes({"application/json", "application/xml"})
-	@javax.ws.rs.Path("/site-test-entities/{siteTestEntityId}/permissions")
+	@javax.ws.rs.PATCH
+	@javax.ws.rs.Path("/site-test-entities/{siteTestEntityId}")
 	@javax.ws.rs.Produces({"application/json", "application/xml"})
-	@javax.ws.rs.PUT
 	@Override
-	public Page<Permission> putSiteTestEntityPermissionsPage(
+	public SiteTestEntity patchSiteTestEntity(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@javax.validation.constraints.NotNull
 			@javax.ws.rs.PathParam("siteTestEntityId")
 			Long siteTestEntityId,
-			Permission[] permissions)
+			SiteTestEntity siteTestEntity)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(
+		SiteTestEntity existingSiteTestEntity = getSiteTestEntity(
 			siteTestEntityId);
-		Long resourceId = getPermissionCheckerResourceId(siteTestEntityId);
 
-		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(siteTestEntityId), resourceName,
-			resourceId);
-
-		ModelPermissions modelPermissions =
-			ModelPermissionsUtil.toModelPermissions(
-				contextCompany.getCompanyId(), permissions, resourceId,
-				resourceName, resourceActionLocalService,
-				resourcePermissionLocalService, roleLocalService);
-
-		Collection<String> roleNames = modelPermissions.getRoleNames();
-
-		for (ResourcePermission resourcePermission :
-				resourcePermissionLocalService.getResourcePermissions(
-					contextCompany.getCompanyId(), resourceName,
-					ResourceConstants.SCOPE_INDIVIDUAL,
-					String.valueOf(resourceId))) {
-
-			com.liferay.portal.kernel.model.Role role =
-				roleLocalService.fetchRole(resourcePermission.getRoleId());
-
-			if ((role == null) || roleNames.contains(role.getName())) {
-				continue;
-			}
-
-			for (ResourceAction resourceAction :
-					resourceActionLocalService.getResourceActions(
-						resourceName)) {
-
-				resourcePermissionLocalService.removeResourcePermission(
-					contextCompany.getCompanyId(), resourceName,
-					ResourceConstants.SCOPE_INDIVIDUAL,
-					String.valueOf(resourceId), role.getRoleId(),
-					resourceAction.getActionId());
-			}
+		if (siteTestEntity.getDateCreated() != null) {
+			existingSiteTestEntity.setDateCreated(
+				siteTestEntity.getDateCreated());
 		}
 
-		resourcePermissionLocalService.updateResourcePermissions(
-			contextCompany.getCompanyId(),
-			getPermissionCheckerGroupId(siteTestEntityId), resourceName,
-			String.valueOf(resourceId), modelPermissions);
-
-		return toPermissionPage(
-			HashMapBuilder.put(
-				"get",
-				addAction(
-					ActionKeys.PERMISSIONS, "getSiteTestEntityPermissionsPage",
-					resourceName, resourceId)
-			).put(
-				"replace",
-				addAction(
-					ActionKeys.PERMISSIONS, "putSiteTestEntityPermissionsPage",
-					resourceName, resourceId)
-			).build(),
-			resourceId, resourceName, null);
-	}
-
-	protected abstract Page<SiteTestEntity> doGetSiteSiteTestEntitiesPage(
-			Long siteId)
-		throws Exception;
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/test/v1.0/sites/{siteId}/site-test-entities'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "siteId"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "SiteTestEntity")
-		}
-	)
-	@javax.ws.rs.GET
-	@javax.ws.rs.Path("/sites/{siteId}/site-test-entities")
-	@javax.ws.rs.Produces({"application/json", "application/xml"})
-	@Override
-	public final Page<SiteTestEntity> getSiteSiteTestEntitiesPage(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@javax.validation.constraints.NotNull
-			@javax.ws.rs.PathParam("siteId")
-			Long siteId)
-		throws Exception {
-
-		Page<SiteTestEntity> siteTestEntityPage = doGetSiteSiteTestEntitiesPage(
-			siteId);
-
-		for (SiteTestEntity siteTestEntity : siteTestEntityPage.getItems()) {
-			siteTestEntity.setPermissions(
-				() -> NestedFieldsSupplier.supply(
-					"permissions",
-					nestedField -> {
-						Page<Permission> permissionPage =
-							getSiteTestEntityPermissionsPage(
-								siteTestEntity.getId(), null);
-
-						Collection<Permission> permissions =
-							permissionPage.getItems();
-
-						return permissions.toArray(
-							new Permission[permissions.size()]);
-					}));
+		if (siteTestEntity.getDateModified() != null) {
+			existingSiteTestEntity.setDateModified(
+				siteTestEntity.getDateModified());
 		}
 
-		return siteTestEntityPage;
+		if (siteTestEntity.getDescription() != null) {
+			existingSiteTestEntity.setDescription(
+				siteTestEntity.getDescription());
+		}
+
+		if (siteTestEntity.getExternalReferenceCode() != null) {
+			existingSiteTestEntity.setExternalReferenceCode(
+				siteTestEntity.getExternalReferenceCode());
+		}
+
+		if (siteTestEntity.getPermissions() != null) {
+			existingSiteTestEntity.setPermissions(
+				siteTestEntity.getPermissions());
+		}
+
+		preparePatch(siteTestEntity, existingSiteTestEntity);
+
+		return putSiteTestEntity(siteTestEntityId, existingSiteTestEntity);
 	}
 
 	/**
@@ -562,7 +502,7 @@ public abstract class BaseSiteTestEntityResourceImpl
 			siteId, siteTestEntity);
 
 		if (permissions != null) {
-			Page<Permission> permissionPage = putSiteTestEntityPermissionsPage(
+			Page<Permission> permissionsPage = putSiteTestEntityPermissionsPage(
 				postSiteTestEntity.getId(), permissions);
 
 			postSiteTestEntity.setPermissions(
@@ -570,7 +510,7 @@ public abstract class BaseSiteTestEntityResourceImpl
 					"permissions",
 					nestedField -> {
 						Collection<Permission> collection =
-							permissionPage.getItems();
+							permissionsPage.getItems();
 
 						return collection.toArray(
 							new Permission[collection.size()]);
@@ -635,72 +575,6 @@ public abstract class BaseSiteTestEntityResourceImpl
 	}
 
 	protected abstract SiteTestEntity
-			doGetSiteSiteTestEntityByExternalReferenceCode(
-				String externalReferenceCode, Long siteId)
-		throws Exception;
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/test/v1.0/sites/{siteId}/site-test-entities/by-external-reference-code/{externalReferenceCode}'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "externalReferenceCode"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "siteId"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "SiteTestEntity")
-		}
-	)
-	@javax.ws.rs.GET
-	@javax.ws.rs.Path(
-		"/sites/{siteId}/site-test-entities/by-external-reference-code/{externalReferenceCode}"
-	)
-	@javax.ws.rs.Produces({"application/json", "application/xml"})
-	@Override
-	public final SiteTestEntity getSiteSiteTestEntityByExternalReferenceCode(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@javax.validation.constraints.NotNull
-			@javax.ws.rs.PathParam("externalReferenceCode")
-			String externalReferenceCode,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@javax.validation.constraints.NotNull
-			@javax.ws.rs.PathParam("siteId")
-			Long siteId)
-		throws Exception {
-
-		SiteTestEntity getSiteTestEntity =
-			doGetSiteSiteTestEntityByExternalReferenceCode(
-				externalReferenceCode, siteId);
-
-		getSiteTestEntity.setPermissions(
-			() -> NestedFieldsSupplier.supply(
-				"permissions",
-				nestedField -> {
-					Page<Permission> permissionPage =
-						getSiteTestEntityPermissionsPage(
-							getSiteTestEntity.getId(), null);
-
-					Collection<Permission> permissions =
-						permissionPage.getItems();
-
-					return permissions.toArray(
-						new Permission[permissions.size()]);
-				}));
-
-		return getSiteTestEntity;
-	}
-
-	protected abstract SiteTestEntity
 			doPutSiteSiteTestEntityByExternalReferenceCode(
 				String externalReferenceCode, Long siteId,
 				SiteTestEntity siteTestEntity)
@@ -754,7 +628,7 @@ public abstract class BaseSiteTestEntityResourceImpl
 				externalReferenceCode, siteId, siteTestEntity);
 
 		if (permissions != null) {
-			Page<Permission> permissionPage = putSiteTestEntityPermissionsPage(
+			Page<Permission> permissionsPage = putSiteTestEntityPermissionsPage(
 				putSiteTestEntity.getId(), permissions);
 
 			putSiteTestEntity.setPermissions(
@@ -762,7 +636,7 @@ public abstract class BaseSiteTestEntityResourceImpl
 					"permissions",
 					nestedField -> {
 						Collection<Permission> collection =
-							permissionPage.getItems();
+							permissionsPage.getItems();
 
 						return collection.toArray(
 							new Permission[collection.size()]);
@@ -770,6 +644,203 @@ public abstract class BaseSiteTestEntityResourceImpl
 		}
 
 		return putSiteTestEntity;
+	}
+
+	protected abstract SiteTestEntity doPutSiteTestEntity(
+			Long siteTestEntityId, SiteTestEntity siteTestEntity)
+		throws Exception;
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'PUT' 'http://localhost:8080/o/test/v1.0/site-test-entities/{siteTestEntityId}' -d $'{"dateCreated": ___, "dateModified": ___, "description": ___, "externalReferenceCode": ___, "permissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "siteTestEntityId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "SiteTestEntity")
+		}
+	)
+	@javax.ws.rs.Consumes({"application/json", "application/xml"})
+	@javax.ws.rs.Path("/site-test-entities/{siteTestEntityId}")
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@javax.ws.rs.PUT
+	@Override
+	public final SiteTestEntity putSiteTestEntity(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("siteTestEntityId")
+			Long siteTestEntityId,
+			SiteTestEntity siteTestEntity)
+		throws Exception {
+
+		Permission[] permissions = siteTestEntity.getPermissions();
+
+		SiteTestEntity putSiteTestEntity = doPutSiteTestEntity(
+			siteTestEntityId, siteTestEntity);
+
+		if (permissions != null) {
+			Page<Permission> permissionsPage = putSiteTestEntityPermissionsPage(
+				putSiteTestEntity.getId(), permissions);
+
+			putSiteTestEntity.setPermissions(
+				() -> NestedFieldsSupplier.supply(
+					"permissions",
+					nestedField -> {
+						Collection<Permission> collection =
+							permissionsPage.getItems();
+
+						return collection.toArray(
+							new Permission[collection.size()]);
+					}));
+		}
+
+		return putSiteTestEntity;
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'PUT' 'http://localhost:8080/o/test/v1.0/site-test-entities/batch'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "callbackURL"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "SiteTestEntity")
+		}
+	)
+	@javax.ws.rs.Consumes("application/json")
+	@javax.ws.rs.Path("/site-test-entities/batch")
+	@javax.ws.rs.Produces("application/json")
+	@javax.ws.rs.PUT
+	@Override
+	public Response putSiteTestEntityBatch(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.ws.rs.QueryParam("callbackURL")
+			String callbackURL,
+			Object object)
+		throws Exception {
+
+		vulcanBatchEngineImportTaskResource.setContextAcceptLanguage(
+			contextAcceptLanguage);
+		vulcanBatchEngineImportTaskResource.setContextCompany(contextCompany);
+		vulcanBatchEngineImportTaskResource.setContextHttpServletRequest(
+			contextHttpServletRequest);
+		vulcanBatchEngineImportTaskResource.setContextUriInfo(contextUriInfo);
+		vulcanBatchEngineImportTaskResource.setContextUser(contextUser);
+
+		Response.ResponseBuilder responseBuilder = Response.accepted();
+
+		return responseBuilder.entity(
+			vulcanBatchEngineImportTaskResource.putImportTask(
+				SiteTestEntity.class.getName(), callbackURL, object)
+		).build();
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'PUT' 'http://localhost:8080/o/test/v1.0/site-test-entities/{siteTestEntityId}/permissions'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "siteTestEntityId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "SiteTestEntity")
+		}
+	)
+	@javax.ws.rs.Consumes({"application/json", "application/xml"})
+	@javax.ws.rs.Path("/site-test-entities/{siteTestEntityId}/permissions")
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@javax.ws.rs.PUT
+	@Override
+	public Page<Permission> putSiteTestEntityPermissionsPage(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("siteTestEntityId")
+			Long siteTestEntityId,
+			Permission[] permissions)
+		throws Exception {
+
+		String resourceName = getPermissionCheckerResourceName(
+			siteTestEntityId);
+		Long resourceId = getPermissionCheckerResourceId(siteTestEntityId);
+
+		PermissionServiceUtil.checkPermission(
+			getPermissionCheckerGroupId(siteTestEntityId), resourceName,
+			resourceId);
+
+		ModelPermissions modelPermissions =
+			ModelPermissionsUtil.toModelPermissions(
+				contextCompany.getCompanyId(), permissions, resourceId,
+				resourceName, resourceActionLocalService,
+				resourcePermissionLocalService, roleLocalService);
+
+		Collection<String> roleNames = modelPermissions.getRoleNames();
+
+		for (ResourcePermission resourcePermission :
+				resourcePermissionLocalService.getResourcePermissions(
+					contextCompany.getCompanyId(), resourceName,
+					ResourceConstants.SCOPE_INDIVIDUAL,
+					String.valueOf(resourceId))) {
+
+			com.liferay.portal.kernel.model.Role role =
+				roleLocalService.fetchRole(resourcePermission.getRoleId());
+
+			if ((role == null) || roleNames.contains(role.getName())) {
+				continue;
+			}
+
+			for (ResourceAction resourceAction :
+					resourceActionLocalService.getResourceActions(
+						resourceName)) {
+
+				resourcePermissionLocalService.removeResourcePermission(
+					contextCompany.getCompanyId(), resourceName,
+					ResourceConstants.SCOPE_INDIVIDUAL,
+					String.valueOf(resourceId), role.getRoleId(),
+					resourceAction.getActionId());
+			}
+		}
+
+		resourcePermissionLocalService.updateResourcePermissions(
+			contextCompany.getCompanyId(),
+			getPermissionCheckerGroupId(siteTestEntityId), resourceName,
+			String.valueOf(resourceId), modelPermissions);
+
+		return toPermissionPage(
+			HashMapBuilder.put(
+				"get",
+				addAction(
+					ActionKeys.PERMISSIONS, "getSiteTestEntityPermissionsPage",
+					resourceName, resourceId)
+			).put(
+				"replace",
+				addAction(
+					ActionKeys.PERMISSIONS, "putSiteTestEntityPermissionsPage",
+					resourceName, resourceId)
+			).build(),
+			resourceId, resourceName, null);
 	}
 
 	@Override
@@ -800,6 +871,37 @@ public abstract class BaseSiteTestEntityResourceImpl
 		if (StringUtil.equalsIgnoreCase(createStrategy, "UPSERT")) {
 			String updateStrategy = (String)parameters.getOrDefault(
 				"updateStrategy", "UPDATE");
+
+			if (StringUtil.equalsIgnoreCase(updateStrategy, "PARTIAL_UPDATE")) {
+				siteTestEntityUnsafeFunction = siteTestEntity -> {
+					SiteTestEntity persistedSiteTestEntity = null;
+
+					try {
+						SiteTestEntity getSiteTestEntity =
+							getSiteSiteTestEntityByExternalReferenceCode(
+								siteTestEntity.getExternalReferenceCode(),
+								siteTestEntity.getSiteId() != null ?
+									siteTestEntity.getSiteId() :
+										(Long)parameters.get("siteId"));
+
+						persistedSiteTestEntity = patchSiteTestEntity(
+							getSiteTestEntity.getId() != null ?
+								getSiteTestEntity.getId() :
+									_parseLong(
+										(String)parameters.get(
+											"siteTestEntityId")),
+							siteTestEntity);
+					}
+					catch (NoSuchModelException noSuchModelException) {
+						if (parameters.containsKey("siteId")) {
+							persistedSiteTestEntity = postSiteSiteTestEntity(
+								(Long)parameters.get("siteId"), siteTestEntity);
+						}
+					}
+
+					return persistedSiteTestEntity;
+				};
+			}
 
 			if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
 				siteTestEntityUnsafeFunction =
@@ -849,7 +951,7 @@ public abstract class BaseSiteTestEntityResourceImpl
 	}
 
 	public Set<String> getAvailableUpdateStrategies() {
-		return SetUtil.fromArray("UPDATE");
+		return SetUtil.fromArray("PARTIAL_UPDATE", "UPDATE");
 	}
 
 	@Override
@@ -877,7 +979,9 @@ public abstract class BaseSiteTestEntityResourceImpl
 
 	@Override
 	public Page<SiteTestEntity> read(
-			Filter filter, Pagination pagination, Sort[] sorts,
+			com.liferay.portal.kernel.search.filter.Filter filter,
+			Pagination pagination,
+			com.liferay.portal.kernel.search.Sort[] sorts,
 			Map<String, Serializable> parameters, String search)
 		throws Exception {
 
@@ -924,6 +1028,14 @@ public abstract class BaseSiteTestEntityResourceImpl
 		String updateStrategy = (String)parameters.getOrDefault(
 			"updateStrategy", "UPDATE");
 
+		if (StringUtil.equalsIgnoreCase(updateStrategy, "PARTIAL_UPDATE")) {
+			siteTestEntityUnsafeFunction =
+				siteTestEntity -> patchSiteTestEntity(
+					siteTestEntity.getId() != null ? siteTestEntity.getId() :
+						_parseLong((String)parameters.get("siteTestEntityId")),
+					siteTestEntity);
+		}
+
 		if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
 			siteTestEntityUnsafeFunction = siteTestEntity -> putSiteTestEntity(
 				siteTestEntity.getId() != null ? siteTestEntity.getId() :
@@ -958,6 +1070,11 @@ public abstract class BaseSiteTestEntityResourceImpl
 		}
 
 		return null;
+	}
+
+	@Override
+	public SiteTestEntity getItem(Long id) throws Exception {
+		return getSiteTestEntity(id);
 	}
 
 	protected String getPermissionCheckerActionsResourceName(Object id)
@@ -1167,7 +1284,8 @@ public abstract class BaseSiteTestEntityResourceImpl
 	}
 
 	public void setContextUriInfo(UriInfo contextUriInfo) {
-		this.contextUriInfo = contextUriInfo;
+		this.contextUriInfo = UriInfoUtil.getVulcanUriInfo(
+			getApplicationPath(), contextUriInfo);
 	}
 
 	public void setContextUser(
@@ -1177,7 +1295,8 @@ public abstract class BaseSiteTestEntityResourceImpl
 	}
 
 	public void setExpressionConvert(
-		ExpressionConvert<Filter> expressionConvert) {
+		ExpressionConvert<com.liferay.portal.kernel.search.filter.Filter>
+			expressionConvert) {
 
 		this.expressionConvert = expressionConvert;
 	}
@@ -1212,6 +1331,10 @@ public abstract class BaseSiteTestEntityResourceImpl
 		this.sortParserProvider = sortParserProvider;
 	}
 
+	protected String getApplicationPath() {
+		return "test";
+	}
+
 	public void setVulcanBatchEngineExportTaskResource(
 		VulcanBatchEngineExportTaskResource
 			vulcanBatchEngineExportTaskResource) {
@@ -1229,7 +1352,7 @@ public abstract class BaseSiteTestEntityResourceImpl
 	}
 
 	@Override
-	public Filter toFilter(
+	public com.liferay.portal.kernel.search.filter.Filter toFilter(
 		String filterString, Map<String, List<String>> multivaluedMap) {
 
 		try {
@@ -1254,7 +1377,7 @@ public abstract class BaseSiteTestEntityResourceImpl
 	}
 
 	@Override
-	public Sort[] toSorts(String sortString) {
+	public com.liferay.portal.kernel.search.Sort[] toSorts(String sortString) {
 		if (Validator.isNull(sortString)) {
 			return null;
 		}
@@ -1272,13 +1395,13 @@ public abstract class BaseSiteTestEntityResourceImpl
 					sortParser.parse(sortString));
 
 			List<SortField> sortFields = oDataSort.getSortFields();
-
-			Sort[] sorts = new Sort[sortFields.size()];
+			com.liferay.portal.kernel.search.Sort[] sorts =
+				new com.liferay.portal.kernel.search.Sort[sortFields.size()];
 
 			for (int i = 0; i < sortFields.size(); i++) {
 				SortField sortField = sortFields.get(i);
 
-				sorts[i] = new Sort(
+				sorts[i] = new com.liferay.portal.kernel.search.Sort(
 					sortField.getSortableFieldName(
 						contextAcceptLanguage.getPreferredLocale()),
 					!sortField.isAscending());
@@ -1289,7 +1412,7 @@ public abstract class BaseSiteTestEntityResourceImpl
 		catch (Exception exception) {
 			_log.error("Invalid sort " + sortString, exception);
 
-			return new Sort[0];
+			return new com.liferay.portal.kernel.search.Sort[0];
 		}
 	}
 
@@ -1327,6 +1450,10 @@ public abstract class BaseSiteTestEntityResourceImpl
 
 		return addAction(
 			actionName, siteId, methodName, null, permissionName, siteId);
+	}
+
+	protected void preparePatch(
+		SiteTestEntity siteTestEntity, SiteTestEntity existingSiteTestEntity) {
 	}
 
 	protected <T, R, E extends Throwable> List<R> transform(
@@ -1415,7 +1542,8 @@ public abstract class BaseSiteTestEntityResourceImpl
 	protected Object contextScopeChecker;
 	protected UriInfo contextUriInfo;
 	protected com.liferay.portal.kernel.model.User contextUser;
-	protected ExpressionConvert<Filter> expressionConvert;
+	protected ExpressionConvert<com.liferay.portal.kernel.search.filter.Filter>
+		expressionConvert;
 	protected FilterParserProvider filterParserProvider;
 	protected GroupLocalService groupLocalService;
 	protected ResourceActionLocalService resourceActionLocalService;

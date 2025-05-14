@@ -5,9 +5,6 @@
 
 import {createContext, useContext, useEffect, useReducer} from 'react';
 import {useAppPropertiesContext} from '~/contexts/AppPropertiesContext';
-import IAccountBrief from '~/interfaces/accountBrief';
-import IOrganizationBrief from '~/interfaces/organizationBrief';
-import IProject from '~/interfaces/project';
 import {Liferay} from '~/services/liferay';
 import {
 	addAccountFlag,
@@ -21,6 +18,7 @@ import {
 import {ROLE_TYPES, ROUTE_TYPES} from '~/utils/constants';
 import {getAccountKey} from '~/utils/getAccountKey';
 import {isValidPage} from '~/utils/page.validation';
+import {IAccountBrief, IOrganizationBrief, IProject} from '~/utils/types';
 
 import {ONBOARDING_STEP_TYPES} from '../utils/constants';
 import reducer, {
@@ -85,20 +83,10 @@ const AppContextProvider = ({children}: {children: React.ReactNode}) => {
 						)
 				);
 
-				const isAccountProvisioning = Boolean(
-					data.userAccount?.accountBriefs
-						?.find(
-							({
-								externalReferenceCode,
-							}: {
-								externalReferenceCode: string;
-							}) =>
-								externalReferenceCode ===
-								projectExternalReferenceCode
-						)
-						?.roleBriefs?.find(
-							({name}: {name: string}) => name === 'Provisioning'
-						)
+				const isAccountProvisioning = data.userAccount.roleBriefs?.find(
+					({name}: {name: string}) =>
+						name === 'Provisioning Admin' ||
+						name === 'Provisioning Member'
 				);
 
 				const isOmniAdmin = Boolean(

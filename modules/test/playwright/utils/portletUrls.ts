@@ -9,7 +9,19 @@ export const PORTLET_URLS = {
 	announcements:
 		'/~/control_panel/manage?p_p_id=com_liferay_announcements_web_portlet_AnnouncementsAdminPortlet',
 	blogs: '/~/control_panel/manage?p_p_id=com_liferay_blogs_web_portlet_BlogsAdminPortlet',
+	bookmarks:
+		'/~/control_panel/manage?p_p_id=com_liferay_bookmarks_web_portlet_BookmarksAdminPortlet',
 	categoriesAdmin: '/~/control_panel/manage/-/categories_admin/vocabularies',
+	cmsCategories: 'web/cms/categorization/view_categories',
+	cmsEditCategory: 'web/cms/categorization/edit_category',
+	cmsFiles: 'web/cms/files',
+	cmsNewCategory: 'web/cms/categorization/new_category',
+	cmsNewVocabulary: 'web/cms/categorization/new_vocabulary',
+	cmsPicklistBuilder: 'web/cms/picklist-builder',
+	cmsStructureBuilder: 'web/cms/structure-builder',
+	cmsStructures: 'web/cms/structures',
+	cmsTags: 'web/cms/categorization/view_tags',
+	cmsVocabularies: 'web/cms/categorization/view_vocabularies',
 	collections:
 		'/~/control_panel/manage?p_p_id=com_liferay_asset_list_web_portlet_AssetListPortlet',
 	contentDashboard:
@@ -60,6 +72,10 @@ export const PORTLET_URLS = {
 	publications:
 		'/~/control_panel/manage?p_p_id=com_liferay_change_tracking_web_portlet_PublicationsPortlet',
 	recycleBin: '/~/control_panel/manage/-/recycle_bin/',
+	redirect:
+		'/~/control_panel/manage?p_p_id=com_liferay_redirect_web_internal_portlet_RedirectPortlet',
+	roleSelector:
+		'/~/control_panel/manage?p_p_id=com_liferay_roles_selector_web_portlet_RolesSelectorPortlet',
 	scriptManagement:
 		'/~/control_panel/manage?p_p_id=com_liferay_configuration_admin_web_portlet_SystemSettingsPortlet&p_p_lifecycle=0&p_p_state=maximized&p_p_mode=view&_com_liferay_configuration_admin_web_portlet_SystemSettingsPortlet_mvcRenderCommandName=%2Fconfiguration_admin%2Fview_configuration_screen&_com_liferay_configuration_admin_web_portlet_SystemSettingsPortlet_configurationScreenKey=script-management',
 	segments:
@@ -67,7 +83,9 @@ export const PORTLET_URLS = {
 	selectSites: '/~/control_panel/manage/-/sites/sites/select_site',
 	serviceAccessPolicy:
 		'/~/control_panel/manage?p_p_id=com_liferay_portal_security_service_access_policy_web_portlet_SAPPortlet&p_p_lifecycle=0&p_p_state=maximized',
+	siteMemberships: '/~/control_panel/manage/-/site_memberships',
 	siteSettings: '/~/control_panel/manage/-/site/settings',
+	sites: '/~/control_panel/manage/-/sites/sites',
 	staging:
 		'/~/control_panel/manage?p_p_id=com_liferay_staging_processes_web_portlet_StagingProcessesPortlet',
 	styleBooks: '/~/control_panel/manage/-/style_books/style_books',

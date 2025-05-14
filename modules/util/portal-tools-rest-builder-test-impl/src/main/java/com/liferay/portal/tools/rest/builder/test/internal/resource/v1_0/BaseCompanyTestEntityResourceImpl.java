@@ -9,13 +9,12 @@ import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.kernel.exception.NoSuchModelException;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Resource;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.ResourcePermission;
-import com.liferay.portal.kernel.search.Sort;
-import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -40,11 +39,14 @@ import com.liferay.portal.odata.sort.SortField;
 import com.liferay.portal.odata.sort.SortParser;
 import com.liferay.portal.odata.sort.SortParserProvider;
 import com.liferay.portal.tools.rest.builder.test.dto.v1_0.CompanyTestEntity;
+import com.liferay.portal.tools.rest.builder.test.dto.v1_0.Filter;
+import com.liferay.portal.tools.rest.builder.test.dto.v1_0.Sort;
 import com.liferay.portal.tools.rest.builder.test.resource.v1_0.CompanyTestEntityResource;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.batch.engine.VulcanBatchEngineTaskItemDelegate;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineExportTaskResource;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineImportTaskResource;
+import com.liferay.portal.vulcan.crud.VulcanCRUDItemDelegate;
 import com.liferay.portal.vulcan.fields.NestedFieldsSupplier;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
@@ -52,6 +54,7 @@ import com.liferay.portal.vulcan.permission.ModelPermissionsUtil;
 import com.liferay.portal.vulcan.permission.Permission;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 import com.liferay.portal.vulcan.util.ActionUtil;
+import com.liferay.portal.vulcan.util.UriInfoUtil;
 
 import java.io.Serializable;
 
@@ -83,7 +86,8 @@ import javax.ws.rs.core.UriInfo;
 @javax.ws.rs.Path("/v1.0")
 public abstract class BaseCompanyTestEntityResourceImpl
 	implements CompanyTestEntityResource, EntityModelResource,
-			   VulcanBatchEngineTaskItemDelegate<CompanyTestEntity> {
+			   VulcanBatchEngineTaskItemDelegate<CompanyTestEntity>,
+			   VulcanCRUDItemDelegate<CompanyTestEntity> {
 
 	protected abstract Page<CompanyTestEntity> doGetCompanyTestEntitiesPage()
 		throws Exception;
@@ -105,29 +109,269 @@ public abstract class BaseCompanyTestEntityResourceImpl
 	public final Page<CompanyTestEntity> getCompanyTestEntitiesPage()
 		throws Exception {
 
-		Page<CompanyTestEntity> companyTestEntityPage =
+		Page<CompanyTestEntity> companyTestEntitiesPage =
 			doGetCompanyTestEntitiesPage();
 
 		for (CompanyTestEntity companyTestEntity :
-				companyTestEntityPage.getItems()) {
+				companyTestEntitiesPage.getItems()) {
 
 			companyTestEntity.setPermissions(
 				() -> NestedFieldsSupplier.supply(
 					"permissions",
 					nestedField -> {
-						Page<Permission> permissionPage =
+						Page<Permission> permissionsPage =
 							getCompanyTestEntityPermissionsPage(
 								companyTestEntity.getId(), null);
 
 						Collection<Permission> permissions =
-							permissionPage.getItems();
+							permissionsPage.getItems();
 
 						return permissions.toArray(
 							new Permission[permissions.size()]);
 					}));
 		}
 
-		return companyTestEntityPage;
+		return companyTestEntitiesPage;
+	}
+
+	protected abstract CompanyTestEntity doGetCompanyTestEntity(
+			Long companyTestEntityId)
+		throws Exception;
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'GET' 'http://localhost:8080/o/test/v1.0/company-test-entities/{companyTestEntityId}'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "companyTestEntityId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "CompanyTestEntity")
+		}
+	)
+	@javax.ws.rs.GET
+	@javax.ws.rs.Path("/company-test-entities/{companyTestEntityId}")
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public final CompanyTestEntity getCompanyTestEntity(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("companyTestEntityId")
+			Long companyTestEntityId)
+		throws Exception {
+
+		CompanyTestEntity getCompanyTestEntity = doGetCompanyTestEntity(
+			companyTestEntityId);
+
+		getCompanyTestEntity.setPermissions(
+			() -> NestedFieldsSupplier.supply(
+				"permissions",
+				nestedField -> {
+					Page<Permission> permissionsPage =
+						getCompanyTestEntityPermissionsPage(
+							getCompanyTestEntity.getId(), null);
+
+					Collection<Permission> permissions =
+						permissionsPage.getItems();
+
+					return permissions.toArray(
+						new Permission[permissions.size()]);
+				}));
+
+		return getCompanyTestEntity;
+	}
+
+	protected abstract CompanyTestEntity
+			doGetCompanyTestEntityByExternalReferenceCode(
+				String externalReferenceCode)
+		throws Exception;
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'GET' 'http://localhost:8080/o/test/v1.0/company-test-entities/by-external-reference-code/{externalReferenceCode}'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "externalReferenceCode"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "CompanyTestEntity")
+		}
+	)
+	@javax.ws.rs.GET
+	@javax.ws.rs.Path(
+		"/company-test-entities/by-external-reference-code/{externalReferenceCode}"
+	)
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public final CompanyTestEntity getCompanyTestEntityByExternalReferenceCode(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("externalReferenceCode")
+			String externalReferenceCode)
+		throws Exception {
+
+		CompanyTestEntity getCompanyTestEntity =
+			doGetCompanyTestEntityByExternalReferenceCode(
+				externalReferenceCode);
+
+		getCompanyTestEntity.setPermissions(
+			() -> NestedFieldsSupplier.supply(
+				"permissions",
+				nestedField -> {
+					Page<Permission> permissionsPage =
+						getCompanyTestEntityPermissionsPage(
+							getCompanyTestEntity.getId(), null);
+
+					Collection<Permission> permissions =
+						permissionsPage.getItems();
+
+					return permissions.toArray(
+						new Permission[permissions.size()]);
+				}));
+
+		return getCompanyTestEntity;
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'GET' 'http://localhost:8080/o/test/v1.0/company-test-entities/{companyTestEntityId}/permissions'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "companyTestEntityId"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "roleNames"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "CompanyTestEntity")
+		}
+	)
+	@javax.ws.rs.GET
+	@javax.ws.rs.Path(
+		"/company-test-entities/{companyTestEntityId}/permissions"
+	)
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public Page<Permission> getCompanyTestEntityPermissionsPage(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("companyTestEntityId")
+			Long companyTestEntityId,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.ws.rs.QueryParam("roleNames")
+			String roleNames)
+		throws Exception {
+
+		String resourceName = getPermissionCheckerResourceName(
+			companyTestEntityId);
+		Long resourceId = getPermissionCheckerResourceId(companyTestEntityId);
+
+		PermissionServiceUtil.checkPermission(
+			getPermissionCheckerGroupId(companyTestEntityId), resourceName,
+			resourceId);
+
+		return toPermissionPage(
+			HashMapBuilder.put(
+				"get",
+				addAction(
+					ActionKeys.PERMISSIONS,
+					"getCompanyTestEntityPermissionsPage", resourceName,
+					resourceId)
+			).put(
+				"replace",
+				addAction(
+					ActionKeys.PERMISSIONS,
+					"putCompanyTestEntityPermissionsPage", resourceName,
+					resourceId)
+			).build(),
+			resourceId, resourceName, roleNames);
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
+	 * curl -X 'PATCH' 'http://localhost:8080/o/test/v1.0/company-test-entities/{companyTestEntityId}' -d $'{"dateCreated": ___, "dateModified": ___, "description": ___, "externalReferenceCode": ___, "permissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "companyTestEntityId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "CompanyTestEntity")
+		}
+	)
+	@javax.ws.rs.Consumes({"application/json", "application/xml"})
+	@javax.ws.rs.PATCH
+	@javax.ws.rs.Path("/company-test-entities/{companyTestEntityId}")
+	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public CompanyTestEntity patchCompanyTestEntity(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@javax.validation.constraints.NotNull
+			@javax.ws.rs.PathParam("companyTestEntityId")
+			Long companyTestEntityId,
+			CompanyTestEntity companyTestEntity)
+		throws Exception {
+
+		CompanyTestEntity existingCompanyTestEntity = getCompanyTestEntity(
+			companyTestEntityId);
+
+		if (companyTestEntity.getDateCreated() != null) {
+			existingCompanyTestEntity.setDateCreated(
+				companyTestEntity.getDateCreated());
+		}
+
+		if (companyTestEntity.getDateModified() != null) {
+			existingCompanyTestEntity.setDateModified(
+				companyTestEntity.getDateModified());
+		}
+
+		if (companyTestEntity.getDescription() != null) {
+			existingCompanyTestEntity.setDescription(
+				companyTestEntity.getDescription());
+		}
+
+		if (companyTestEntity.getExternalReferenceCode() != null) {
+			existingCompanyTestEntity.setExternalReferenceCode(
+				companyTestEntity.getExternalReferenceCode());
+		}
+
+		if (companyTestEntity.getPermissions() != null) {
+			existingCompanyTestEntity.setPermissions(
+				companyTestEntity.getPermissions());
+		}
+
+		preparePatch(companyTestEntity, existingCompanyTestEntity);
+
+		return putCompanyTestEntity(
+			companyTestEntityId, existingCompanyTestEntity);
 	}
 
 	/**
@@ -222,7 +466,7 @@ public abstract class BaseCompanyTestEntityResourceImpl
 			companyTestEntity);
 
 		if (permissions != null) {
-			Page<Permission> permissionPage =
+			Page<Permission> permissionsPage =
 				putCompanyTestEntityPermissionsPage(
 					postCompanyTestEntity.getId(), permissions);
 
@@ -231,7 +475,7 @@ public abstract class BaseCompanyTestEntityResourceImpl
 					"permissions",
 					nestedField -> {
 						Collection<Permission> collection =
-							permissionPage.getItems();
+							permissionsPage.getItems();
 
 						return collection.toArray(
 							new Permission[collection.size()]);
@@ -287,183 +531,6 @@ public abstract class BaseCompanyTestEntityResourceImpl
 		).build();
 	}
 
-	protected abstract CompanyTestEntity
-			doGetCompanyTestEntityByExternalReferenceCode(
-				String externalReferenceCode)
-		throws Exception;
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/test/v1.0/company-test-entities/by-external-reference-code/{externalReferenceCode}'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "externalReferenceCode"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "CompanyTestEntity")
-		}
-	)
-	@javax.ws.rs.GET
-	@javax.ws.rs.Path(
-		"/company-test-entities/by-external-reference-code/{externalReferenceCode}"
-	)
-	@javax.ws.rs.Produces({"application/json", "application/xml"})
-	@Override
-	public final CompanyTestEntity getCompanyTestEntityByExternalReferenceCode(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@javax.validation.constraints.NotNull
-			@javax.ws.rs.PathParam("externalReferenceCode")
-			String externalReferenceCode)
-		throws Exception {
-
-		CompanyTestEntity getCompanyTestEntity =
-			doGetCompanyTestEntityByExternalReferenceCode(
-				externalReferenceCode);
-
-		getCompanyTestEntity.setPermissions(
-			() -> NestedFieldsSupplier.supply(
-				"permissions",
-				nestedField -> {
-					Page<Permission> permissionPage =
-						getCompanyTestEntityPermissionsPage(
-							getCompanyTestEntity.getId(), null);
-
-					Collection<Permission> permissions =
-						permissionPage.getItems();
-
-					return permissions.toArray(
-						new Permission[permissions.size()]);
-				}));
-
-		return getCompanyTestEntity;
-	}
-
-	protected abstract CompanyTestEntity
-			doPutCompanyTestEntityByExternalReferenceCode(
-				String externalReferenceCode,
-				CompanyTestEntity companyTestEntity)
-		throws Exception;
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'PUT' 'http://localhost:8080/o/test/v1.0/company-test-entities/by-external-reference-code/{externalReferenceCode}' -d $'{"dateCreated": ___, "dateModified": ___, "description": ___, "externalReferenceCode": ___, "permissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "externalReferenceCode"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "CompanyTestEntity")
-		}
-	)
-	@javax.ws.rs.Consumes({"application/json", "application/xml"})
-	@javax.ws.rs.Path(
-		"/company-test-entities/by-external-reference-code/{externalReferenceCode}"
-	)
-	@javax.ws.rs.Produces({"application/json", "application/xml"})
-	@javax.ws.rs.PUT
-	@Override
-	public final CompanyTestEntity putCompanyTestEntityByExternalReferenceCode(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@javax.validation.constraints.NotNull
-			@javax.ws.rs.PathParam("externalReferenceCode")
-			String externalReferenceCode,
-			CompanyTestEntity companyTestEntity)
-		throws Exception {
-
-		Permission[] permissions = companyTestEntity.getPermissions();
-
-		CompanyTestEntity putCompanyTestEntity =
-			doPutCompanyTestEntityByExternalReferenceCode(
-				externalReferenceCode, companyTestEntity);
-
-		if (permissions != null) {
-			Page<Permission> permissionPage =
-				putCompanyTestEntityPermissionsPage(
-					putCompanyTestEntity.getId(), permissions);
-
-			putCompanyTestEntity.setPermissions(
-				() -> NestedFieldsSupplier.supply(
-					"permissions",
-					nestedField -> {
-						Collection<Permission> collection =
-							permissionPage.getItems();
-
-						return collection.toArray(
-							new Permission[collection.size()]);
-					}));
-		}
-
-		return putCompanyTestEntity;
-	}
-
-	protected abstract CompanyTestEntity doGetCompanyTestEntity(
-			Long companyTestEntityId)
-		throws Exception;
-
-	/**
-	 * Invoke this method with the command line:
-	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/test/v1.0/company-test-entities/{companyTestEntityId}'  -u 'test@liferay.com:test'
-	 */
-	@io.swagger.v3.oas.annotations.Parameters(
-		value = {
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "companyTestEntityId"
-			)
-		}
-	)
-	@io.swagger.v3.oas.annotations.tags.Tags(
-		value = {
-			@io.swagger.v3.oas.annotations.tags.Tag(name = "CompanyTestEntity")
-		}
-	)
-	@javax.ws.rs.GET
-	@javax.ws.rs.Path("/company-test-entities/{companyTestEntityId}")
-	@javax.ws.rs.Produces({"application/json", "application/xml"})
-	@Override
-	public final CompanyTestEntity getCompanyTestEntity(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@javax.validation.constraints.NotNull
-			@javax.ws.rs.PathParam("companyTestEntityId")
-			Long companyTestEntityId)
-		throws Exception {
-
-		CompanyTestEntity getCompanyTestEntity = doGetCompanyTestEntity(
-			companyTestEntityId);
-
-		getCompanyTestEntity.setPermissions(
-			() -> NestedFieldsSupplier.supply(
-				"permissions",
-				nestedField -> {
-					Page<Permission> permissionPage =
-						getCompanyTestEntityPermissionsPage(
-							getCompanyTestEntity.getId(), null);
-
-					Collection<Permission> permissions =
-						permissionPage.getItems();
-
-					return permissions.toArray(
-						new Permission[permissions.size()]);
-				}));
-
-		return getCompanyTestEntity;
-	}
-
 	protected abstract CompanyTestEntity doPutCompanyTestEntity(
 			Long companyTestEntityId, CompanyTestEntity companyTestEntity)
 		throws Exception;
@@ -505,7 +572,7 @@ public abstract class BaseCompanyTestEntityResourceImpl
 			companyTestEntityId, companyTestEntity);
 
 		if (permissions != null) {
-			Page<Permission> permissionPage =
+			Page<Permission> permissionsPage =
 				putCompanyTestEntityPermissionsPage(
 					putCompanyTestEntity.getId(), permissions);
 
@@ -514,7 +581,7 @@ public abstract class BaseCompanyTestEntityResourceImpl
 					"permissions",
 					nestedField -> {
 						Collection<Permission> collection =
-							permissionPage.getItems();
+							permissionsPage.getItems();
 
 						return collection.toArray(
 							new Permission[collection.size()]);
@@ -570,20 +637,22 @@ public abstract class BaseCompanyTestEntityResourceImpl
 		).build();
 	}
 
+	protected abstract CompanyTestEntity
+			doPutCompanyTestEntityByExternalReferenceCode(
+				String externalReferenceCode,
+				CompanyTestEntity companyTestEntity)
+		throws Exception;
+
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/test/v1.0/company-test-entities/{companyTestEntityId}/permissions'  -u 'test@liferay.com:test'
+	 * curl -X 'PUT' 'http://localhost:8080/o/test/v1.0/company-test-entities/by-external-reference-code/{externalReferenceCode}' -d $'{"dateCreated": ___, "dateModified": ___, "description": ___, "externalReferenceCode": ___, "permissions": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "companyTestEntityId"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "roleNames"
+				name = "externalReferenceCode"
 			)
 		}
 	)
@@ -592,45 +661,45 @@ public abstract class BaseCompanyTestEntityResourceImpl
 			@io.swagger.v3.oas.annotations.tags.Tag(name = "CompanyTestEntity")
 		}
 	)
-	@javax.ws.rs.GET
+	@javax.ws.rs.Consumes({"application/json", "application/xml"})
 	@javax.ws.rs.Path(
-		"/company-test-entities/{companyTestEntityId}/permissions"
+		"/company-test-entities/by-external-reference-code/{externalReferenceCode}"
 	)
 	@javax.ws.rs.Produces({"application/json", "application/xml"})
+	@javax.ws.rs.PUT
 	@Override
-	public Page<Permission> getCompanyTestEntityPermissionsPage(
+	public final CompanyTestEntity putCompanyTestEntityByExternalReferenceCode(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@javax.validation.constraints.NotNull
-			@javax.ws.rs.PathParam("companyTestEntityId")
-			Long companyTestEntityId,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@javax.ws.rs.QueryParam("roleNames")
-			String roleNames)
+			@javax.ws.rs.PathParam("externalReferenceCode")
+			String externalReferenceCode,
+			CompanyTestEntity companyTestEntity)
 		throws Exception {
 
-		String resourceName = getPermissionCheckerResourceName(
-			companyTestEntityId);
-		Long resourceId = getPermissionCheckerResourceId(companyTestEntityId);
+		Permission[] permissions = companyTestEntity.getPermissions();
 
-		PermissionServiceUtil.checkPermission(
-			getPermissionCheckerGroupId(companyTestEntityId), resourceName,
-			resourceId);
+		CompanyTestEntity putCompanyTestEntity =
+			doPutCompanyTestEntityByExternalReferenceCode(
+				externalReferenceCode, companyTestEntity);
 
-		return toPermissionPage(
-			HashMapBuilder.put(
-				"get",
-				addAction(
-					ActionKeys.PERMISSIONS,
-					"getCompanyTestEntityPermissionsPage", resourceName,
-					resourceId)
-			).put(
-				"replace",
-				addAction(
-					ActionKeys.PERMISSIONS,
-					"putCompanyTestEntityPermissionsPage", resourceName,
-					resourceId)
-			).build(),
-			resourceId, resourceName, roleNames);
+		if (permissions != null) {
+			Page<Permission> permissionsPage =
+				putCompanyTestEntityPermissionsPage(
+					putCompanyTestEntity.getId(), permissions);
+
+			putCompanyTestEntity.setPermissions(
+				() -> NestedFieldsSupplier.supply(
+					"permissions",
+					nestedField -> {
+						Collection<Permission> collection =
+							permissionsPage.getItems();
+
+						return collection.toArray(
+							new Permission[collection.size()]);
+					}));
+		}
+
+		return putCompanyTestEntity;
 	}
 
 	/**
@@ -751,6 +820,32 @@ public abstract class BaseCompanyTestEntityResourceImpl
 			String updateStrategy = (String)parameters.getOrDefault(
 				"updateStrategy", "UPDATE");
 
+			if (StringUtil.equalsIgnoreCase(updateStrategy, "PARTIAL_UPDATE")) {
+				companyTestEntityUnsafeFunction = companyTestEntity -> {
+					CompanyTestEntity persistedCompanyTestEntity = null;
+
+					try {
+						CompanyTestEntity getCompanyTestEntity =
+							getCompanyTestEntityByExternalReferenceCode(
+								companyTestEntity.getExternalReferenceCode());
+
+						persistedCompanyTestEntity = patchCompanyTestEntity(
+							getCompanyTestEntity.getId() != null ?
+								getCompanyTestEntity.getId() :
+									_parseLong(
+										(String)parameters.get(
+											"companyTestEntityId")),
+							companyTestEntity);
+					}
+					catch (NoSuchModelException noSuchModelException) {
+						persistedCompanyTestEntity = postCompanyTestEntity(
+							companyTestEntity);
+					}
+
+					return persistedCompanyTestEntity;
+				};
+			}
+
 			if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
 				companyTestEntityUnsafeFunction = companyTestEntity ->
 					putCompanyTestEntityByExternalReferenceCode(
@@ -795,7 +890,7 @@ public abstract class BaseCompanyTestEntityResourceImpl
 	}
 
 	public Set<String> getAvailableUpdateStrategies() {
-		return SetUtil.fromArray("UPDATE");
+		return SetUtil.fromArray("PARTIAL_UPDATE", "UPDATE");
 	}
 
 	@Override
@@ -823,7 +918,9 @@ public abstract class BaseCompanyTestEntityResourceImpl
 
 	@Override
 	public Page<CompanyTestEntity> read(
-			Filter filter, Pagination pagination, Sort[] sorts,
+			com.liferay.portal.kernel.search.filter.Filter filter,
+			Pagination pagination,
+			com.liferay.portal.kernel.search.Sort[] sorts,
 			Map<String, Serializable> parameters, String search)
 		throws Exception {
 
@@ -864,6 +961,16 @@ public abstract class BaseCompanyTestEntityResourceImpl
 		String updateStrategy = (String)parameters.getOrDefault(
 			"updateStrategy", "UPDATE");
 
+		if (StringUtil.equalsIgnoreCase(updateStrategy, "PARTIAL_UPDATE")) {
+			companyTestEntityUnsafeFunction =
+				companyTestEntity -> patchCompanyTestEntity(
+					companyTestEntity.getId() != null ?
+						companyTestEntity.getId() :
+							_parseLong(
+								(String)parameters.get("companyTestEntityId")),
+					companyTestEntity);
+		}
+
 		if (StringUtil.equalsIgnoreCase(updateStrategy, "UPDATE")) {
 			companyTestEntityUnsafeFunction =
 				companyTestEntity -> putCompanyTestEntity(
@@ -901,6 +1008,11 @@ public abstract class BaseCompanyTestEntityResourceImpl
 		}
 
 		return null;
+	}
+
+	@Override
+	public CompanyTestEntity getItem(Long id) throws Exception {
+		return getCompanyTestEntity(id);
 	}
 
 	protected String getPermissionCheckerActionsResourceName(Object id)
@@ -1110,7 +1222,8 @@ public abstract class BaseCompanyTestEntityResourceImpl
 	}
 
 	public void setContextUriInfo(UriInfo contextUriInfo) {
-		this.contextUriInfo = contextUriInfo;
+		this.contextUriInfo = UriInfoUtil.getVulcanUriInfo(
+			getApplicationPath(), contextUriInfo);
 	}
 
 	public void setContextUser(
@@ -1120,7 +1233,8 @@ public abstract class BaseCompanyTestEntityResourceImpl
 	}
 
 	public void setExpressionConvert(
-		ExpressionConvert<Filter> expressionConvert) {
+		ExpressionConvert<com.liferay.portal.kernel.search.filter.Filter>
+			expressionConvert) {
 
 		this.expressionConvert = expressionConvert;
 	}
@@ -1155,6 +1269,10 @@ public abstract class BaseCompanyTestEntityResourceImpl
 		this.sortParserProvider = sortParserProvider;
 	}
 
+	protected String getApplicationPath() {
+		return "test";
+	}
+
 	public void setVulcanBatchEngineExportTaskResource(
 		VulcanBatchEngineExportTaskResource
 			vulcanBatchEngineExportTaskResource) {
@@ -1172,7 +1290,7 @@ public abstract class BaseCompanyTestEntityResourceImpl
 	}
 
 	@Override
-	public Filter toFilter(
+	public com.liferay.portal.kernel.search.filter.Filter toFilter(
 		String filterString, Map<String, List<String>> multivaluedMap) {
 
 		try {
@@ -1197,7 +1315,7 @@ public abstract class BaseCompanyTestEntityResourceImpl
 	}
 
 	@Override
-	public Sort[] toSorts(String sortString) {
+	public com.liferay.portal.kernel.search.Sort[] toSorts(String sortString) {
 		if (Validator.isNull(sortString)) {
 			return null;
 		}
@@ -1215,13 +1333,13 @@ public abstract class BaseCompanyTestEntityResourceImpl
 					sortParser.parse(sortString));
 
 			List<SortField> sortFields = oDataSort.getSortFields();
-
-			Sort[] sorts = new Sort[sortFields.size()];
+			com.liferay.portal.kernel.search.Sort[] sorts =
+				new com.liferay.portal.kernel.search.Sort[sortFields.size()];
 
 			for (int i = 0; i < sortFields.size(); i++) {
 				SortField sortField = sortFields.get(i);
 
-				sorts[i] = new Sort(
+				sorts[i] = new com.liferay.portal.kernel.search.Sort(
 					sortField.getSortableFieldName(
 						contextAcceptLanguage.getPreferredLocale()),
 					!sortField.isAscending());
@@ -1232,7 +1350,7 @@ public abstract class BaseCompanyTestEntityResourceImpl
 		catch (Exception exception) {
 			_log.error("Invalid sort " + sortString, exception);
 
-			return new Sort[0];
+			return new com.liferay.portal.kernel.search.Sort[0];
 		}
 	}
 
@@ -1270,6 +1388,11 @@ public abstract class BaseCompanyTestEntityResourceImpl
 
 		return addAction(
 			actionName, siteId, methodName, null, permissionName, siteId);
+	}
+
+	protected void preparePatch(
+		CompanyTestEntity companyTestEntity,
+		CompanyTestEntity existingCompanyTestEntity) {
 	}
 
 	protected <T, R, E extends Throwable> List<R> transform(
@@ -1359,7 +1482,8 @@ public abstract class BaseCompanyTestEntityResourceImpl
 	protected Object contextScopeChecker;
 	protected UriInfo contextUriInfo;
 	protected com.liferay.portal.kernel.model.User contextUser;
-	protected ExpressionConvert<Filter> expressionConvert;
+	protected ExpressionConvert<com.liferay.portal.kernel.search.filter.Filter>
+		expressionConvert;
 	protected FilterParserProvider filterParserProvider;
 	protected GroupLocalService groupLocalService;
 	protected ResourceActionLocalService resourceActionLocalService;

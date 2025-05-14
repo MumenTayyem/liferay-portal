@@ -16,7 +16,7 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
-import com.liferay.portal.test.rule.FeatureFlags;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import org.junit.Assert;
@@ -80,7 +80,7 @@ public class ObjectDefinitionImplTest {
 		}
 	}
 
-	@FeatureFlags("LPD-34594")
+	@FeatureFlag("LPD-34594")
 	@Test
 	public void testGetRESTContextPathRootDescendantNode() {
 
@@ -96,7 +96,7 @@ public class ObjectDefinitionImplTest {
 			"/headless-builder/applications/endpoints", true, "APIEndpoint",
 			"APIApplication", true);
 		_testGetRESTContextPath(
-			"/commerce-returns/commerce-return-items", true,
+			"/commerce/returns/commerce/return-items", true,
 			"CommerceReturnItem", "CommerceReturn", true);
 	}
 

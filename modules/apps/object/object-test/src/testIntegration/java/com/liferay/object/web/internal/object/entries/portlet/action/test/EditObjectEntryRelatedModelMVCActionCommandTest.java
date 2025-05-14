@@ -6,6 +6,7 @@
 package com.liferay.object.web.internal.object.entries.portlet.action.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.object.constants.ObjectEntryFolderConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectRelationship;
@@ -89,7 +90,9 @@ public class EditObjectEntryRelatedModelMVCActionCommandTest {
 
 		ObjectEntry objectEntry1 = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
-			objectDefinition1.getObjectDefinitionId(), Collections.emptyMap(),
+			objectDefinition1.getObjectDefinitionId(),
+			ObjectEntryFolderConstants.PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+			null, Collections.emptyMap(),
 			ServiceContextTestUtil.getServiceContext());
 
 		mockLiferayPortletActionRequest.addParameter(
@@ -109,7 +112,9 @@ public class EditObjectEntryRelatedModelMVCActionCommandTest {
 
 		ObjectEntry objectEntry2 = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
-			objectDefinition2.getObjectDefinitionId(), Collections.emptyMap(),
+			objectDefinition2.getObjectDefinitionId(),
+			ObjectEntryFolderConstants.PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+			null, Collections.emptyMap(),
 			ServiceContextTestUtil.getServiceContext());
 
 		mockLiferayPortletActionRequest.addParameter(

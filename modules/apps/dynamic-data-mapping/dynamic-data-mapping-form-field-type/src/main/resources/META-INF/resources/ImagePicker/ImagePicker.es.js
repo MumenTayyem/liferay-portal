@@ -7,7 +7,8 @@ import ClayButton from '@clayui/button';
 import ClayForm, {ClayInput} from '@clayui/form';
 import ClayModal, {useModal} from '@clayui/modal';
 import {usePrevious} from '@liferay/frontend-js-react-web';
-import {addParams, openSelectionModal, sub} from 'frontend-js-web';
+import {openSelectionModal} from 'frontend-js-components-web';
+import {addParams, sub} from 'frontend-js-web';
 import React, {useState} from 'react';
 
 import FieldBase from '../FieldBase/ReactFieldBase.es';
@@ -349,11 +350,8 @@ const Main = ({
 		>
 			<ImagePicker
 				accessibleProps={{
-					...(otherProps.tip && {
-						'aria-describedby': `${id ?? name}_fieldHelp`,
-					}),
-					...(otherProps.requiredErrorMessage && {
-						'aria-errormessage': `${id ?? name}_fieldError`,
+					...((otherProps.errorMessage || otherProps.tip) && {
+						'aria-describedby': `${otherProps.id ?? name}_fieldFeedback`,
 					}),
 					'aria-invalid': !valid,
 					'aria-required': otherProps.required,

@@ -32,7 +32,7 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -46,7 +46,7 @@ import com.liferay.portal.vulcan.resource.EntityModelResource;
 
 import java.lang.reflect.Method;
 
-import java.text.DateFormat;
+import java.text.Format;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -85,7 +85,7 @@ public abstract class BaseDSEnvelopeResourceTestCase {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		_dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
@@ -99,12 +99,12 @@ public abstract class BaseDSEnvelopeResourceTestCase {
 
 		_dsEnvelopeResource.setContextCompany(testCompany);
 
-		com.liferay.portal.kernel.model.User testCompanyAdminUser =
-			UserTestUtil.getAdminUser(testCompany.getCompanyId());
+		_testCompanyAdminUser = UserTestUtil.getAdminUser(
+			testCompany.getCompanyId());
 
 		dsEnvelopeResource = DSEnvelopeResource.builder(
 		).authentication(
-			testCompanyAdminUser.getEmailAddress(),
+			_testCompanyAdminUser.getEmailAddress(),
 			PropsValues.DEFAULT_ADMIN_PASSWORD
 		).endpoint(
 			testCompany.getVirtualHostname(), 8080, "http"
@@ -188,200 +188,6 @@ public abstract class BaseDSEnvelopeResourceTestCase {
 		Assert.assertEquals(regex, dsEnvelope.getName());
 		Assert.assertEquals(regex, dsEnvelope.getSenderEmailAddress());
 		Assert.assertEquals(regex, dsEnvelope.getStatus());
-	}
-
-	@Test
-	public void testGetSiteDSEnvelopesPage() throws Exception {
-		Long siteId = testGetSiteDSEnvelopesPage_getSiteId();
-		Long irrelevantSiteId =
-			testGetSiteDSEnvelopesPage_getIrrelevantSiteId();
-
-		Page<DSEnvelope> page = dsEnvelopeResource.getSiteDSEnvelopesPage(
-			siteId, RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
-			RandomTestUtil.randomString(), Pagination.of(1, 10));
-
-		long totalCount = page.getTotalCount();
-
-		if (irrelevantSiteId != null) {
-			DSEnvelope irrelevantDSEnvelope =
-				testGetSiteDSEnvelopesPage_addDSEnvelope(
-					irrelevantSiteId, randomIrrelevantDSEnvelope());
-
-			page = dsEnvelopeResource.getSiteDSEnvelopesPage(
-				irrelevantSiteId, null, null, null, null,
-				Pagination.of(1, (int)totalCount + 1));
-
-			Assert.assertEquals(totalCount + 1, page.getTotalCount());
-
-			assertContains(
-				irrelevantDSEnvelope, (List<DSEnvelope>)page.getItems());
-			assertValid(
-				page,
-				testGetSiteDSEnvelopesPage_getExpectedActions(
-					irrelevantSiteId));
-		}
-
-		DSEnvelope dsEnvelope1 = testGetSiteDSEnvelopesPage_addDSEnvelope(
-			siteId, randomDSEnvelope());
-
-		DSEnvelope dsEnvelope2 = testGetSiteDSEnvelopesPage_addDSEnvelope(
-			siteId, randomDSEnvelope());
-
-		page = dsEnvelopeResource.getSiteDSEnvelopesPage(
-			siteId, null, null, null, null, Pagination.of(1, 10));
-
-		Assert.assertEquals(totalCount + 2, page.getTotalCount());
-
-		assertContains(dsEnvelope1, (List<DSEnvelope>)page.getItems());
-		assertContains(dsEnvelope2, (List<DSEnvelope>)page.getItems());
-		assertValid(
-			page, testGetSiteDSEnvelopesPage_getExpectedActions(siteId));
-	}
-
-	protected Map<String, Map<String, String>>
-			testGetSiteDSEnvelopesPage_getExpectedActions(Long siteId)
-		throws Exception {
-
-		Map<String, Map<String, String>> expectedActions = new HashMap<>();
-
-		Map createBatchAction = new HashMap<>();
-		createBatchAction.put("method", "POST");
-		createBatchAction.put(
-			"href",
-			"http://localhost:8080/o/digital-signature-rest/v1.0/sites/{siteId}/ds-envelopes/batch".
-				replace("{siteId}", String.valueOf(siteId)));
-
-		expectedActions.put("createBatch", createBatchAction);
-
-		return expectedActions;
-	}
-
-	@Test
-	public void testGetSiteDSEnvelopesPageWithPagination() throws Exception {
-		Long siteId = testGetSiteDSEnvelopesPage_getSiteId();
-
-		Page<DSEnvelope> dsEnvelopePage =
-			dsEnvelopeResource.getSiteDSEnvelopesPage(
-				siteId, null, null, null, null, null);
-
-		int totalCount = GetterUtil.getInteger(dsEnvelopePage.getTotalCount());
-
-		DSEnvelope dsEnvelope1 = testGetSiteDSEnvelopesPage_addDSEnvelope(
-			siteId, randomDSEnvelope());
-
-		DSEnvelope dsEnvelope2 = testGetSiteDSEnvelopesPage_addDSEnvelope(
-			siteId, randomDSEnvelope());
-
-		DSEnvelope dsEnvelope3 = testGetSiteDSEnvelopesPage_addDSEnvelope(
-			siteId, randomDSEnvelope());
-
-		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
-
-		int pageSizeLimit = 500;
-
-		if (totalCount >= (pageSizeLimit - 2)) {
-			Page<DSEnvelope> page1 = dsEnvelopeResource.getSiteDSEnvelopesPage(
-				siteId, null, null, null, null,
-				Pagination.of(
-					(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
-					pageSizeLimit));
-
-			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
-
-			assertContains(dsEnvelope1, (List<DSEnvelope>)page1.getItems());
-
-			Page<DSEnvelope> page2 = dsEnvelopeResource.getSiteDSEnvelopesPage(
-				siteId, null, null, null, null,
-				Pagination.of(
-					(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
-					pageSizeLimit));
-
-			assertContains(dsEnvelope2, (List<DSEnvelope>)page2.getItems());
-
-			Page<DSEnvelope> page3 = dsEnvelopeResource.getSiteDSEnvelopesPage(
-				siteId, null, null, null, null,
-				Pagination.of(
-					(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
-					pageSizeLimit));
-
-			assertContains(dsEnvelope3, (List<DSEnvelope>)page3.getItems());
-		}
-		else {
-			Page<DSEnvelope> page1 = dsEnvelopeResource.getSiteDSEnvelopesPage(
-				siteId, null, null, null, null,
-				Pagination.of(1, totalCount + 2));
-
-			List<DSEnvelope> dsEnvelopes1 = (List<DSEnvelope>)page1.getItems();
-
-			Assert.assertEquals(
-				dsEnvelopes1.toString(), totalCount + 2, dsEnvelopes1.size());
-
-			Page<DSEnvelope> page2 = dsEnvelopeResource.getSiteDSEnvelopesPage(
-				siteId, null, null, null, null,
-				Pagination.of(2, totalCount + 2));
-
-			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
-
-			List<DSEnvelope> dsEnvelopes2 = (List<DSEnvelope>)page2.getItems();
-
-			Assert.assertEquals(
-				dsEnvelopes2.toString(), 1, dsEnvelopes2.size());
-
-			Page<DSEnvelope> page3 = dsEnvelopeResource.getSiteDSEnvelopesPage(
-				siteId, null, null, null, null,
-				Pagination.of(1, (int)totalCount + 3));
-
-			assertContains(dsEnvelope1, (List<DSEnvelope>)page3.getItems());
-			assertContains(dsEnvelope2, (List<DSEnvelope>)page3.getItems());
-			assertContains(dsEnvelope3, (List<DSEnvelope>)page3.getItems());
-		}
-	}
-
-	protected DSEnvelope testGetSiteDSEnvelopesPage_addDSEnvelope(
-			Long siteId, DSEnvelope dsEnvelope)
-		throws Exception {
-
-		return dsEnvelopeResource.postSiteDSEnvelope(siteId, dsEnvelope);
-	}
-
-	protected Long testGetSiteDSEnvelopesPage_getSiteId() throws Exception {
-		return testGroup.getGroupId();
-	}
-
-	protected Long testGetSiteDSEnvelopesPage_getIrrelevantSiteId()
-		throws Exception {
-
-		return irrelevantGroup.getGroupId();
-	}
-
-	@Test
-	public void testPostSiteDSEnvelope() throws Exception {
-		DSEnvelope randomDSEnvelope = randomDSEnvelope();
-
-		DSEnvelope postDSEnvelope = testPostSiteDSEnvelope_addDSEnvelope(
-			randomDSEnvelope);
-
-		assertEquals(randomDSEnvelope, postDSEnvelope);
-		assertValid(postDSEnvelope);
-	}
-
-	protected DSEnvelope testPostSiteDSEnvelope_addDSEnvelope(
-			DSEnvelope dsEnvelope)
-		throws Exception {
-
-		return dsEnvelopeResource.postSiteDSEnvelope(
-			testGetSiteDSEnvelopesPage_getSiteId(), dsEnvelope);
-	}
-
-	@Test
-	public void testGraphQLPostSiteDSEnvelope() throws Exception {
-		DSEnvelope randomDSEnvelope = randomDSEnvelope();
-
-		DSEnvelope dsEnvelope = testGraphQLDSEnvelope_addDSEnvelope(
-			randomDSEnvelope);
-
-		Assert.assertTrue(equals(randomDSEnvelope, dsEnvelope));
 	}
 
 	@Test
@@ -529,6 +335,200 @@ public abstract class BaseDSEnvelopeResourceTestCase {
 		throws Exception {
 
 		return testGraphQLDSEnvelope_addDSEnvelope();
+	}
+
+	@Test
+	public void testGetSiteDSEnvelopesPage() throws Exception {
+		Long siteId = testGetSiteDSEnvelopesPage_getSiteId();
+		Long irrelevantSiteId =
+			testGetSiteDSEnvelopesPage_getIrrelevantSiteId();
+
+		Page<DSEnvelope> page = dsEnvelopeResource.getSiteDSEnvelopesPage(
+			siteId, RandomTestUtil.randomString(), null,
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			Pagination.of(1, 10));
+
+		long totalCount = page.getTotalCount();
+
+		if (irrelevantSiteId != null) {
+			DSEnvelope irrelevantDSEnvelope =
+				testGetSiteDSEnvelopesPage_addDSEnvelope(
+					irrelevantSiteId, randomIrrelevantDSEnvelope());
+
+			page = dsEnvelopeResource.getSiteDSEnvelopesPage(
+				irrelevantSiteId, null, null, null, null,
+				Pagination.of(1, (int)totalCount + 1));
+
+			Assert.assertEquals(totalCount + 1, page.getTotalCount());
+
+			assertContains(
+				irrelevantDSEnvelope, (List<DSEnvelope>)page.getItems());
+			assertValid(
+				page,
+				testGetSiteDSEnvelopesPage_getExpectedActions(
+					irrelevantSiteId));
+		}
+
+		DSEnvelope dsEnvelope1 = testGetSiteDSEnvelopesPage_addDSEnvelope(
+			siteId, randomDSEnvelope());
+
+		DSEnvelope dsEnvelope2 = testGetSiteDSEnvelopesPage_addDSEnvelope(
+			siteId, randomDSEnvelope());
+
+		page = dsEnvelopeResource.getSiteDSEnvelopesPage(
+			siteId, null, null, null, null, Pagination.of(1, 10));
+
+		Assert.assertEquals(totalCount + 2, page.getTotalCount());
+
+		assertContains(dsEnvelope1, (List<DSEnvelope>)page.getItems());
+		assertContains(dsEnvelope2, (List<DSEnvelope>)page.getItems());
+		assertValid(
+			page, testGetSiteDSEnvelopesPage_getExpectedActions(siteId));
+	}
+
+	protected Map<String, Map<String, String>>
+			testGetSiteDSEnvelopesPage_getExpectedActions(Long siteId)
+		throws Exception {
+
+		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		Map createBatchAction = new HashMap<>();
+		createBatchAction.put("method", "POST");
+		createBatchAction.put(
+			"href",
+			"http://localhost:8080/o/digital-signature-rest/v1.0/sites/{siteId}/ds-envelopes/batch".
+				replace("{siteId}", String.valueOf(siteId)));
+
+		expectedActions.put("createBatch", createBatchAction);
+
+		return expectedActions;
+	}
+
+	@Test
+	public void testGetSiteDSEnvelopesPageWithPagination() throws Exception {
+		Long siteId = testGetSiteDSEnvelopesPage_getSiteId();
+
+		Page<DSEnvelope> dsEnvelopesPage =
+			dsEnvelopeResource.getSiteDSEnvelopesPage(
+				siteId, null, null, null, null, null);
+
+		int totalCount = GetterUtil.getInteger(dsEnvelopesPage.getTotalCount());
+
+		DSEnvelope dsEnvelope1 = testGetSiteDSEnvelopesPage_addDSEnvelope(
+			siteId, randomDSEnvelope());
+
+		DSEnvelope dsEnvelope2 = testGetSiteDSEnvelopesPage_addDSEnvelope(
+			siteId, randomDSEnvelope());
+
+		DSEnvelope dsEnvelope3 = testGetSiteDSEnvelopesPage_addDSEnvelope(
+			siteId, randomDSEnvelope());
+
+		// See com.liferay.portal.vulcan.internal.configuration.HeadlessAPICompanyConfiguration#pageSizeLimit
+
+		int pageSizeLimit = 500;
+
+		if (totalCount >= (pageSizeLimit - 2)) {
+			Page<DSEnvelope> page1 = dsEnvelopeResource.getSiteDSEnvelopesPage(
+				siteId, null, null, null, null,
+				Pagination.of(
+					(int)Math.ceil((totalCount + 1.0) / pageSizeLimit),
+					pageSizeLimit));
+
+			Assert.assertEquals(totalCount + 3, page1.getTotalCount());
+
+			assertContains(dsEnvelope1, (List<DSEnvelope>)page1.getItems());
+
+			Page<DSEnvelope> page2 = dsEnvelopeResource.getSiteDSEnvelopesPage(
+				siteId, null, null, null, null,
+				Pagination.of(
+					(int)Math.ceil((totalCount + 2.0) / pageSizeLimit),
+					pageSizeLimit));
+
+			assertContains(dsEnvelope2, (List<DSEnvelope>)page2.getItems());
+
+			Page<DSEnvelope> page3 = dsEnvelopeResource.getSiteDSEnvelopesPage(
+				siteId, null, null, null, null,
+				Pagination.of(
+					(int)Math.ceil((totalCount + 3.0) / pageSizeLimit),
+					pageSizeLimit));
+
+			assertContains(dsEnvelope3, (List<DSEnvelope>)page3.getItems());
+		}
+		else {
+			Page<DSEnvelope> page1 = dsEnvelopeResource.getSiteDSEnvelopesPage(
+				siteId, null, null, null, null,
+				Pagination.of(1, totalCount + 2));
+
+			List<DSEnvelope> dsEnvelopes1 = (List<DSEnvelope>)page1.getItems();
+
+			Assert.assertEquals(
+				dsEnvelopes1.toString(), totalCount + 2, dsEnvelopes1.size());
+
+			Page<DSEnvelope> page2 = dsEnvelopeResource.getSiteDSEnvelopesPage(
+				siteId, null, null, null, null,
+				Pagination.of(2, totalCount + 2));
+
+			Assert.assertEquals(totalCount + 3, page2.getTotalCount());
+
+			List<DSEnvelope> dsEnvelopes2 = (List<DSEnvelope>)page2.getItems();
+
+			Assert.assertEquals(
+				dsEnvelopes2.toString(), 1, dsEnvelopes2.size());
+
+			Page<DSEnvelope> page3 = dsEnvelopeResource.getSiteDSEnvelopesPage(
+				siteId, null, null, null, null,
+				Pagination.of(1, (int)totalCount + 3));
+
+			assertContains(dsEnvelope1, (List<DSEnvelope>)page3.getItems());
+			assertContains(dsEnvelope2, (List<DSEnvelope>)page3.getItems());
+			assertContains(dsEnvelope3, (List<DSEnvelope>)page3.getItems());
+		}
+	}
+
+	protected DSEnvelope testGetSiteDSEnvelopesPage_addDSEnvelope(
+			Long siteId, DSEnvelope dsEnvelope)
+		throws Exception {
+
+		return dsEnvelopeResource.postSiteDSEnvelope(siteId, dsEnvelope);
+	}
+
+	protected Long testGetSiteDSEnvelopesPage_getSiteId() throws Exception {
+		return testGroup.getGroupId();
+	}
+
+	protected Long testGetSiteDSEnvelopesPage_getIrrelevantSiteId()
+		throws Exception {
+
+		return irrelevantGroup.getGroupId();
+	}
+
+	@Test
+	public void testPostSiteDSEnvelope() throws Exception {
+		DSEnvelope randomDSEnvelope = randomDSEnvelope();
+
+		DSEnvelope postDSEnvelope = testPostSiteDSEnvelope_addDSEnvelope(
+			randomDSEnvelope);
+
+		assertEquals(randomDSEnvelope, postDSEnvelope);
+		assertValid(postDSEnvelope);
+	}
+
+	protected DSEnvelope testPostSiteDSEnvelope_addDSEnvelope(
+			DSEnvelope dsEnvelope)
+		throws Exception {
+
+		return dsEnvelopeResource.postSiteDSEnvelope(
+			testGetSiteDSEnvelopesPage_getSiteId(), dsEnvelope);
+	}
+
+	@Test
+	public void testGraphQLPostSiteDSEnvelope() throws Exception {
+		DSEnvelope randomDSEnvelope = randomDSEnvelope();
+
+		DSEnvelope dsEnvelope = testGraphQLDSEnvelope_addDSEnvelope(
+			randomDSEnvelope);
+
+		Assert.assertTrue(equals(randomDSEnvelope, dsEnvelope));
 	}
 
 	protected void appendGraphQLFieldValue(StringBuilder sb, Object value)
@@ -1129,13 +1129,11 @@ public abstract class BaseDSEnvelopeResourceTestCase {
 				sb.append("(");
 				sb.append(entityFieldName);
 				sb.append(" gt ");
-				sb.append(
-					_dateFormat.format(date.getTime() - (2 * Time.SECOND)));
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
 				sb.append(" and ");
 				sb.append(entityFieldName);
 				sb.append(" lt ");
-				sb.append(
-					_dateFormat.format(date.getTime() + (2 * Time.SECOND)));
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
 				sb.append(")");
 			}
 			else {
@@ -1145,7 +1143,7 @@ public abstract class BaseDSEnvelopeResourceTestCase {
 				sb.append(operator);
 				sb.append(" ");
 
-				sb.append(_dateFormat.format(dsEnvelope.getDateCreated()));
+				sb.append(_format.format(dsEnvelope.getDateCreated()));
 			}
 
 			return sb.toString();
@@ -1160,13 +1158,11 @@ public abstract class BaseDSEnvelopeResourceTestCase {
 				sb.append("(");
 				sb.append(entityFieldName);
 				sb.append(" gt ");
-				sb.append(
-					_dateFormat.format(date.getTime() - (2 * Time.SECOND)));
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
 				sb.append(" and ");
 				sb.append(entityFieldName);
 				sb.append(" lt ");
-				sb.append(
-					_dateFormat.format(date.getTime() + (2 * Time.SECOND)));
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
 				sb.append(")");
 			}
 			else {
@@ -1176,7 +1172,7 @@ public abstract class BaseDSEnvelopeResourceTestCase {
 				sb.append(operator);
 				sb.append(" ");
 
-				sb.append(_dateFormat.format(dsEnvelope.getDateModified()));
+				sb.append(_format.format(dsEnvelope.getDateModified()));
 			}
 
 			return sb.toString();
@@ -1749,7 +1745,9 @@ public abstract class BaseDSEnvelopeResourceTestCase {
 	private static final com.liferay.portal.kernel.log.Log _log =
 		LogFactoryUtil.getLog(BaseDSEnvelopeResourceTestCase.class);
 
-	private static DateFormat _dateFormat;
+	private static Format _format;
+
+	private com.liferay.portal.kernel.model.User _testCompanyAdminUser;
 
 	@Inject
 	private com.liferay.digital.signature.rest.resource.v1_0.DSEnvelopeResource

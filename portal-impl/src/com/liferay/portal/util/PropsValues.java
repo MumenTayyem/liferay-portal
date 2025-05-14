@@ -216,10 +216,6 @@ public class PropsValues {
 	public static final String AUTH_TOKEN_SHARED_SECRET = PropsUtil.get(
 		PropsKeys.AUTH_TOKEN_SHARED_SECRET);
 
-	public static final boolean AUTO_DEPLOY_CUSTOM_PORTLET_XML =
-		GetterUtil.getBoolean(
-			PropsUtil.get(PropsKeys.AUTO_DEPLOY_CUSTOM_PORTLET_XML));
-
 	public static final String AUTO_DEPLOY_DEPLOY_DIR = PropsUtil.get(
 		PropsKeys.AUTO_DEPLOY_DEPLOY_DIR);
 
@@ -1016,6 +1012,10 @@ public class PropsValues {
 
 	public static final String JDBC_DEFAULT_USERNAME = PropsUtil.get(
 		PropsKeys.JDBC_DEFAULT_USERNAME);
+
+	public static long JDBC_READ_DATA_SOURCE_UNAVAILABLE_TIMEOUT =
+		GetterUtil.getLong(
+			PropsUtil.get(PropsKeys.JDBC_READ_DATA_SOURCE_UNAVAILABLE_TIMEOUT));
 
 	public static final boolean JSON_SERVICE_AUTH_TOKEN_ENABLED =
 		GetterUtil.getBoolean(
@@ -2100,7 +2100,7 @@ public class PropsValues {
 		GetterUtil.getBoolean(
 			PropsUtil.get(PropsKeys.SESSION_ENABLE_URL_WITH_SESSION_ID));
 
-	public static final int SESSION_MAX_ALLOWED = GetterUtil.getInteger(
+	public static int SESSION_MAX_ALLOWED = GetterUtil.getInteger(
 		PropsUtil.get(PropsKeys.SESSION_MAX_ALLOWED));
 
 	public static String[] SESSION_PHISHING_PROTECTED_ATTRIBUTES =

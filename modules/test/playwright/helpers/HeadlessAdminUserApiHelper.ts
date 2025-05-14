@@ -12,6 +12,8 @@ type TAccount = {
 	externalReferenceCode?: string;
 	id?: number;
 	name?: string;
+	status?: number;
+	taxID?: string;
 	type?: string;
 };
 
@@ -20,38 +22,6 @@ type TAccountGroup = {
 	externalReferenceCode?: string;
 	id?: number;
 	name: string;
-};
-
-type THoursAvailable = {
-	closes: string;
-	dayOfWeek?: string;
-	opens: string;
-};
-
-type TOrganization = {
-	externalReferenceCode?: string;
-	id?: string;
-	name?: string;
-	parentOrganization?: TOrganization;
-	services?: TServices[];
-};
-
-type TRole = {
-	externalReferenceCode?: string;
-	id?: number;
-	name: string;
-	rolePermissions?: Array<{
-		actionIds: string[];
-		primaryKey: string;
-		resourceName: string;
-		scope: number;
-	}>;
-	roleType?: number | string;
-};
-
-type TServices = {
-	hoursAvailable: THoursAvailable[];
-	serviceType: string;
 };
 
 type TExportBatch = {
@@ -64,6 +34,65 @@ type TExportBatch = {
 	processedItemsCount?: number;
 	startTime?: string;
 	totalItemsCount?: number;
+};
+
+type THoursAvailable = {
+	closes: string;
+	dayOfWeek?: string;
+	opens: string;
+};
+
+type TOrganization = {
+	externalReferenceCode?: string;
+	id?: string;
+	name?: string;
+	organizationContactInformation?: TOrganizationContactInformation;
+	parentOrganization?: TOrganization;
+	services?: TServices[];
+};
+
+export type TOrganizationContactInformation = {
+	postalAddresses: TPostalAddresses[];
+};
+
+export type TPostalAddresses = {
+	addressCountry: string;
+	addressLocality: string;
+	addressType: string;
+	externalReferenceCode?: string;
+	id?: string;
+	postalCode: string;
+	streetAddressLine1: string;
+};
+
+export type TPermission = {
+	actionIds: string[];
+	primaryKey: string;
+	resourceName: string;
+	scope: number;
+};
+
+export type TRole = {
+	externalReferenceCode?: string;
+	id?: number;
+	name: string;
+	name_i18n?: {
+		[key: string]: string;
+	};
+	rolePermissions?: Array<TPermission>;
+	roleType?: number | string;
+};
+
+type TServices = {
+	hoursAvailable: THoursAvailable[];
+	serviceType: string;
+};
+
+type TTicket = {
+	expirationDate: string;
+	extraInfo: string;
+	id: number;
+	key: string;
 };
 
 type TUserGroup = {
@@ -80,6 +109,17 @@ export class HeadlessAdminUserApiHelper {
 	constructor(apiHelpers: ApiHelpers) {
 		this.apiHelpers = apiHelpers;
 		this.basePath = 'headless-admin-user/v1.0/';
+	}
+
+	async assignAccountRoles(
+		accountERC: string,
+		roleId: number,
+		userEmail: string
+	) {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/accounts/by-external-reference-code/${accountERC}/account-roles/${roleId}/user-accounts/by-email-address/${userEmail}`,
+			{data: {}, failOnStatusCode: true}
+		);
 	}
 
 	async assignAccountToAccountGroup(
@@ -110,6 +150,17 @@ export class HeadlessAdminUserApiHelper {
 		);
 	}
 
+	async assignUserToAccountRole(
+		accountId: number | string,
+		accountRoleId: number | string,
+		userId: number | string
+	) {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}accounts/${accountId}/account-roles/${accountRoleId}/user-accounts/${userId}`,
+			{data: {}, failOnStatusCode: true}
+		);
+	}
+
 	async assignUserToOrganizationByEmailAddress(
 		organizationId: string,
 		emailAddress: string
@@ -127,6 +178,45 @@ export class HeadlessAdminUserApiHelper {
 		return this.apiHelpers.post(
 			`${this.apiHelpers.baseUrl}${this.basePath}/roles/${roleId}/association/user-account/${userAccountId}/organization/${organizationId}`
 		);
+	}
+
+	async assignUserToRole(
+		roleExternalReferenceCode: string,
+		userId: number | string
+	) {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}roles/by-external-reference-code/${roleExternalReferenceCode}/association/user-account/${userId}`,
+			{data: {}, failOnStatusCode: true}
+		);
+	}
+
+	async assignUserToSite(
+		roleId: number | string,
+		siteId: number | string,
+		userId: number | string
+	) {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}roles/${roleId}/association/user-account/${userId}/site/${siteId}`,
+			{data: {}, failOnStatusCode: true}
+		);
+	}
+
+	async assignUsersToUserGroup(userGroupId: number, userIds: string[]) {
+		const association = this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/user-groups/${userGroupId}/user-group-users`,
+			{
+				data: userIds,
+			}
+		);
+
+		if (this.apiHelpers instanceof DataApiHelpers) {
+			this.apiHelpers.data.push({
+				id: `${userGroupId}_${userIds.join('_')}`,
+				type: 'userGroupUserAccountAssociation',
+			});
+		}
+
+		return association;
 	}
 
 	async deleteAccount(accountId: number) {
@@ -162,6 +252,15 @@ export class HeadlessAdminUserApiHelper {
 		);
 	}
 
+	async deleteRoleUserAccountAssociation(
+		roleId: number,
+		userAccountId: number
+	) {
+		return this.apiHelpers.delete(
+			`${this.apiHelpers.baseUrl}${this.basePath}/roles/${roleId}/association/user-account/${userAccountId}`
+		);
+	}
+
 	async deleteUserAccount(userAccountId: number) {
 		return this.apiHelpers.delete(
 			`${this.apiHelpers.baseUrl}${this.basePath}/user-accounts/${userAccountId}`
@@ -177,12 +276,6 @@ export class HeadlessAdminUserApiHelper {
 		);
 	}
 
-	async deleteUserGroup(userGroupId: number) {
-		return this.apiHelpers.delete(
-			`${this.apiHelpers.baseUrl}${this.basePath}/user-groups/${userGroupId}`
-		);
-	}
-
 	async deleteUserFromOrganizationByEmailAddress(
 		organizationId: string,
 		emailAddress: string
@@ -192,18 +285,18 @@ export class HeadlessAdminUserApiHelper {
 		);
 	}
 
-	async deleteRoleUserAccountAssociation(
-		roleId: number,
-		userAccountId: number
-	) {
+	async deleteUserGroup(userGroupId: number) {
 		return this.apiHelpers.delete(
-			`${this.apiHelpers.baseUrl}${this.basePath}/roles/${roleId}/association/user-account/${userAccountId}`
+			`${this.apiHelpers.baseUrl}${this.basePath}/user-groups/${userGroupId}`
 		);
 	}
 
-	async getAccountByExternalReferenceCode(externalReferenceCode: string) {
-		return this.apiHelpers.get(
-			`${this.apiHelpers.baseUrl}${this.basePath}/accounts/by-external-reference-code/${externalReferenceCode}`
+	async deleteUserGroupUsers(userGroupId: number, userIds: string[]) {
+		return this.apiHelpers.delete(
+			`${this.apiHelpers.baseUrl}${this.basePath}/user-groups/${userGroupId}/user-group-users`,
+			{
+				data: userIds,
+			}
 		);
 	}
 
@@ -213,6 +306,35 @@ export class HeadlessAdminUserApiHelper {
 		);
 
 		return accountResponse?.items?.at(0);
+	}
+
+	async getAccountByExternalReferenceCode(externalReferenceCode: string) {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/accounts/by-external-reference-code/${externalReferenceCode}`
+		);
+	}
+
+	async getAccountGroupByExternalReferenceCode(
+		externalReferenceCode: string
+	): Promise<TAccountGroup> {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/account-groups/by-external-reference-code/${externalReferenceCode}`
+		);
+	}
+
+	async getAccountRoles(accountId: number) {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/accounts/${accountId}/account-roles`
+		);
+	}
+
+	async getAccountRolesByRoleName(
+		accountId: number,
+		accountRoleName: string
+	) {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/accounts/${accountId}/account-roles?filter=name eq '${accountRoleName}'`
+		);
 	}
 
 	async getMyUserAccount(): Promise<TAccount> {
@@ -235,20 +357,14 @@ export class HeadlessAdminUserApiHelper {
 		);
 	}
 
-	async getRoles(search: string) {
-		return this.apiHelpers.get(
-			`${this.apiHelpers.baseUrl}${this.basePath}/roles?search=${search}`
-		);
-	}
-
 	async getRoleByExternalReferenceCode(externalReferenceCode: string) {
 		return this.apiHelpers.get(
 			`${this.apiHelpers.baseUrl}${this.basePath}/roles/by-external-reference-code/${externalReferenceCode}`
 		);
 	}
 
-	async getRoleByName(name: string) {
-		const response = await this.getRoles(name);
+	async getRoleByName(name: string, restrictFields = '') {
+		const response = await this.getRoles(name, restrictFields);
 
 		const roles = response.items || [];
 
@@ -261,9 +377,23 @@ export class HeadlessAdminUserApiHelper {
 		return null;
 	}
 
+	async getRoles(search: string, restrictFields = '') {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/roles?search=${search}&restrictFields=${restrictFields}`
+		);
+	}
+
 	async getUserAccountByEmailAddress(emailAddress: string) {
 		return this.apiHelpers.get(
 			`${this.apiHelpers.baseUrl}${this.basePath}/user-accounts/by-email-address/${emailAddress}`
+		);
+	}
+
+	async getUserAccountPasswordResetTicket(
+		userAccountId: string
+	): Promise<TTicket> {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/user-accounts/${userAccountId}/password-reset-ticket`
 		);
 	}
 
@@ -287,13 +417,22 @@ export class HeadlessAdminUserApiHelper {
 	}
 
 	async postAccount(account?: TAccount): Promise<TAccount> {
-		return this.apiHelpers.post(
+		account = await this.apiHelpers.post(
 			`${this.apiHelpers.baseUrl}${this.basePath}/accounts`,
 			{
 				data: {name: 'Account' + getRandomInt(), ...(account || {})},
 				failOnStatusCode: true,
 			}
 		);
+
+		if (this.apiHelpers instanceof DataApiHelpers) {
+			this.apiHelpers.data.push({
+				id: account.id,
+				type: 'account',
+			});
+		}
+
+		return account;
 	}
 
 	async postAccountAccountRoles(
@@ -340,32 +479,6 @@ export class HeadlessAdminUserApiHelper {
 				accountRoleIds ? `?accountRoleIds=${accountRoleIds}` : ''
 			}`,
 			{data: emailAddresses}
-		);
-	}
-
-	async postRoleByExternalReferenceCodeUserAccountAssociation(
-		roleExternalReferenceCode: string,
-		userAccountId: string
-	) {
-		return this.apiHelpers.postResponse(
-			`${this.apiHelpers.baseUrl}${this.basePath}roles/by-external-reference-code/${roleExternalReferenceCode}/association/user-account/${userAccountId}`,
-			{data: {}, failOnStatusCode: true}
-		);
-	}
-
-	async postRoleUserAccountAssociation(
-		roleId: number,
-		userAccountId: number
-	) {
-		return this.apiHelpers.postResponse(
-			`${this.apiHelpers.baseUrl}${this.basePath}/roles/${roleId}/association/user-account/${userAccountId}`,
-			{data: {}, failOnStatusCode: true}
-		);
-	}
-
-	async postRolesPageExportBatch(): Promise<TExportBatch> {
-		return this.apiHelpers.post(
-			`${this.apiHelpers.baseUrl}${this.basePath}/roles/export-batch`
 		);
 	}
 
@@ -425,6 +538,32 @@ export class HeadlessAdminUserApiHelper {
 		return role;
 	}
 
+	async postRoleByExternalReferenceCodeUserAccountAssociation(
+		roleExternalReferenceCode: string,
+		userAccountId: string
+	) {
+		return this.apiHelpers.postResponse(
+			`${this.apiHelpers.baseUrl}${this.basePath}roles/by-external-reference-code/${roleExternalReferenceCode}/association/user-account/${userAccountId}`,
+			{data: {}, failOnStatusCode: true}
+		);
+	}
+
+	async postRoleUserAccountAssociation(
+		roleId: number,
+		userAccountId: number
+	) {
+		return this.apiHelpers.postResponse(
+			`${this.apiHelpers.baseUrl}${this.basePath}/roles/${roleId}/association/user-account/${userAccountId}`,
+			{data: {}, failOnStatusCode: true}
+		);
+	}
+
+	async postRolesPageExportBatch(): Promise<TExportBatch> {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/roles/export-batch`
+		);
+	}
+
 	async postUserAccount(
 		userAccount?: TUserAccount,
 		randomNumber = getRandomInt()
@@ -473,72 +612,5 @@ export class HeadlessAdminUserApiHelper {
 		}
 
 		return userGroup;
-	}
-
-	async assignUsersToUserGroup(userGroupId: number, userIds: number[]) {
-		return this.apiHelpers.post(
-			`${this.apiHelpers.baseUrl}${this.basePath}/user-groups/${userGroupId}/user-group-users`,
-			{
-				data: {userIds},
-			}
-		);
-	}
-
-	async getAccountRoles(accountId: number) {
-		return this.apiHelpers.get(
-			`${this.apiHelpers.baseUrl}${this.basePath}/accounts/${accountId}/account-roles`
-		);
-	}
-
-	async getAccountRolesByRoleName(
-		accountId: number,
-		accountRoleName: string
-	) {
-		return this.apiHelpers.get(
-			`${this.apiHelpers.baseUrl}${this.basePath}/accounts/${accountId}/account-roles?filter=name eq '${accountRoleName}'`
-		);
-	}
-
-	async assignUserToRole(
-		roleExternalReferenceCode: string,
-		userId: number | string
-	) {
-		return this.apiHelpers.post(
-			`${this.apiHelpers.baseUrl}${this.basePath}roles/by-external-reference-code/${roleExternalReferenceCode}/association/user-account/${userId}`,
-			{data: {}, failOnStatusCode: true}
-		);
-	}
-
-	async assignUserToAccountRole(
-		accountId: number | string,
-		accountRoleId: number | string,
-		userId: number | string
-	) {
-		return this.apiHelpers.post(
-			`${this.apiHelpers.baseUrl}${this.basePath}accounts/${accountId}/account-roles/${accountRoleId}/user-accounts/${userId}`,
-			{data: {}, failOnStatusCode: true}
-		);
-	}
-
-	async assignAccountRoles(
-		accountERC: string,
-		roleId: number,
-		userEmail: string
-	) {
-		return this.apiHelpers.post(
-			`${this.apiHelpers.baseUrl}${this.basePath}/accounts/by-external-reference-code/${accountERC}/account-roles/${roleId}/user-accounts/by-email-address/${userEmail}`,
-			{data: {}, failOnStatusCode: true}
-		);
-	}
-
-	async assignUserToSite(
-		roleId: number | string,
-		siteId: number | string,
-		userId: number | string
-	) {
-		return this.apiHelpers.post(
-			`${this.apiHelpers.baseUrl}${this.basePath}roles/${roleId}/association/user-account/${userId}/site/${siteId}`,
-			{data: {}, failOnStatusCode: true}
-		);
 	}
 }

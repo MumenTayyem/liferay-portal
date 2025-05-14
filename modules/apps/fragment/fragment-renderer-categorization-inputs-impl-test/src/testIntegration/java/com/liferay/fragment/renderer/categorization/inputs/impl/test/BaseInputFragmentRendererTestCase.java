@@ -127,9 +127,10 @@ public abstract class BaseInputFragmentRendererTestCase {
 		FragmentRenderer fragmentRenderer = getFragmentRenderer();
 
 		Layout draftLayout = layout.fetchDraftLayout();
+
 		long segmentsExperienceId =
 			segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
-				layout.getPlid());
+				draftLayout.getPlid());
 
 		JSONObject jsonObject = ContentLayoutTestUtil.addFormToLayout(
 			false,
@@ -218,11 +219,13 @@ public abstract class BaseInputFragmentRendererTestCase {
 			objectDefinition.isEnableLocalization(),
 			objectDefinition.isEnableObjectEntryDraft(),
 			objectDefinition.isEnableObjectEntryHistory(),
+			objectDefinition.isEnableObjectEntryVersioning(),
 			objectDefinition.getLabelMap(), objectDefinition.getName(),
 			objectDefinition.getPanelAppOrder(),
 			objectDefinition.getPanelCategoryKey(),
 			objectDefinition.isPortlet(), objectDefinition.getPluralLabelMap(),
-			objectDefinition.getScope(), objectDefinition.getStatus());
+			objectDefinition.getScope(), objectDefinition.getStatus(),
+			Collections.emptyList());
 
 		FragmentRenderer fragmentRenderer = getFragmentRenderer();
 

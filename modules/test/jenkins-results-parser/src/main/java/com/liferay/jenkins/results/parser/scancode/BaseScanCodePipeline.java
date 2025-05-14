@@ -11,8 +11,6 @@ import com.liferay.jenkins.results.parser.NotificationUtil;
 import java.io.File;
 import java.io.IOException;
 
-import java.net.URL;
-
 import java.text.SimpleDateFormat;
 
 import java.util.ArrayList;
@@ -21,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.json.JSONArray;
@@ -30,6 +29,16 @@ import org.json.JSONObject;
  * @author Brittney Nguyen
  */
 public abstract class BaseScanCodePipeline implements ScanCodePipeline {
+
+	public static String getBuildNumber(String url) {
+		Matcher matcher = _buildNumberPattern.matcher(url);
+
+		if (matcher.find()) {
+			return matcher.group(1);
+		}
+
+		return "";
+	}
 
 	public void addAdditionalPipeline(String pipelineName)
 		throws IOException, TimeoutException {
@@ -158,32 +167,51 @@ public abstract class BaseScanCodePipeline implements ScanCodePipeline {
 			ComplianceAlertType.valueOf(complianceAlertTypeString));
 	}
 
-	public void downloadResultFiles() throws IOException {
+	public void downloadResultFiles() throws IOException, TimeoutException {
 		String scanCodeResultsDir = JenkinsResultsParserUtil.getBuildProperty(
 			"scancode.results.dir");
 
-		for (String resultFileExtension : _RESULT_FILES_EXTENSIONS) {
-			String link = JenkinsResultsParserUtil.combine(
-				_projectURL, "results/", resultFileExtension);
+		for (Map.Entry<String, String> resultTypeEntry :
+				_resultTypeExtensionsMap.entrySet()) {
 
-			URL url = new URL(link);
+			StringBuilder sb = new StringBuilder();
 
-			File file = new File(
-				JenkinsResultsParserUtil.combine(
-					scanCodeResultsDir, _projectNameFromURL, ".",
-					resultFileExtension));
+			sb.append("curl ");
+			sb.append("--output ");
+			sb.append(scanCodeResultsDir);
+			sb.append(_projectNameFromURL);
+			sb.append(".");
+			sb.append(resultTypeEntry.getValue());
+			sb.append(" \"");
+			sb.append(_projectAPIURL);
+			sb.append("results_download/?output_format=");
+			sb.append(resultTypeEntry.getKey());
+			sb.append("\" --header \"Authorization:Token ");
+			sb.append(_API_KEY);
+			sb.append("\" --request GET ");
 
-			JenkinsResultsParserUtil.toFile(url, file);
+			Process process = JenkinsResultsParserUtil.executeBashCommands(
+				sb.toString());
+
+			try {
+				JenkinsResultsParserUtil.readInputStream(
+					process.getInputStream());
+			}
+			catch (IOException ioException) {
+				ioException.printStackTrace();
+			}
 		}
 
 		String tarGzName = _projectNameFromURL + ".tar.gz";
 
-		File resultsTarGzFile = new File(scanCodeResultsDir, tarGzName);
+		File resultsTarGzFile = new File(tarGzName);
 
 		JenkinsResultsParserUtil.tarGzip(
 			new File(scanCodeResultsDir), resultsTarGzFile);
 
 		uploadResultsToBucket(resultsTarGzFile.toString());
+
+		JenkinsResultsParserUtil.delete(resultsTarGzFile);
 	}
 
 	public abstract void execute() throws IOException, TimeoutException;
@@ -351,12 +379,27 @@ public abstract class BaseScanCodePipeline implements ScanCodePipeline {
 			complianceAlertErrorMessage + complianceAlertWarningMessage;
 
 		if (!JenkinsResultsParserUtil.isNullOrEmpty(complianceAlertMessages)) {
-			sb.append("*Compliance alerts:* ");
+			sb.append("*Compliance Alerts:* ");
 			sb.append(complianceAlertMessages);
 			sb.append("\n");
 		}
 
-		sb.append("*Project link:* ");
+		if (!JenkinsResultsParserUtil.isNullOrEmpty(_releaseBuildURL)) {
+			sb.append("*Release Jenkins Build:* ");
+			sb.append("<");
+			sb.append(_releaseBuildURL);
+			sb.append("|test-portal-release#");
+			sb.append(getBuildNumber(_releaseBuildURL));
+			sb.append(">\n");
+		}
+
+		sb.append("*ScanCode Pipelines Jenkins Build:* ");
+		sb.append("<");
+		sb.append(_buildURL);
+		sb.append("|test-scancode-pipelines#");
+		sb.append(getBuildNumber(_buildURL));
+		sb.append(">\n");
+		sb.append("*Project Link:* ");
 		sb.append("<");
 		sb.append(_projectURL);
 		sb.append("|");
@@ -532,6 +575,16 @@ public abstract class BaseScanCodePipeline implements ScanCodePipeline {
 		_buildURL = buildURL;
 
 		_pipelineNames.add(pipelineName);
+		_releaseBuildURL = null;
+	}
+
+	protected BaseScanCodePipeline(
+		String buildURL, String pipelineName, String releaseBuildURL) {
+
+		_buildURL = buildURL;
+
+		_pipelineNames.add(pipelineName);
+		_releaseBuildURL = releaseBuildURL;
 	}
 
 	private boolean _hasErrors() {
@@ -552,12 +605,19 @@ public abstract class BaseScanCodePipeline implements ScanCodePipeline {
 	private static final String _CONTENT_TYPE =
 		"'Content-Type: application/json;'";
 
-	private static final String[] _RESULT_FILES_EXTENSIONS = {
-		"attribution", "cyclonedx", "spdx", "xls"
-	};
-
+	private static final Pattern _buildNumberPattern = Pattern.compile(
+		"job/.*/(\\d+)/?$");
 	private static final Map<String, Integer> _complianceAlertCountsMap =
 		new HashMap<>();
+	private static final Map<String, String> _resultTypeExtensionsMap =
+		new HashMap<String, String>() {
+			{
+				put("attribution", "attribution.html");
+				put("cyclonedx", "cdx.json");
+				put("spdx", "spdx.json");
+				put("xlsx", "xlsx");
+			}
+		};
 
 	static {
 		try {
@@ -578,6 +638,7 @@ public abstract class BaseScanCodePipeline implements ScanCodePipeline {
 	private String _projectNameFromURL;
 	private final List<String> _projectStatuses = new ArrayList<>();
 	private String _projectURL;
+	private final String _releaseBuildURL;
 	private String _s3URL;
 	private final SimpleDateFormat _simpleDateFormat = new SimpleDateFormat(
 		"MMM d yy HH:mm:ss");

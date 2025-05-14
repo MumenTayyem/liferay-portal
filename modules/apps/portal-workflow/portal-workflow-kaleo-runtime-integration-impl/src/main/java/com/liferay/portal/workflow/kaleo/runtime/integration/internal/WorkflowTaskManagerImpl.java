@@ -53,7 +53,6 @@ import com.liferay.portal.workflow.kaleo.model.KaleoTask;
 import com.liferay.portal.workflow.kaleo.model.KaleoTaskAssignment;
 import com.liferay.portal.workflow.kaleo.model.KaleoTaskAssignmentInstance;
 import com.liferay.portal.workflow.kaleo.model.KaleoTaskInstanceToken;
-import com.liferay.portal.workflow.kaleo.model.KaleoTransition;
 import com.liferay.portal.workflow.kaleo.runtime.ExecutionContext;
 import com.liferay.portal.workflow.kaleo.runtime.KaleoSignaler;
 import com.liferay.portal.workflow.kaleo.runtime.TaskManager;
@@ -285,6 +284,16 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	public List<String> getNextTransitionNames(long userId, long workflowTaskId)
 		throws WorkflowException {
 
+		return TransformUtil.transform(
+			getNextWorkflowTransitions(workflowTaskId),
+			WorkflowTransition::getName);
+	}
+
+	@Override
+	public List<WorkflowTransition> getNextWorkflowTransitions(
+			long workflowTaskId)
+		throws WorkflowException {
+
 		try {
 			KaleoTaskInstanceToken kaleoTaskInstanceToken =
 				_kaleoTaskInstanceTokenLocalService.getKaleoTaskInstanceToken(
@@ -299,7 +308,17 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			KaleoNode kaleoNode = kaleoTask.getKaleoNode();
 
 			return TransformUtil.transform(
-				kaleoNode.getKaleoTransitions(), KaleoTransition::getName);
+				kaleoNode.getKaleoTransitions(),
+				kaleoTransition -> new DefaultWorkflowTransition() {
+					{
+						setLabelMap(kaleoTransition.getLabelMap());
+						setName(kaleoTransition.getName());
+						setSourceNodeName(
+							kaleoTransition.getSourceKaleoNodeName());
+						setTargetNodeName(
+							kaleoTransition.getTargetKaleoNodeName());
+					}
+				});
 		}
 		catch (WorkflowException workflowException) {
 			throw workflowException;
@@ -1004,17 +1023,10 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	private List<User> _getUsers(long groupId, long roleId)
 		throws PortalException {
 
-		List<User> users = new ArrayList<>();
-
-		List<UserGroupRole> userGroupGroupRoles =
+		return TransformUtil.transform(
 			_userGroupRoleLocalService.getUserGroupRolesByGroupAndRole(
-				groupId, roleId);
-
-		for (UserGroupRole userGroupRole : userGroupGroupRoles) {
-			users.add(userGroupRole.getUser());
-		}
-
-		return users;
+				groupId, roleId),
+			userGroupRole -> userGroupRole.getUser());
 	}
 
 	private boolean _hasAssignableUsers(
@@ -1298,22 +1310,13 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			List<KaleoTaskInstanceToken> kaleoTaskInstanceTokens)
 		throws PortalException {
 
-		List<WorkflowTask> workflowTasks = new ArrayList<>(
-			kaleoTaskInstanceTokens.size());
-
-		for (KaleoTaskInstanceToken kaleoTaskInstanceToken :
-				kaleoTaskInstanceTokens) {
-
-			WorkflowTask workflowTask =
+		return TransformUtil.transform(
+			kaleoTaskInstanceTokens,
+			kaleoTaskInstanceToken ->
 				_kaleoWorkflowModelConverter.toWorkflowTask(
 					kaleoTaskInstanceToken,
 					WorkflowContextUtil.convert(
-						kaleoTaskInstanceToken.getWorkflowContext()));
-
-			workflowTasks.add(workflowTask);
-		}
-
-		return workflowTasks;
+						kaleoTaskInstanceToken.getWorkflowContext())));
 	}
 
 	private static final int _ACTION_TYPE_ASSIGN = 1;

@@ -30,7 +30,7 @@ import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.impl.LayoutTypeControllerImpl;
 import com.liferay.portal.model.impl.ThemeSettingImpl;
-import com.liferay.portal.test.rule.FeatureFlags;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -369,7 +369,7 @@ public class LayoutImplTest {
 		}
 	}
 
-	@FeatureFlags("LPD-38869")
+	@FeatureFlag("LPD-38869")
 	@Test
 	public void testPrivateLayoutGetTheme() throws Exception {
 		_assertGetTheme(LayoutTestUtil.addTypePortletLayout(_group, true));
@@ -383,7 +383,7 @@ public class LayoutImplTest {
 	private Layout _addMasterLayout() throws Exception {
 		LayoutPageTemplateEntry masterLayoutPageTemplateEntry =
 			_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
-				null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
+				null, TestPropsValues.getUserId(), _group.getGroupId(), 0, null,
 				RandomTestUtil.randomString(),
 				LayoutPageTemplateEntryTypeConstants.MASTER_LAYOUT, 0,
 				WorkflowConstants.STATUS_APPROVED,

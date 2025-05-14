@@ -102,7 +102,9 @@ export {default as Numeric} from './Numeric/Numeric';
 export {default as NumericInputMask} from './NumericInputMask/NumericInputMask';
 export {default as MultipleSelection} from './Select/MultipleSelect';
 export {default as Select} from './Select/Select';
-export type {FieldChangeEventHandler} from './types';
+export type {FieldChangeEventHandler, LocalizedValue} from './types';
+export type {AvailableLocale} from './util/localizable/LocalesDropdown';
+export {default as LocalesDropdown} from './util/localizable/LocalesDropdown';
 
 export {
 	Captcha,

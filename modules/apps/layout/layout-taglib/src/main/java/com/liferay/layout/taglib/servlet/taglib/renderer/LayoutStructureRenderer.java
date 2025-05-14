@@ -5,11 +5,14 @@
 
 package com.liferay.layout.taglib.servlet.taglib.renderer;
 
+import com.liferay.fragment.constants.FragmentConstants;
 import com.liferay.fragment.constants.FragmentWebKeys;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.renderer.DefaultFragmentRendererContext;
 import com.liferay.fragment.renderer.FragmentRendererController;
 import com.liferay.fragment.service.FragmentEntryLinkLocalServiceUtil;
+import com.liferay.fragment.util.configuration.FragmentConfigurationField;
+import com.liferay.fragment.util.configuration.FragmentEntryConfigurationParser;
 import com.liferay.frontend.taglib.clay.servlet.taglib.ButtonTag;
 import com.liferay.frontend.taglib.clay.servlet.taglib.ColTag;
 import com.liferay.frontend.taglib.clay.servlet.taglib.ContainerTag;
@@ -17,6 +20,9 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.PaginationBarTag;
 import com.liferay.frontend.taglib.clay.servlet.taglib.RowTag;
 import com.liferay.frontend.taglib.servlet.taglib.ComponentTag;
 import com.liferay.info.constants.InfoDisplayWebKeys;
+import com.liferay.info.field.InfoField;
+import com.liferay.info.field.type.BooleanInfoFieldType;
+import com.liferay.info.field.type.MultiselectInfoFieldType;
 import com.liferay.info.form.InfoForm;
 import com.liferay.info.item.InfoItemDetails;
 import com.liferay.info.item.InfoItemReference;
@@ -31,6 +37,7 @@ import com.liferay.layout.constants.LayoutWebKeys;
 import com.liferay.layout.display.page.LayoutDisplayPageObjectProvider;
 import com.liferay.layout.display.page.LayoutDisplayPageProvider;
 import com.liferay.layout.display.page.constants.LayoutDisplayPageWebKeys;
+import com.liferay.layout.helper.structure.LayoutStructureRulesHelper;
 import com.liferay.layout.list.retriever.ListObjectReference;
 import com.liferay.layout.responsive.ResponsiveLayoutStructureUtil;
 import com.liferay.layout.taglib.internal.display.context.RenderCollectionLayoutStructureItemDisplayContext;
@@ -70,6 +77,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -127,7 +135,22 @@ public class LayoutStructureRenderer {
 				"infoItemActionComponent",
 				_renderLayoutStructureDisplayContext.
 					getInfoItemActionComponentContext(),
-				"{InfoItemActionHandler} from layout-taglib");
+				"{InfoItemActionHandler} from layout-taglib/render");
+		}
+
+		LayoutStructureRulesHelper.LayoutStructureRulesResult
+			layoutStructureRulesResult =
+				_renderLayoutStructureDisplayContext.
+					getLayoutStructureRulesResult();
+
+		if (MapUtil.isNotEmpty(
+				layoutStructureRulesResult.getLayoutStructureRuleIdsMap())) {
+
+			_renderComponent(
+				"RulesHandlerComponent",
+				_renderLayoutStructureDisplayContext.
+					getRulesHandlerComponentContext(),
+				"{RulesHandler} from layout-taglib/render");
 		}
 	}
 
@@ -245,6 +268,8 @@ public class LayoutStructureRenderer {
 			collectionStyledLayoutStructureItem.getUniqueCssClass());
 		jspWriter.write(StringPool.SPACE);
 		jspWriter.write(collectionStyledLayoutStructureItem.getCssClass());
+		jspWriter.write("\" data-layout-structure-item-id=\"");
+		jspWriter.write(collectionStyledLayoutStructureItem.getItemId());
 		jspWriter.write("\"");
 
 		ListObjectReference listObjectReference =
@@ -259,10 +284,15 @@ public class LayoutStructureRenderer {
 
 		jspWriter.write(" id=\"analytics-targetable-collection-");
 		jspWriter.write(collectionStyledLayoutStructureItem.getItemId());
-		jspWriter.write("\" style=\"");
-		jspWriter.write(
-			_renderLayoutStructureDisplayContext.getStyle(
-				collectionStyledLayoutStructureItem));
+
+		String style = _renderLayoutStructureDisplayContext.getStyle(
+			collectionStyledLayoutStructureItem);
+
+		if (Validator.isNotNull(style)) {
+			jspWriter.write("\" style=\"");
+			jspWriter.write(style);
+		}
+
 		jspWriter.write("\">");
 
 		List<String> collectionStyledLayoutStructureItemIds =
@@ -487,7 +517,7 @@ public class LayoutStructureRenderer {
 			paginationBarTag.setCssClass("pb-2 pt-3");
 			paginationBarTag.setPropsTransformer(
 				"{NumericCollectionPaginationPropsTransformer} from " +
-					"layout-taglib");
+					"layout-taglib/render");
 			paginationBarTag.setShowDeltasDropDown(false);
 			paginationBarTag.setTotalItems(
 				renderCollectionLayoutStructureItemDisplayContext.
@@ -558,7 +588,7 @@ public class LayoutStructureRenderer {
 					"collectionId",
 					collectionStyledLayoutStructureItem.getItemId()
 				).build(),
-				"{SimpleCollectionPagination} from layout-taglib");
+				"{SimpleCollectionPagination} from layout-taglib/render");
 		}
 
 		jspWriter.write("</div>");
@@ -701,20 +731,29 @@ public class LayoutStructureRenderer {
 			}
 		}
 
-		jspWriter.write("\" style=\"");
+		jspWriter.write("\" data-layout-structure-item-id=\"");
+		jspWriter.write(containerStyledLayoutStructureItem.getItemId());
 
-		String contentVisibility =
-			containerStyledLayoutStructureItem.getContentVisibility();
+		StringBundler sb = new StringBundler(4);
 
-		if (Validator.isNotNull(contentVisibility)) {
-			jspWriter.append("content-visibility:");
-			jspWriter.append(contentVisibility);
-			jspWriter.append(StringPool.SEMICOLON);
+		if (Validator.isNotNull(
+				containerStyledLayoutStructureItem.getContentVisibility())) {
+
+			sb.append("content-visibility:");
+			sb.append(
+				containerStyledLayoutStructureItem.getContentVisibility());
+			sb.append(StringPool.SEMICOLON);
 		}
 
-		jspWriter.write(
+		sb.append(
 			_renderLayoutStructureDisplayContext.getStyle(
 				containerStyledLayoutStructureItem));
+
+		if (sb.length() > 0) {
+			jspWriter.write("\" style=\"");
+			jspWriter.write(sb.toString());
+		}
+
 		jspWriter.write("\">");
 
 		_renderLayoutStructure(
@@ -888,11 +927,17 @@ public class LayoutStructureRenderer {
 		jspWriter.write(StringPool.SPACE);
 		jspWriter.write(
 			formStepContainerStyledLayoutStructureItem.getStyledCssClasses());
-		jspWriter.write("\" style=\"");
+		jspWriter.write("\" data-layout-structure-item-id=\"");
+		jspWriter.write(formStepContainerStyledLayoutStructureItem.getItemId());
 
-		jspWriter.write(
-			_renderLayoutStructureDisplayContext.getStyle(
-				formStepContainerStyledLayoutStructureItem));
+		String style = _renderLayoutStructureDisplayContext.getStyle(
+			formStepContainerStyledLayoutStructureItem);
+
+		if (Validator.isNotNull(style)) {
+			jspWriter.write("\" style=\"");
+			jspWriter.write(style);
+		}
+
 		jspWriter.write("\">");
 
 		List<String> childrenItemIds =
@@ -929,7 +974,7 @@ public class LayoutStructureRenderer {
 				"formId",
 				formStepContainerStyledLayoutStructureItem.getParentItemId()
 			).build(),
-			"{FormStepHandler} from layout-taglib");
+			"{FormStepHandler} from layout-taglib/render");
 	}
 
 	private void _renderFormStyledLayoutStructureItem(
@@ -1001,11 +1046,18 @@ public class LayoutStructureRenderer {
 			}
 		}
 
-		jspWriter.write(
-			"\" enctype=\"multipart/form-data\" method=\"POST\" style=\"");
-		jspWriter.write(
-			_renderLayoutStructureDisplayContext.getStyle(
-				formStyledLayoutStructureItem));
+		jspWriter.write("\" data-layout-structure-item-id=\"");
+		jspWriter.write(formStyledLayoutStructureItem.getItemId());
+		jspWriter.write("\" enctype=\"multipart/form-data\" method=\"POST");
+
+		String style = _renderLayoutStructureDisplayContext.getStyle(
+			formStyledLayoutStructureItem);
+
+		if (Validator.isNotNull(style)) {
+			jspWriter.write("\" style=\"");
+			jspWriter.write(style);
+		}
+
 		jspWriter.write("\"><input name=\"redirect\" type=\"hidden\" value=\"");
 		jspWriter.write(
 			_renderLayoutStructureDisplayContext.
@@ -1013,11 +1065,6 @@ public class LayoutStructureRenderer {
 					formStyledLayoutStructureItem));
 		jspWriter.write("\"><input name=\"backURL\" type=\"hidden\" value=\"");
 		jspWriter.write(_themeDisplay.getURLCurrent());
-		jspWriter.write(
-			"\"><input name=\"checkboxNames\" type=\"hidden\" value=\"");
-		jspWriter.write(
-			_renderLayoutStructureDisplayContext.getInfoFormCheckboxNames(
-				infoForm));
 		jspWriter.write(
 			"\"><input name=\"classNameId\" type=\"hidden\" value=\"");
 		jspWriter.write(
@@ -1173,6 +1220,24 @@ public class LayoutStructureRenderer {
 							fragmentEntryLink, infoForm,
 							fragmentStyledLayoutStructureItem.getItemId());
 
+				Set<String> disabledItemIds =
+					_renderLayoutStructureDisplayContext.getDisabledItemIds();
+				Set<String> enabledItemIds =
+					_renderLayoutStructureDisplayContext.getEnabledItemIds();
+
+				if (disabledItemIds.contains(
+						fragmentStyledLayoutStructureItem.getItemId())) {
+
+					defaultFragmentRendererContext.setAttribute(
+						"disabled", Boolean.TRUE);
+				}
+				else if (enabledItemIds.contains(
+							fragmentStyledLayoutStructureItem.getItemId())) {
+
+					defaultFragmentRendererContext.setAttribute(
+						"enabled", Boolean.TRUE);
+				}
+
 				FragmentRendererController fragmentRendererController =
 					ServletContextUtil.getFragmentRendererController();
 
@@ -1184,6 +1249,38 @@ public class LayoutStructureRenderer {
 				String html = fragmentRendererController.render(
 					defaultFragmentRendererContext, _httpServletRequest,
 					httpServletResponse);
+
+				if ((infoForm != null) &&
+					Objects.equals(
+						fragmentEntryLink.getType(),
+						FragmentConstants.TYPE_INPUT)) {
+
+					FragmentEntryConfigurationParser
+						fragmentEntryConfigurationParser =
+							ServletContextUtil.
+								getFragmentEntryConfigurationParser();
+
+					String fieldName = GetterUtil.getString(
+						fragmentEntryConfigurationParser.getFieldValue(
+							fragmentEntryLink.getEditableValues(),
+							new FragmentConfigurationField(
+								"inputFieldId", "string", "", false, "text"),
+							_themeDisplay.getLocale()));
+
+					InfoField<?> infoField = infoForm.getInfoField(fieldName);
+
+					if ((infoField != null) &&
+						(infoField.getInfoFieldType() instanceof
+							BooleanInfoFieldType ||
+						 infoField.getInfoFieldType() instanceof
+							 MultiselectInfoFieldType)) {
+
+						jspWriter.write("<input name=\"checkboxNames\" ");
+						jspWriter.write("type=\"hidden\" value=\"");
+						jspWriter.write(fieldName);
+						jspWriter.write("\">");
+					}
+				}
 
 				if (GetterUtil.getBoolean(
 						_httpServletRequest.getAttribute(
@@ -1366,10 +1463,17 @@ public class LayoutStructureRenderer {
 		jspWriter.write(rowStyledLayoutStructureItem.getCssClass());
 		jspWriter.write(StringPool.SPACE);
 		jspWriter.write(rowStyledLayoutStructureItem.getStyledCssClasses());
-		jspWriter.write("\" style=\"");
-		jspWriter.write(
-			_renderLayoutStructureDisplayContext.getStyle(
-				rowStyledLayoutStructureItem));
+		jspWriter.write("\" data-layout-structure-item-id=\"");
+		jspWriter.write(rowStyledLayoutStructureItem.getItemId());
+
+		String style = _renderLayoutStructureDisplayContext.getStyle(
+			rowStyledLayoutStructureItem);
+
+		if (Validator.isNotNull(style)) {
+			jspWriter.write("\" style=\"");
+			jspWriter.write(style);
+		}
+
 		jspWriter.write("\">");
 
 		if (_renderLayoutStructureDisplayContext.isIncludeContainer(
@@ -1449,10 +1553,17 @@ public class LayoutStructureRenderer {
 			jspWriter.write(colorCssClasses);
 		}
 
-		jspWriter.write("\" style=\"");
-		jspWriter.write(
-			_renderLayoutStructureDisplayContext.getStyle(
-				fragmentStyledLayoutStructureItem));
+		jspWriter.write("\" data-layout-structure-item-id=\"");
+		jspWriter.write(fragmentStyledLayoutStructureItem.getItemId());
+
+		String style = _renderLayoutStructureDisplayContext.getStyle(
+			fragmentStyledLayoutStructureItem);
+
+		if (Validator.isNotNull(style)) {
+			jspWriter.write("\" style=\"");
+			jspWriter.write(style);
+		}
+
 		jspWriter.write("\">");
 	}
 

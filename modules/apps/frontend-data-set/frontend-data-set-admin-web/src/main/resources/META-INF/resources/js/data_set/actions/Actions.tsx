@@ -7,7 +7,8 @@ import ClayBreadcrumb from '@clayui/breadcrumb';
 import ClayLayout from '@clayui/layout';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import ClayTabs from '@clayui/tabs';
-import {fetch, openModal} from 'frontend-js-web';
+import {openModal} from 'frontend-js-components-web';
+import {fetch} from 'frontend-js-web';
 import React, {useEffect, useState} from 'react';
 
 import {
@@ -55,6 +56,7 @@ interface IAction extends IOrderable {
 			method: string;
 		};
 	};
+	active: boolean;
 	confirmationMessage?: string;
 	confirmationMessageType?: string;
 	confirmationMessage_i18n?: {
@@ -64,6 +66,7 @@ interface IAction extends IOrderable {
 	errorMessage_i18n?: {
 		[key: string]: string;
 	};
+	externalReferenceCode: string;
 	icon: string;
 	label: string;
 	label_i18n: {
@@ -93,6 +96,8 @@ const Actions = ({dataSet, namespace, spritemap}: IDataSetSectionProps) => {
 	const [loading, setLoading] = useState(true);
 	const [initialActionFormValues, setInitialActionFormValues] =
 		useState<IAction>();
+	const [toggleActiveDisabled, setToogleActiveDisabled] =
+		useState<boolean>(false);
 
 	const getBreadcrumbItems = () => {
 		const breadcrumbItems: React.ComponentProps<
@@ -280,6 +285,46 @@ const Actions = ({dataSet, namespace, spritemap}: IDataSetSectionProps) => {
 		}
 	};
 
+	const updateActive = async (item: IAction) => {
+		setToogleActiveDisabled(true);
+
+		const response = await fetch(
+			`${API_URL.ACTIONS}/by-external-reference-code/${item.externalReferenceCode}`,
+			{
+				body: JSON.stringify({active: !item.active}),
+				headers: DEFAULT_FETCH_HEADERS,
+				method: 'PATCH',
+			}
+		);
+
+		if (!response.ok) {
+			openDefaultFailureToast();
+
+			return;
+		}
+
+		const dataSetAction: IAction = await response.json();
+
+		if (dataSetAction?.id) {
+			const updatedActions = actions.map((action) => {
+				if (action.id === dataSetAction.id) {
+					action = {...action, ...dataSetAction};
+				}
+
+				return action;
+			});
+
+			setActions(updatedActions);
+
+			openDefaultSuccessToast();
+		}
+		else {
+			openDefaultFailureToast();
+		}
+
+		setToogleActiveDisabled(false);
+	};
+
 	useEffect(() => {
 		loadActions({activeTab: 0});
 
@@ -322,47 +367,59 @@ const Actions = ({dataSet, namespace, spritemap}: IDataSetSectionProps) => {
 						</ClayTabs>
 
 						<ClayTabs.Content active={activeTab} fade>
-							<ClayTabs.TabPane
-								aria-label={Liferay.Language.get(
-									'item-actions'
-								)}
-								className="item-actions-tab-pane"
-							>
-								<ActionList
-									actions={actions}
-									createAction={createAction}
-									creationMenuItemLabel={Liferay.Language.get(
-										'new-item-action'
+							{activeSection === SECTIONS.ITEM_ACTIONS && (
+								<ClayTabs.TabPane
+									aria-label={Liferay.Language.get(
+										'item-actions'
 									)}
-									deleteAction={deleteAction}
-									editAction={editAction}
-									noItemsButtonLabel={Liferay.Language.get(
-										'new-item-action'
-									)}
-									updateActionsOrder={updateActionsOrder}
-								/>
-							</ClayTabs.TabPane>
+									className="item-actions-tab-pane"
+								>
+									<ActionList
+										actions={actions}
+										createAction={createAction}
+										creationMenuItemLabel={Liferay.Language.get(
+											'new-item-action'
+										)}
+										deleteAction={deleteAction}
+										editAction={editAction}
+										noItemsButtonLabel={Liferay.Language.get(
+											'new-item-action'
+										)}
+										toogleActiveDisabled={
+											toggleActiveDisabled
+										}
+										updateActionsOrder={updateActionsOrder}
+										updateActive={updateActive}
+									/>
+								</ClayTabs.TabPane>
+							)}
 
-							<ClayTabs.TabPane
-								aria-label={Liferay.Language.get(
-									'creation-actions'
-								)}
-								className="creation-actions-tab-pane"
-							>
-								<ActionList
-									actions={actions}
-									createAction={createAction}
-									creationMenuItemLabel={Liferay.Language.get(
-										'new-creation-action'
+							{activeSection === SECTIONS.CREATION_ACTIONS && (
+								<ClayTabs.TabPane
+									aria-label={Liferay.Language.get(
+										'creation-actions'
 									)}
-									deleteAction={deleteAction}
-									editAction={editAction}
-									noItemsButtonLabel={Liferay.Language.get(
-										'new-creation-action'
-									)}
-									updateActionsOrder={updateActionsOrder}
-								/>
-							</ClayTabs.TabPane>
+									className="creation-actions-tab-pane"
+								>
+									<ActionList
+										actions={actions}
+										createAction={createAction}
+										creationMenuItemLabel={Liferay.Language.get(
+											'new-creation-action'
+										)}
+										deleteAction={deleteAction}
+										editAction={editAction}
+										noItemsButtonLabel={Liferay.Language.get(
+											'new-creation-action'
+										)}
+										toogleActiveDisabled={
+											toggleActiveDisabled
+										}
+										updateActionsOrder={updateActionsOrder}
+										updateActive={updateActive}
+									/>
+								</ClayTabs.TabPane>
+							)}
 						</ClayTabs.Content>
 					</>
 				)}

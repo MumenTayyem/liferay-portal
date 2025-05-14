@@ -66,17 +66,35 @@ public class FDSAPIURLBuilder {
 				_restApplication, "/v1.0", StringPool.BLANK));
 		sb.append(_restEndpoint);
 
-		_appendParameters(sb);
+		_appendParameters(true, sb);
 
 		return _interpolate(_resolveParameters(sb.toString()));
 	}
 
-	private void _appendParameters(StringBundler sb) {
+	public String buildQueryString() {
+		StringBundler sb = new StringBundler(_queryStringItems.size() * 2);
+
+		_appendParameters(false, sb);
+
+		String query = sb.toString();
+
+		if (Validator.isNull(query)) {
+			return null;
+		}
+
+		return _interpolate(_resolveParameters(query));
+	}
+
+	private void _appendParameters(
+		boolean includeQuestionMark, StringBundler sb) {
+
 		if (_queryStringItems.isEmpty()) {
 			return;
 		}
 
-		sb.append(CharPool.QUESTION);
+		if (includeQuestionMark) {
+			sb.append(CharPool.QUESTION);
+		}
 
 		int count = 0;
 

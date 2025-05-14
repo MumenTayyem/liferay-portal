@@ -12,11 +12,10 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.tools.rest.builder.test.constant.v1_0.StringTestEntity;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLName;
 import com.liferay.portal.vulcan.util.ObjectMapperUtil;
-
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 
@@ -52,7 +51,7 @@ public class ChildTestEntity2 extends TestEntity implements Serializable {
 		return ObjectMapperUtil.unsafeReadValue(ChildTestEntity2.class, json);
 	}
 
-	@Schema
+	@io.swagger.v3.oas.annotations.media.Schema
 	public String getProperty2() {
 		if (_property2Supplier != null) {
 			property2 = _property2Supplier.get();
@@ -271,6 +270,40 @@ public class ChildTestEntity2 extends TestEntity implements Serializable {
 			sb.append("\"");
 		}
 
+		StringTestEntity[] stringTestEntities = getStringTestEntities();
+
+		if (stringTestEntities != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"stringTestEntities\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < stringTestEntities.length; i++) {
+				sb.append(stringTestEntities[i]);
+
+				if ((i + 1) < stringTestEntities.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
+		StringTestEntity stringTestEntity = getStringTestEntity();
+
+		if (stringTestEntity != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"stringTestEntity\": ");
+
+			sb.append(stringTestEntity);
+		}
+
 		TestEntity testEntities = getTestEntities();
 
 		if (testEntities != null) {
@@ -304,8 +337,8 @@ public class ChildTestEntity2 extends TestEntity implements Serializable {
 		return sb.toString();
 	}
 
-	@Schema(
-		accessMode = Schema.AccessMode.READ_ONLY,
+	@io.swagger.v3.oas.annotations.media.Schema(
+		accessMode = io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY,
 		defaultValue = "com.liferay.portal.tools.rest.builder.test.dto.v1_0.ChildTestEntity2",
 		name = "x-class-name"
 	)

@@ -49,7 +49,10 @@ public class ObjectEntryWrapper
 		attributes.put("objectDefinitionId", getObjectDefinitionId());
 		attributes.put("objectEntryFolderId", getObjectEntryFolderId());
 		attributes.put("rootObjectEntryId", getRootObjectEntryId());
+		attributes.put("defaultLanguageId", getDefaultLanguageId());
+		attributes.put("expirationDate", getExpirationDate());
 		attributes.put("treePath", getTreePath());
+		attributes.put("version", getVersion());
 		attributes.put("lastPublishDate", getLastPublishDate());
 		attributes.put("status", getStatus());
 		attributes.put("statusByUserId", getStatusByUserId());
@@ -140,10 +143,28 @@ public class ObjectEntryWrapper
 			setRootObjectEntryId(rootObjectEntryId);
 		}
 
+		String defaultLanguageId = (String)attributes.get("defaultLanguageId");
+
+		if (defaultLanguageId != null) {
+			setDefaultLanguageId(defaultLanguageId);
+		}
+
+		Date expirationDate = (Date)attributes.get("expirationDate");
+
+		if (expirationDate != null) {
+			setExpirationDate(expirationDate);
+		}
+
 		String treePath = (String)attributes.get("treePath");
 
 		if (treePath != null) {
 			setTreePath(treePath);
+		}
+
+		Integer version = (Integer)attributes.get("version");
+
+		if (version != null) {
+			setVersion(version);
 		}
 
 		Date lastPublishDate = (Date)attributes.get("lastPublishDate");
@@ -207,6 +228,26 @@ public class ObjectEntryWrapper
 	@Override
 	public Date getCreateDate() {
 		return model.getCreateDate();
+	}
+
+	/**
+	 * Returns the default language ID of this object entry.
+	 *
+	 * @return the default language ID of this object entry
+	 */
+	@Override
+	public String getDefaultLanguageId() {
+		return model.getDefaultLanguageId();
+	}
+
+	/**
+	 * Returns the expiration date of this object entry.
+	 *
+	 * @return the expiration date of this object entry
+	 */
+	@Override
+	public Date getExpirationDate() {
+		return model.getExpirationDate();
 	}
 
 	/**
@@ -372,10 +413,31 @@ public class ObjectEntryWrapper
 	}
 
 	@Override
+	public Map<java.util.Locale, String> getTitleMap()
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getTitleMap();
+	}
+
+	@Override
 	public String getTitleValue()
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return model.getTitleValue();
+	}
+
+	@Override
+	public String getTitleValue(String languageId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getTitleValue(languageId);
+	}
+
+	@Override
+	public String getTitleValue(String languageId, boolean useDefault)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return model.getTitleValue(languageId, useDefault);
 	}
 
 	/**
@@ -389,16 +451,12 @@ public class ObjectEntryWrapper
 	}
 
 	@Override
-	public String getURLTitle(java.util.Locale locale)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public String getURLTitle(java.util.Locale locale) {
 		return model.getURLTitle(locale);
 	}
 
 	@Override
-	public Map<String, String> getURLTitleMap()
-		throws com.liferay.portal.kernel.exception.PortalException {
-
+	public Map<String, String> getURLTitleMap() {
 		return model.getURLTitleMap();
 	}
 
@@ -445,6 +503,16 @@ public class ObjectEntryWrapper
 	@Override
 	public Map<String, Serializable> getValues() {
 		return model.getValues();
+	}
+
+	/**
+	 * Returns the version of this object entry.
+	 *
+	 * @return the version of this object entry
+	 */
+	@Override
+	public int getVersion() {
+		return model.getVersion();
 	}
 
 	/**
@@ -550,6 +618,26 @@ public class ObjectEntryWrapper
 	@Override
 	public void setCreateDate(Date createDate) {
 		model.setCreateDate(createDate);
+	}
+
+	/**
+	 * Sets the default language ID of this object entry.
+	 *
+	 * @param defaultLanguageId the default language ID of this object entry
+	 */
+	@Override
+	public void setDefaultLanguageId(String defaultLanguageId) {
+		model.setDefaultLanguageId(defaultLanguageId);
+	}
+
+	/**
+	 * Sets the expiration date of this object entry.
+	 *
+	 * @param expirationDate the expiration date of this object entry
+	 */
+	@Override
+	public void setExpirationDate(Date expirationDate) {
+		model.setExpirationDate(expirationDate);
 	}
 
 	/**
@@ -760,6 +848,16 @@ public class ObjectEntryWrapper
 	@Override
 	public void setValues(Map<String, Serializable> values) {
 		model.setValues(values);
+	}
+
+	/**
+	 * Sets the version of this object entry.
+	 *
+	 * @param version the version of this object entry
+	 */
+	@Override
+	public void setVersion(int version) {
+		model.setVersion(version);
 	}
 
 	@Override

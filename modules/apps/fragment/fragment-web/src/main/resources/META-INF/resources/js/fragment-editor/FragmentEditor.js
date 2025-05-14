@@ -7,7 +7,8 @@ import ClayForm from '@clayui/form';
 import ClayIcon from '@clayui/icon';
 import ClayTabs from '@clayui/tabs';
 import {useIsMounted, usePrevious} from '@liferay/frontend-js-react-web';
-import {debounce, fetch, navigate, openToast, sub} from 'frontend-js-web';
+import {openToast} from 'frontend-js-components-web';
+import {debounce, fetch, navigate, sub} from 'frontend-js-web';
 import React, {useCallback, useEffect, useState} from 'react';
 
 import CodeMirrorEditor from './CodeMirrorEditor';
@@ -188,7 +189,7 @@ const FragmentEditor = ({
 		<div className="fragment-editor-container">
 			<div className="fragment-editor__toolbar nav-bar-container">
 				<div className="navbar navbar-expand navbar-underline navigation-bar navigation-bar-light">
-					<div className="container-fluid container-fluid-max-xl">
+					<div className="container-fluid">
 						<div className="navbar-nav">
 							<ClayTabs>
 								<ClayTabs.Item

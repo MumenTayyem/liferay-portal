@@ -101,6 +101,8 @@ public class CopyLayoutMVCActionCommandTest {
 			_group, RandomTestUtil.randomString(),
 			WorkflowConstants.STATUS_APPROVED);
 
+		_draftLayout = _layout.fetchDraftLayout();
+
 		_serviceContext = _getServiceContext(_group);
 
 		ServiceContextThreadLocal.pushServiceContext(_serviceContext);
@@ -115,7 +117,7 @@ public class CopyLayoutMVCActionCommandTest {
 	public void testDoProcessActionCopyLayout() throws Exception {
 		_addFragmentEntryLinkToLayout(
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
-				_layout.getPlid()));
+				_draftLayout.getPlid()));
 
 		_addModelResources(RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR));
 
@@ -129,7 +131,7 @@ public class CopyLayoutMVCActionCommandTest {
 
 		LayoutPageTemplateEntry masterLayoutPageTemplateEntry =
 			_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
-				null, TestPropsValues.getUserId(), _group.getGroupId(), 0,
+				null, TestPropsValues.getUserId(), _group.getGroupId(), 0, null,
 				RandomTestUtil.randomString(),
 				LayoutPageTemplateEntryTypeConstants.MASTER_LAYOUT, 0,
 				WorkflowConstants.STATUS_APPROVED,
@@ -155,7 +157,7 @@ public class CopyLayoutMVCActionCommandTest {
 
 		_addFragmentEntryLinkToLayout(
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
-				_layout.getPlid()));
+				_draftLayout.getPlid()));
 
 		_addModelResources(RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR));
 
@@ -185,7 +187,7 @@ public class CopyLayoutMVCActionCommandTest {
 
 		_addFragmentEntryLinkToLayout(
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
-				_layout.getPlid()));
+				_draftLayout.getPlid()));
 
 		Role role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
 
@@ -232,12 +234,11 @@ public class CopyLayoutMVCActionCommandTest {
 		ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
 			null, fragmentEntry.getCss(), fragmentEntry.getConfiguration(),
 			fragmentEntry.getFragmentEntryId(), fragmentEntry.getHtml(),
-			fragmentEntry.getJs(), _layout.fetchDraftLayout(),
+			fragmentEntry.getJs(), _draftLayout,
 			fragmentEntry.getFragmentEntryKey(), segmentsExperienceId,
 			fragmentEntry.getType());
 
-		ContentLayoutTestUtil.publishLayout(
-			_layout.fetchDraftLayout(), _layout);
+		ContentLayoutTestUtil.publishLayout(_draftLayout, _layout);
 	}
 
 	private void _addModelResources(Role role) throws Exception {
@@ -414,7 +415,7 @@ public class CopyLayoutMVCActionCommandTest {
 			fragmentCollection.getFragmentCollectionId(), "fragment-entry-key",
 			RandomTestUtil.randomString(), StringPool.BLANK,
 			"<div data-lfr-styles><span>Test</span>Fragment</div>",
-			StringPool.BLANK, false, StringPool.BLANK, null, 0, false,
+			StringPool.BLANK, false, StringPool.BLANK, null, 0, false, false,
 			FragmentConstants.TYPE_COMPONENT, null,
 			WorkflowConstants.STATUS_APPROVED, _serviceContext);
 
@@ -485,6 +486,8 @@ public class CopyLayoutMVCActionCommandTest {
 
 	@Inject
 	private CompanyLocalService _companyLocalService;
+
+	private Layout _draftLayout;
 
 	@Inject
 	private FragmentCollectionLocalService _fragmentCollectionLocalService;

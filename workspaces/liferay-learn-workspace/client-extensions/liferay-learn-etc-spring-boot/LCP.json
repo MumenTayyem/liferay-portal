@@ -1,7 +1,5 @@
 {
 	"cpu": 1,
-	"env": {
-	},
 	"environments": {
 		"infra": {
 			"deploy": false

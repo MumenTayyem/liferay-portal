@@ -12,7 +12,7 @@ import com.liferay.dynamic.data.mapping.constants.DDMFormConstants;
 import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
 import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
-import com.liferay.dynamic.data.mapping.form.item.selector.criterion.DDMUserPersonalFolderItemSelectorCriterion;
+import com.liferay.dynamic.data.mapping.form.item.selector.DDMUserPersonalFolderItemSelectorCriterion;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
@@ -105,6 +105,25 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 				}
 
 				return ddmFormInstanceRecordId;
+			}
+		).put(
+			"fileEntryDeleteURL",
+			() -> {
+				HttpServletRequest httpServletRequest =
+					ddmFormFieldRenderingContext.getHttpServletRequest();
+
+				RequestBackedPortletURLFactory requestBackedPortletURLFactory =
+					RequestBackedPortletURLFactoryUtil.create(
+						httpServletRequest);
+
+				return PortletURLBuilder.create(
+					requestBackedPortletURLFactory.createActionURL(
+						GetterUtil.getString(
+							_portal.getPortletId(httpServletRequest),
+							DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM))
+				).setActionName(
+					"/dynamic_data_mapping_form/delete_file_entry"
+				).buildString();
 			}
 		).put(
 			"groupId", ddmFormFieldRenderingContext.getProperty("groupId")

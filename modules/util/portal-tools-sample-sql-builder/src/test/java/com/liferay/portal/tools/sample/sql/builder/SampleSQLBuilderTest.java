@@ -155,6 +155,7 @@ public class SampleSQLBuilderTest {
 		properties.put(BenchmarksPropsKeys.MAX_DL_FILE_ENTRY_SIZE, "1");
 		properties.put(BenchmarksPropsKeys.MAX_DL_FOLDER_COUNT, "1");
 		properties.put(BenchmarksPropsKeys.MAX_DL_FOLDER_DEPTH, "1");
+		properties.put(BenchmarksPropsKeys.MAX_FRAGMENT_ENTRY_LINK_COUNT, "1");
 		properties.put(BenchmarksPropsKeys.MAX_GROUP_COUNT, "2");
 		properties.put(BenchmarksPropsKeys.MAX_JOURNAL_ARTICLE_COUNT, "1");
 		properties.put(BenchmarksPropsKeys.MAX_JOURNAL_ARTICLE_PAGE_COUNT, "1");
@@ -185,7 +186,9 @@ public class SampleSQLBuilderTest {
 			"com/liferay/portal/tools/sample/sql/builder/dependencies" +
 				"/sample.ftl");
 		properties.put(BenchmarksPropsKeys.SEARCH_BAR_ENABLED, "true");
-		properties.put(BenchmarksPropsKeys.VIRTUAL_HOST_NAME, "localhost");
+		properties.put(
+			BenchmarksPropsKeys.VIRTUAL_HOSTNAME_ADMIN_INSTANCE, "localhost");
+		properties.put(BenchmarksPropsKeys.VIRTUAL_HOSTNAME_PREFIX, "liferay");
 	}
 
 	private void _loadHypersonic(Connection connection, String fileName)

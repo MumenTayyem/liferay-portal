@@ -7,14 +7,26 @@ package com.liferay.segments.internal.provider;
 
 import com.liferay.asset.kernel.service.AssetCategoryLocalService;
 import com.liferay.asset.kernel.service.AssetTagLocalService;
+import com.liferay.expando.kernel.model.ExpandoColumn;
+import com.liferay.expando.kernel.model.ExpandoTable;
+import com.liferay.expando.kernel.model.ExpandoTableConstants;
+import com.liferay.expando.kernel.model.ExpandoValue;
+import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
+import com.liferay.expando.kernel.service.ExpandoTableLocalService;
+import com.liferay.expando.kernel.service.ExpandoValueLocalService;
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
+import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.search.Field;
+import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -36,6 +48,8 @@ import com.liferay.segments.provider.SegmentsEntryProvider;
 import com.liferay.segments.service.SegmentsEntryLocalService;
 import com.liferay.segments.service.SegmentsEntryRelLocalService;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -114,10 +128,17 @@ public abstract class BaseSegmentsEntryProvider
 		long groupId, String className, long classPK, Context context,
 		long[] filterSegmentsEntryIds, long[] segmentsEntryIds) {
 
-		List<SegmentsEntry> segmentsEntries =
-			segmentsEntryLocalService.getSegmentsEntries(
+		List<SegmentsEntry> segmentsEntries = new ArrayList<>();
+
+		if (ArrayUtil.isNotEmpty(filterSegmentsEntryIds)) {
+			segmentsEntries = segmentsEntryLocalService.getSegmentsEntries(
+				filterSegmentsEntryIds, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+		}
+		else {
+			segmentsEntries = segmentsEntryLocalService.getSegmentsEntries(
 				groupId, getSource(), QueryUtil.ALL_POS, QueryUtil.ALL_POS,
 				null);
+		}
 
 		if (segmentsEntries.isEmpty()) {
 			return new long[0];
@@ -125,26 +146,33 @@ public abstract class BaseSegmentsEntryProvider
 
 		User user = userLocalService.fetchUser(classPK);
 
-		if (user == null) {
+		if ((user == null) ||
+			(user.getType() == UserConstants.TYPE_DEFAULT_SERVICE_ACCOUNT)) {
+
 			return new long[0];
 		}
 
-		return TransformUtil.transformToLongArray(
-			segmentsEntries,
-			segmentsEntry -> {
-				if ((ArrayUtil.isNotEmpty(filterSegmentsEntryIds) &&
-					 !ArrayUtil.contains(
-						 filterSegmentsEntryIds,
-						 segmentsEntry.getSegmentsEntryId())) ||
-					!isMember(
-						className, classPK, context, segmentsEntry,
-						segmentsEntryIds, _getUserAttributes(user))) {
+		try {
+			Map<String, Object> userAttributes = _getUserAttributes(user);
+
+			return TransformUtil.transformToLongArray(
+				segmentsEntries,
+				segmentsEntry -> {
+					if (isMember(
+							className, classPK, context, segmentsEntry,
+							segmentsEntryIds, userAttributes)) {
+
+						return segmentsEntry.getSegmentsEntryId();
+					}
 
 					return null;
-				}
+				});
+		}
+		catch (Exception exception) {
+			_log.error(exception);
+		}
 
-				return segmentsEntry.getSegmentsEntryId();
-			});
+		return new long[0];
 	}
 
 	protected Criteria.Conjunction getConjunction(
@@ -199,9 +227,9 @@ public abstract class BaseSegmentsEntryProvider
 		String contextFilterString = getFilterString(
 			segmentsEntry, Criteria.Type.CONTEXT);
 
-		if (segmentsEntryRelLocalService.hasSegmentsEntryRel(
-				segmentsEntry.getSegmentsEntryId(),
-				portal.getClassNameId(className), classPK) &&
+		if (ArrayUtil.contains(
+				(long[])userAttributes.get("segmentsEntryIds"),
+				segmentsEntry.getSegmentsEntryId()) &&
 			Validator.isNull(contextFilterString)) {
 
 			return true;
@@ -298,6 +326,18 @@ public abstract class BaseSegmentsEntryProvider
 	@Reference
 	protected AssetTagLocalService assetTagLocalService;
 
+	@Reference
+	protected ClassNameLocalService classNameLocalService;
+
+	@Reference
+	protected ExpandoColumnLocalService expandoColumnLocalService;
+
+	@Reference
+	protected ExpandoTableLocalService expandoTableLocalService;
+
+	@Reference
+	protected ExpandoValueLocalService expandoValueLocalService;
+
 	@Reference(
 		target = "(target.class.name=com.liferay.segments.context.Context)"
 	)
@@ -332,8 +372,42 @@ public abstract class BaseSegmentsEntryProvider
 	}
 
 	private Map<String, Object> _getUserAttributes(User user) throws Exception {
+		Map<String, String> expandoValues = new HashMap<>();
+
+		ExpandoTable expandoTable = expandoTableLocalService.fetchTable(
+			user.getCompanyId(),
+			classNameLocalService.getClassNameId(User.class.getName()),
+			ExpandoTableConstants.DEFAULT_TABLE_NAME);
+
+		if (expandoTable != null) {
+			List<ExpandoColumn> expandoColumns =
+				expandoColumnLocalService.getColumns(expandoTable.getTableId());
+
+			for (ExpandoColumn expandoColumn : expandoColumns) {
+				ExpandoValue expandoValue = expandoValueLocalService.getValue(
+					expandoTable.getTableId(), expandoColumn.getColumnId(),
+					user.getUserId());
+
+				String key = StringBundler.concat(
+					"customField/_", expandoColumn.getColumnId(),
+					StringPool.UNDERLINE,
+					StringUtil.replace(
+						expandoColumn.getName(), CharPool.SPACE,
+						CharPool.UNDERLINE));
+
+				if (expandoValue != null) {
+					expandoValues.put(key, expandoValue.getData());
+				}
+				else {
+					expandoValues.put(key, StringPool.BLANK);
+				}
+			}
+		}
+
 		return HashMapBuilder.<String, Object>putAll(
 			user.getModelAttributes()
+		).putAll(
+			expandoValues
 		).put(
 			Field.ASSET_CATEGORY_IDS,
 			TransformUtil.transform(
@@ -358,13 +432,6 @@ public abstract class BaseSegmentsEntryProvider
 			"classPK", user.getUserId()
 		).put(
 			"groupIds", user.getGroupIds()
-		).put(
-			"inheritedRoleIds",
-			TransformUtil.transform(
-				user.getInheritedRoles(), role -> role.getRoleId()
-			).toArray(
-				new Long[0]
-			)
 		).put(
 			"organizationIds", user.getOrganizationIds()
 		).put(

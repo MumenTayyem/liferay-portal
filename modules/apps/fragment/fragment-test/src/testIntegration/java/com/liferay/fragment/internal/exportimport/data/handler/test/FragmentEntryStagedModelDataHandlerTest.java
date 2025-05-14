@@ -231,10 +231,12 @@ public class FragmentEntryStagedModelDataHandlerTest
 
 		FragmentEntry fragmentEntry = _addFragmentEntry(
 			StringPool.BLANK, stagingGroup, "<div class=\"fragment_1\"></div>");
+
+		Layout draftLayout = _layout.fetchDraftLayout();
+
 		long segmentsExperienceId =
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
-				_layout.getPlid());
-		Layout draftLayout = _layout.fetchDraftLayout();
+				draftLayout.getPlid());
 
 		ServiceContext serviceContext =
 			ServiceContextTestUtil.getServiceContext(
@@ -400,7 +402,7 @@ public class FragmentEntryStagedModelDataHandlerTest
 			fragmentCollection.getFragmentCollectionId(),
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			RandomTestUtil.randomString(), html, RandomTestUtil.randomString(),
-			false, configuration, null, 0, false,
+			false, configuration, null, 0, false, false,
 			FragmentConstants.TYPE_COMPONENT, null,
 			WorkflowConstants.STATUS_APPROVED,
 			ServiceContextTestUtil.getServiceContext(

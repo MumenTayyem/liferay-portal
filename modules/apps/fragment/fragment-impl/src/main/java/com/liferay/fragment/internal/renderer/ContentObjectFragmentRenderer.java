@@ -130,7 +130,7 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 			displayObject = _getDisplayObject(
 				className, jsonObject.getLong("classPK"),
 				jsonObject.getString("externalReferenceCode"),
-				infoItemReference);
+				httpServletRequest, infoItemReference);
 		}
 		else {
 			displayObject = _getInfoItem(infoItemReference);
@@ -189,7 +189,7 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 			displayObject = _getDisplayObject(
 				className, jsonObject.getLong("classPK"),
 				jsonObject.getString("externalReferenceCode"),
-				infoItemReference);
+				httpServletRequest, infoItemReference);
 		}
 		else {
 			displayObject = _getInfoItem(infoItemReference);
@@ -234,8 +234,12 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 		}
 
 		long classPK = _getClassPK(infoItemReference, jsonObject);
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-39437") ||
+		if (!FeatureFlagManagerUtil.isEnabled(
+				themeDisplay.getCompanyId(), "LPD-39437") ||
 			!fragmentRendererContext.isViewMode() || (classPK <= 0)) {
 
 			_render(
@@ -344,7 +348,24 @@ public class ContentObjectFragmentRenderer implements FragmentRenderer {
 
 	private Object _getDisplayObject(
 		String className, long classPK, String externalReferenceCode,
+		HttpServletRequest httpServletRequest,
 		InfoItemReference infoItemReference) {
+
+		InfoItemDetails infoItemDetails =
+			(InfoItemDetails)httpServletRequest.getAttribute(
+				InfoDisplayWebKeys.INFO_ITEM_DETAILS);
+
+		if ((classPK <= 0) && (infoItemDetails != null) &&
+			(infoItemReference != null) &&
+			infoItemReference.equals(infoItemDetails.getInfoItemReference())) {
+
+			Object infoItem = httpServletRequest.getAttribute(
+				InfoDisplayWebKeys.INFO_ITEM);
+
+			if (infoItem != null) {
+				return infoItem;
+			}
+		}
 
 		InfoItemServiceFilter infoItemServiceFilter = null;
 

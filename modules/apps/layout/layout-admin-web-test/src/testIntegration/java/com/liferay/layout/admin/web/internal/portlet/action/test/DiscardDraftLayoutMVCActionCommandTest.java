@@ -27,6 +27,8 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.test.TestInfo;
+import com.liferay.portal.kernel.test.portlet.MockActionRequest;
+import com.liferay.portal.kernel.test.portlet.MockActionResponse;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionRequest;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletActionResponse;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -44,8 +46,6 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
-import com.liferay.portletmvc4spring.test.mock.web.portlet.MockActionRequest;
-import com.liferay.portletmvc4spring.test.mock.web.portlet.MockActionResponse;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
 
 import org.junit.After;
@@ -93,30 +93,25 @@ public class DiscardDraftLayoutMVCActionCommandTest {
 
 		Layout draftLayout = layout.fetchDraftLayout();
 
-		draftLayout.setStatus(WorkflowConstants.STATUS_DRAFT);
-
-		draftLayout = _layoutLocalService.updateLayout(draftLayout);
-
-		MockActionRequest mockActionRequest =
-			_getMockLiferayPortletActionRequest(
-				draftLayout, TestPropsValues.getUser());
-
-		mockActionRequest.setAttribute(
-			WebKeys.PORTLET_ID,
-			ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET);
-		mockActionRequest.setParameter(
-			"groupId", String.valueOf(_group.getGroupId()));
-		mockActionRequest.setParameter("name", RandomTestUtil.randomString());
-		mockActionRequest.setParameter(
-			"plid", String.valueOf(draftLayout.getPlid()));
-
 		_addSegmentsExperienceMVCActionCommand.processAction(
-			mockActionRequest, new MockLiferayPortletActionResponse());
+			_getMockLiferayPortletActionRequest(
+				draftLayout, TestPropsValues.getUser()),
+			new MockLiferayPortletActionResponse());
 
+		Assert.assertEquals(
+			1,
+			_segmentsExperienceLocalService.getSegmentsExperiencesCount(
+				_group.getGroupId(), layout.getPlid()));
 		Assert.assertEquals(
 			2,
 			_segmentsExperienceLocalService.getSegmentsExperiencesCount(
-				_group.getGroupId(), layout.getPlid()));
+				_group.getGroupId(), draftLayout.getPlid()));
+
+		draftLayout = layout.fetchDraftLayout();
+
+		draftLayout.setStatus(WorkflowConstants.STATUS_DRAFT);
+
+		draftLayout = _layoutLocalService.updateLayout(draftLayout);
 
 		_discardDraftLayoutMVCActionCommand.processAction(
 			_getMockLiferayPortletActionRequest(
@@ -127,6 +122,10 @@ public class DiscardDraftLayoutMVCActionCommandTest {
 			1,
 			_segmentsExperienceLocalService.getSegmentsExperiencesCount(
 				_group.getGroupId(), layout.getPlid()));
+		Assert.assertEquals(
+			1,
+			_segmentsExperienceLocalService.getSegmentsExperiencesCount(
+				_group.getGroupId(), draftLayout.getPlid()));
 	}
 
 	@Test
@@ -167,25 +166,13 @@ public class DiscardDraftLayoutMVCActionCommandTest {
 
 		draftLayout = _layoutLocalService.updateLayout(draftLayout);
 
-		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
-			_getMockLiferayPortletActionRequest(
-				draftLayout, TestPropsValues.getUser());
-
-		mockLiferayPortletActionRequest.setAttribute(
-			WebKeys.PORTLET_ID,
-			ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET);
-		mockLiferayPortletActionRequest.setParameter(
-			"groupId", String.valueOf(_group.getGroupId()));
-		mockLiferayPortletActionRequest.setParameter(
-			"name", RandomTestUtil.randomString());
-		mockLiferayPortletActionRequest.setParameter(
-			"plid", String.valueOf(draftLayout.getPlid()));
-
 		MockLiferayPortletActionResponse mockLiferayPortletActionResponse =
 			new MockLiferayPortletActionResponse();
 
 		_addSegmentsExperienceMVCActionCommand.processAction(
-			mockLiferayPortletActionRequest, mockLiferayPortletActionResponse);
+			_getMockLiferayPortletActionRequest(
+				draftLayout, TestPropsValues.getUser()),
+			mockLiferayPortletActionResponse);
 
 		ContentLayoutTestUtil.publishLayout(draftLayout, layout);
 
@@ -246,21 +233,21 @@ public class DiscardDraftLayoutMVCActionCommandTest {
 		MockLiferayPortletActionRequest mockLiferayPortletActionRequest =
 			new MockLiferayPortletActionRequest();
 
+		mockLiferayPortletActionRequest.setAttribute(
+			WebKeys.PORTLET_ID,
+			ContentPageEditorPortletKeys.CONTENT_PAGE_EDITOR_PORTLET);
+
 		ThemeDisplay themeDisplay = new ThemeDisplay();
 
 		themeDisplay.setCompany(
 			_companyLocalService.fetchCompany(TestPropsValues.getCompanyId()));
-
-		Layout controlPanelLayout = _layoutLocalService.getLayout(
-			_portal.getControlPanelPlid(TestPropsValues.getCompanyId()));
-
-		themeDisplay.setLayout(controlPanelLayout);
-		themeDisplay.setLayoutSet(controlPanelLayout.getLayoutSet());
+		themeDisplay.setLayout(layout);
+		themeDisplay.setLayoutSet(layout.getLayoutSet());
 		themeDisplay.setLayoutTypePortlet(
-			(LayoutTypePortlet)controlPanelLayout.getLayoutType());
-
+			(LayoutTypePortlet)layout.getLayoutType());
 		themeDisplay.setPermissionChecker(
 			PermissionCheckerFactoryUtil.create(user));
+		themeDisplay.setPlid(layout.getPlid());
 		themeDisplay.setScopeGroupId(_group.getGroupId());
 		themeDisplay.setSiteGroupId(_group.getGroupId());
 		themeDisplay.setUser(user);
@@ -268,6 +255,8 @@ public class DiscardDraftLayoutMVCActionCommandTest {
 		mockLiferayPortletActionRequest.setAttribute(
 			WebKeys.THEME_DISPLAY, themeDisplay);
 
+		mockLiferayPortletActionRequest.setParameter(
+			"name", RandomTestUtil.randomString());
 		mockLiferayPortletActionRequest.setParameter(
 			"selPlid", String.valueOf(layout.getPlid()));
 

@@ -517,6 +517,32 @@ public class PlacedOrderSerDes {
 			sb.append("\"");
 		}
 
+		if (placedOrder.getRequestedDeliveryDate() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"requestedDeliveryDate\": ");
+
+			sb.append("\"");
+
+			sb.append(
+				liferayToJSONDateFormat.format(
+					placedOrder.getRequestedDeliveryDate()));
+
+			sb.append("\"");
+		}
+
+		if (placedOrder.getShipments() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"shipments\": ");
+
+			sb.append(String.valueOf(placedOrder.getShipments()));
+		}
+
 		if (placedOrder.getShippingMethod() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -926,6 +952,23 @@ public class PlacedOrderSerDes {
 				String.valueOf(placedOrder.getPurchaseOrderNumber()));
 		}
 
+		if (placedOrder.getRequestedDeliveryDate() == null) {
+			map.put("requestedDeliveryDate", null);
+		}
+		else {
+			map.put(
+				"requestedDeliveryDate",
+				liferayToJSONDateFormat.format(
+					placedOrder.getRequestedDeliveryDate()));
+		}
+
+		if (placedOrder.getShipments() == null) {
+			map.put("shipments", null);
+		}
+		else {
+			map.put("shipments", String.valueOf(placedOrder.getShipments()));
+		}
+
 		if (placedOrder.getShippingMethod() == null) {
 			map.put("shippingMethod", null);
 		}
@@ -1132,6 +1175,14 @@ public class PlacedOrderSerDes {
 			else if (Objects.equals(
 						jsonParserFieldName, "purchaseOrderNumber")) {
 
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "requestedDeliveryDate")) {
+
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "shipments")) {
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "shippingMethod")) {
@@ -1423,6 +1474,20 @@ public class PlacedOrderSerDes {
 						(String)jsonParserFieldValue);
 				}
 			}
+			else if (Objects.equals(
+						jsonParserFieldName, "requestedDeliveryDate")) {
+
+				if (jsonParserFieldValue != null) {
+					placedOrder.setRequestedDeliveryDate(
+						toDate((String)jsonParserFieldValue));
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "shipments")) {
+				if (jsonParserFieldValue != null) {
+					placedOrder.setShipments(
+						ShipmentSerDes.toDTO((String)jsonParserFieldValue));
+				}
+			}
 			else if (Objects.equals(jsonParserFieldName, "shippingMethod")) {
 				if (jsonParserFieldValue != null) {
 					placedOrder.setShippingMethod((String)jsonParserFieldValue);
@@ -1522,6 +1587,10 @@ public class PlacedOrderSerDes {
 	}
 
 	private static String _toJSON(Object value) {
+		if (value == null) {
+			return "null";
+		}
+
 		if (value instanceof Map) {
 			return _toJSON((Map)value);
 		}

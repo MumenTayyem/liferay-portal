@@ -11,3 +11,4 @@ export * from './hooks/useMarketplaceConfiguration';
 export * from './MarketplaceContext';
 export * from './types';
 export * from './views';
+export * from './MarketplacePurchase';

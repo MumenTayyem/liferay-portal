@@ -5,7 +5,7 @@
 
 import ClayButton, {ClayButtonWithIcon} from '@clayui/button';
 import ClayForm from '@clayui/form';
-import {useLiferayState} from '@liferay/frontend-js-state-web';
+import {useLiferayState} from '@liferay/frontend-js-state-web/react';
 import classnames from 'classnames';
 import {fetch, sub} from 'frontend-js-web';
 import React, {
@@ -139,6 +139,7 @@ function EditItem() {
 		({
 			accountId,
 			channelId,
+			currencyCode,
 			options,
 			productId,
 			quantity,
@@ -149,6 +150,7 @@ function EditItem() {
 					channelId,
 					productId,
 					accountId,
+					currencyCode,
 					quantity,
 					unitOfMeasureKey,
 					options
@@ -366,6 +368,13 @@ function EditItem() {
 											postChannelProductSkuBySkuOption({
 												accountId: cartState.accountId,
 												channelId: channel.id,
+												currencyCode:
+													Liferay.CommerceContext
+														? Liferay
+																.CommerceContext
+																.currency
+																.currencyCode
+														: '',
 												options:
 													cpInstance?.skuOptions ||
 													[],
@@ -480,6 +489,9 @@ const Options = ({
 		}
 		else if (productOption.fieldType === FIELD_TYPE.date) {
 			Component = ProductOptionDate;
+		}
+		else if (productOption.fieldType === FIELD_TYPE.document_library) {
+			return;
 		}
 		else if (productOption.fieldType === FIELD_TYPE.numeric) {
 			Component = ProductOptionNumeric;

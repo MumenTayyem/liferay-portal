@@ -4,7 +4,8 @@
  */
 
 import {API, stringUtils} from '@liferay/object-js-components-web';
-import {openToast, sub} from 'frontend-js-web';
+import {openToast} from 'frontend-js-components-web';
+import {sub} from 'frontend-js-web';
 import React, {useEffect, useState} from 'react';
 import {useStore} from 'react-flow-renderer';
 
@@ -22,6 +23,11 @@ import {TYPES} from '../ModelBuilderContext/typesEnum';
 import {nonRelationshipObjectFieldsInfo} from '../types';
 
 import './RightSidebarObjectDefinitionDetails.scss';
+import {
+	ObjectDefinitionInfo,
+	getObjectDefinitionInfo,
+} from '../../ViewObjectDefinitions/objectDefinitionUtil';
+import WorkflowContainer from '../../WorkflowContainer';
 
 interface RightSidebarObjectDefinitionDetailsProps {
 	companies: Scope[];
@@ -59,8 +65,16 @@ export function RightSidebarObjectDefinitionDetails({
 		setNonRelationshipObjectFieldsInfo,
 	] = useState<nonRelationshipObjectFieldsInfo[]>();
 
-	const [{selectedObjectDefinitionNode, selectedObjectFolder}, dispatch] =
-		useObjectFolderContext();
+	const [workflowInfo, setWorkflowInfo] = useState<ObjectDefinitionInfo>({
+		isWorkflowSupported: false,
+		tableName: '',
+		workflowDefinitionTitle: '',
+	});
+
+	const [
+		{baseResourceURL, selectedObjectDefinitionNode, selectedObjectFolder},
+		dispatch,
+	] = useObjectFolderContext();
 
 	const store = useStore();
 
@@ -103,10 +117,17 @@ export function RightSidebarObjectDefinitionDetails({
 							name: objectField.name,
 						})) as nonRelationshipObjectFieldsInfo[];
 
+				const objectDefinitionInfo = await getObjectDefinitionInfo({
+					baseResourceURL,
+					objectDefinitionId: selectedObjectDefinitionNode.data
+						?.id as number,
+				});
+
 				setNonRelationshipObjectFieldsInfo(
 					newNonRelationshipObjectFieldsInfo
 				);
 				setValues(selectedObjectDefinition);
+				setWorkflowInfo(objectDefinitionInfo);
 			}
 		};
 
@@ -171,12 +192,19 @@ export function RightSidebarObjectDefinitionDetails({
 
 	const objectDefinitionNodeDetailsTitle = sub(
 		Liferay.Language.get('x-details'),
-		stringUtils.getLocalizableLabel(
-			values.defaultLanguageId as Liferay.Language.Locale,
-			values?.label,
-			values?.name
-		)
+		stringUtils.getLocalizableLabel({
+			fallbackLabel: values?.name,
+			fallbackLanguageId:
+				values.defaultLanguageId as Liferay.Language.Locale,
+			labels: values?.label,
+		})
 	);
+
+	const showWorkflowSection =
+		Liferay.FeatureFlags['LPD-34594'] &&
+		workflowInfo.isWorkflowSupported &&
+		values.scope === 'company' &&
+		values.status?.label === 'approved';
 
 	return (
 		<>
@@ -242,6 +270,19 @@ export function RightSidebarObjectDefinitionDetails({
 					values={values as ObjectDefinition}
 				/>
 			</div>
+			{showWorkflowSection && (
+				<div className="lfr-objects__model-builder-right-sidebar-object-definition-node-content">
+					<WorkflowContainer
+						baseResourceURL={baseResourceURL}
+						className="lfr-objects__model-builder-right-sidebar-section"
+						isRootDescendantNode={isRootDescendantNode}
+						objectDefinitionId={
+							selectedObjectDefinitionNode?.data?.id as number
+						}
+						workflowLabel={workflowInfo.workflowDefinitionTitle}
+					/>
+				</div>
+			)}
 			{values?.modifiable && (
 				<div className="lfr-objects__model-builder-right-sidebar-object-definition-node-content">
 					<AccountRestrictionContainer

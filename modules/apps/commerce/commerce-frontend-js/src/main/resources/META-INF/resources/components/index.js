@@ -15,6 +15,7 @@ export {default as AddToWishList} from './add_to_wish_list/entry';
 export {default as AutocompleteComponent} from './autocomplete/Autocomplete';
 export {default as Autocomplete} from './autocomplete/entry';
 export {default as compareCheckbox} from './compare_checkbox/entry';
+export {default as CurrencySelector} from './currency_selector/CurrencySelector';
 export {default as DropdownMenuComponent} from './dropdown/Dropdown';
 export {default as DropdownMenu} from './dropdown/entry';
 export {default as GalleryComponent} from './gallery/Gallery';
@@ -38,6 +39,7 @@ export {default as ProductOptionNumeric} from './product_options/ProductOptionNu
 export {default as ProductOptionRadio} from './product_options/ProductOptionRadio';
 export {default as ProductOptionSelect} from './product_options/ProductOptionSelect';
 export {default as ProductOptionText} from './product_options/ProductOptionText';
+export {default as ProductOptionUpload} from './product_options/ProductOptionUpload';
 export {default as QuantitySelectorComponent} from './quantity_selector/QuantitySelector';
 export {default as QuantitySelector} from './quantity_selector/entry';
 export {default as RequestQuote} from './request_quote/entry';

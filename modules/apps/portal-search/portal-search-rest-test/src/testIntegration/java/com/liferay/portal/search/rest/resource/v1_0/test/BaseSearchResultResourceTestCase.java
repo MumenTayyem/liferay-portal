@@ -26,7 +26,7 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -47,7 +47,7 @@ import com.liferay.portal.vulcan.resource.EntityModelResource;
 
 import java.lang.reflect.Method;
 
-import java.text.DateFormat;
+import java.text.Format;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,7 +86,7 @@ public abstract class BaseSearchResultResourceTestCase {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
-		_dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+		_format = FastDateFormatFactoryUtil.getSimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ss'Z'");
 	}
 
@@ -100,12 +100,12 @@ public abstract class BaseSearchResultResourceTestCase {
 
 		_searchResultResource.setContextCompany(testCompany);
 
-		com.liferay.portal.kernel.model.User testCompanyAdminUser =
-			UserTestUtil.getAdminUser(testCompany.getCompanyId());
+		_testCompanyAdminUser = UserTestUtil.getAdminUser(
+			testCompany.getCompanyId());
 
 		searchResultResource = SearchResultResource.builder(
 		).authentication(
-			testCompanyAdminUser.getEmailAddress(),
+			_testCompanyAdminUser.getEmailAddress(),
 			PropsValues.DEFAULT_ADMIN_PASSWORD
 		).endpoint(
 			testCompany.getVirtualHostname(), 8080, "http"
@@ -171,6 +171,7 @@ public abstract class BaseSearchResultResourceTestCase {
 		SearchResult searchResult = randomSearchResult();
 
 		searchResult.setDescription(regex);
+		searchResult.setEntryClassName(regex);
 		searchResult.setItemURL(regex);
 		searchResult.setTitle(regex);
 
@@ -181,6 +182,7 @@ public abstract class BaseSearchResultResourceTestCase {
 		searchResult = SearchResultSerDes.toDTO(json);
 
 		Assert.assertEquals(regex, searchResult.getDescription());
+		Assert.assertEquals(regex, searchResult.getEntryClassName());
 		Assert.assertEquals(regex, searchResult.getItemURL());
 		Assert.assertEquals(regex, searchResult.getTitle());
 	}
@@ -295,12 +297,12 @@ public abstract class BaseSearchResultResourceTestCase {
 
 	@Test
 	public void testGetSearchPageWithPagination() throws Exception {
-		Page<SearchResult> searchResultPage =
+		Page<SearchResult> searchResultsPage =
 			searchResultResource.getSearchPage(
 				null, null, null, null, null, null, null, null);
 
 		int totalCount = GetterUtil.getInteger(
-			searchResultPage.getTotalCount());
+			searchResultsPage.getTotalCount());
 
 		SearchResult searchResult1 = testGetSearchPage_addSearchResult(
 			randomSearchResult());
@@ -613,6 +615,14 @@ public abstract class BaseSearchResultResourceTestCase {
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
+			if (Objects.equals("actions", additionalAssertFieldName)) {
+				if (searchResult.getActions() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("description", additionalAssertFieldName)) {
 				if (searchResult.getDescription() == null) {
 					valid = false;
@@ -623,6 +633,14 @@ public abstract class BaseSearchResultResourceTestCase {
 
 			if (Objects.equals("embedded", additionalAssertFieldName)) {
 				if (searchResult.getEmbedded() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("entryClassName", additionalAssertFieldName)) {
+				if (searchResult.getEntryClassName() == null) {
 					valid = false;
 				}
 
@@ -772,6 +790,17 @@ public abstract class BaseSearchResultResourceTestCase {
 		for (String additionalAssertFieldName :
 				getAdditionalAssertFieldNames()) {
 
+			if (Objects.equals("actions", additionalAssertFieldName)) {
+				if (!equals(
+						(Map)searchResult1.getActions(),
+						(Map)searchResult2.getActions())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("dateCreated", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						searchResult1.getDateCreated(),
@@ -809,6 +838,17 @@ public abstract class BaseSearchResultResourceTestCase {
 				if (!Objects.deepEquals(
 						searchResult1.getEmbedded(),
 						searchResult2.getEmbedded())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals("entryClassName", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						searchResult1.getEntryClassName(),
+						searchResult2.getEntryClassName())) {
 
 					return false;
 				}
@@ -954,6 +994,11 @@ public abstract class BaseSearchResultResourceTestCase {
 		sb.append(operator);
 		sb.append(" ");
 
+		if (entityFieldName.equals("actions")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		if (entityFieldName.equals("dateCreated")) {
 			if (operator.equals("between")) {
 				Date date = searchResult.getDateCreated();
@@ -963,13 +1008,11 @@ public abstract class BaseSearchResultResourceTestCase {
 				sb.append("(");
 				sb.append(entityFieldName);
 				sb.append(" gt ");
-				sb.append(
-					_dateFormat.format(date.getTime() - (2 * Time.SECOND)));
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
 				sb.append(" and ");
 				sb.append(entityFieldName);
 				sb.append(" lt ");
-				sb.append(
-					_dateFormat.format(date.getTime() + (2 * Time.SECOND)));
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
 				sb.append(")");
 			}
 			else {
@@ -979,7 +1022,7 @@ public abstract class BaseSearchResultResourceTestCase {
 				sb.append(operator);
 				sb.append(" ");
 
-				sb.append(_dateFormat.format(searchResult.getDateCreated()));
+				sb.append(_format.format(searchResult.getDateCreated()));
 			}
 
 			return sb.toString();
@@ -994,13 +1037,11 @@ public abstract class BaseSearchResultResourceTestCase {
 				sb.append("(");
 				sb.append(entityFieldName);
 				sb.append(" gt ");
-				sb.append(
-					_dateFormat.format(date.getTime() - (2 * Time.SECOND)));
+				sb.append(_format.format(date.getTime() - (2 * Time.SECOND)));
 				sb.append(" and ");
 				sb.append(entityFieldName);
 				sb.append(" lt ");
-				sb.append(
-					_dateFormat.format(date.getTime() + (2 * Time.SECOND)));
+				sb.append(_format.format(date.getTime() + (2 * Time.SECOND)));
 				sb.append(")");
 			}
 			else {
@@ -1010,7 +1051,7 @@ public abstract class BaseSearchResultResourceTestCase {
 				sb.append(operator);
 				sb.append(" ");
 
-				sb.append(_dateFormat.format(searchResult.getDateModified()));
+				sb.append(_format.format(searchResult.getDateModified()));
 			}
 
 			return sb.toString();
@@ -1065,6 +1106,52 @@ public abstract class BaseSearchResultResourceTestCase {
 		if (entityFieldName.equals("embedded")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("entryClassName")) {
+			Object object = searchResult.getEntryClassName();
+
+			String value = String.valueOf(object);
+
+			if (operator.equals("contains")) {
+				sb = new StringBundler();
+
+				sb.append("contains(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 2)) {
+					sb.append(value.substring(1, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else if (operator.equals("startswith")) {
+				sb = new StringBundler();
+
+				sb.append("startswith(");
+				sb.append(entityFieldName);
+				sb.append(",'");
+
+				if ((object != null) && (value.length() > 1)) {
+					sb.append(value.substring(0, value.length() - 1));
+				}
+				else {
+					sb.append(value);
+				}
+
+				sb.append("')");
+			}
+			else {
+				sb.append("'");
+				sb.append(value);
+				sb.append("'");
+			}
+
+			return sb.toString();
 		}
 
 		if (entityFieldName.equals("itemURL")) {
@@ -1212,6 +1299,8 @@ public abstract class BaseSearchResultResourceTestCase {
 				dateCreated = RandomTestUtil.nextDate();
 				dateModified = RandomTestUtil.nextDate();
 				description = StringUtil.toLowerCase(
+					RandomTestUtil.randomString());
+				entryClassName = StringUtil.toLowerCase(
 					RandomTestUtil.randomString());
 				itemURL = StringUtil.toLowerCase(RandomTestUtil.randomString());
 				title = StringUtil.toLowerCase(RandomTestUtil.randomString());
@@ -1430,7 +1519,9 @@ public abstract class BaseSearchResultResourceTestCase {
 	private static final com.liferay.portal.kernel.log.Log _log =
 		LogFactoryUtil.getLog(BaseSearchResultResourceTestCase.class);
 
-	private static DateFormat _dateFormat;
+	private static Format _format;
+
+	private com.liferay.portal.kernel.model.User _testCompanyAdminUser;
 
 	@Inject
 	private com.liferay.portal.search.rest.resource.v1_0.SearchResultResource

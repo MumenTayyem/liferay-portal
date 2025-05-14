@@ -956,10 +956,19 @@ public class FolderActionDisplayContext {
 			return false;
 		}
 
-		return DLFolderPermission.contains(
-			_dlRequestHelper.getPermissionChecker(),
-			_dlRequestHelper.getScopeGroupId(), _getFolderId(),
-			ActionKeys.UPDATE);
+		if (DLFolderPermission.contains(
+				_dlRequestHelper.getPermissionChecker(),
+				_dlRequestHelper.getScopeGroupId(), _getFolderId(),
+				ActionKeys.ADVANCED_UPDATE) ||
+			DLFolderPermission.contains(
+				_dlRequestHelper.getPermissionChecker(),
+				_dlRequestHelper.getScopeGroupId(), _getFolderId(),
+				ActionKeys.UPDATE)) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private boolean _isMoveFolderActionVisible() throws PortalException {

@@ -118,6 +118,7 @@ export default {
 	'components': 'Components',
 	'confirm-password': 'Confirm Password',
 	'copy-x': 'Copy - {0}',
+	'cpu-use-time': 'CPU Use Time',
 	'create': 'Create',
 	'create-cases-if-you-want-to-link-cases-to-this-build':
 		'Create cases if you want to link cases to this build.',
@@ -215,6 +216,7 @@ export default {
 	'job-scheduler': 'Job Scheduler',
 	'job-scheduler-x': 'Job Scheduler {0}',
 	'key': 'Key',
+	'last-execution-total-cpu-usage': 'Last Execution Total CPU Usage',
 	'last-name': 'Last Name',
 	'last-used-date': 'Last Used Date',
 	'latest-build': 'Latest Build',
@@ -293,6 +295,7 @@ export default {
 	'password-may-contain-letters-and-numbers':
 		'Password may contain letters and numbers.',
 	'passwords-do-not-match': 'Passwords do not match.',
+	'playwright-reports': 'Playwright Reports',
 	'please-select-at-least-two-subtasks-to-merge':
 		'Please select at least two subtasks to merge.',
 	'please-select-one-or-more-roles': 'Please, select one or more roles.',

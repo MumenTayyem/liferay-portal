@@ -5,7 +5,7 @@
 
 package com.liferay.change.tracking.internal.conflict;
 
-import com.liferay.change.tracking.configuration.CTConflictConfiguration;
+import com.liferay.change.tracking.configuration.CTSettingsConfiguration;
 import com.liferay.change.tracking.conflict.CTEntryConflictHelper;
 import com.liferay.change.tracking.conflict.ConflictInfo;
 import com.liferay.change.tracking.constants.CTConstants;
@@ -75,26 +75,26 @@ public class CTConflictChecker<T extends CTModel<T>> {
 		ClassNameLocalService classNameLocalService,
 		ServiceTrackerMap<ConstraintResolverKey, ConstraintResolver<?>>
 			constraintResolverServiceTrackerMap,
-		CTConflictConfiguration ctConflictConfiguration,
 		ServiceTrackerMap<String, CTDisplayRenderer<?>>
 			ctDisplayRendererServiceTrackerMap,
 		ServiceTrackerMap<String, CTEntryConflictHelper>
 			ctEntryConflictHelperServiceTrackerMap,
 		CTEntryLocalService ctEntryLocalService, CTService<T> ctService,
-		long modelClassNameId, long sourceCTCollectionId,
+		CTSettingsConfiguration ctSettingsConfiguration, long modelClassNameId,
+		long sourceCTCollectionId,
 		TableReferenceDefinitionManager tableReferenceDefinitionManager,
 		long targetCTCollectionId) {
 
 		_classNameLocalService = classNameLocalService;
 		_constraintResolverServiceTrackerMap =
 			constraintResolverServiceTrackerMap;
-		_ctConflictConfiguration = ctConflictConfiguration;
 		_ctDisplayRendererServiceTrackerMap =
 			ctDisplayRendererServiceTrackerMap;
 		_ctEntryConflictHelperServiceTrackerMap =
 			ctEntryConflictHelperServiceTrackerMap;
 		_ctEntryLocalService = ctEntryLocalService;
 		_ctService = ctService;
+		_ctSettingsConfiguration = ctSettingsConfiguration;
 		_modelClassNameId = modelClassNameId;
 		_sourceCTCollectionId = sourceCTCollectionId;
 		_tableReferenceDefinitionManager = tableReferenceDefinitionManager;
@@ -338,7 +338,7 @@ public class CTConflictChecker<T extends CTModel<T>> {
 		Connection connection, CTPersistence<T> ctPersistence,
 		List<ConflictInfo> conflictInfos, String primaryKeyName) {
 
-		if (_ctConflictConfiguration.
+		if (_ctSettingsConfiguration.
 				modificationDeletionConflictCheckEnabled()) {
 
 			try (PreparedStatement preparedStatement =
@@ -378,11 +378,16 @@ public class CTConflictChecker<T extends CTModel<T>> {
 					"ctEntry1 inner join CTCollection on ",
 					"ctEntry1.ctCollectionId = CTCollection.ctCollectionId ",
 					"and CTCollection.status = ",
-					WorkflowConstants.STATUS_DRAFT, " inner join CTEntry ",
-					"ctEntry2 on ctEntry1.modelClassNameId = ",
-					"ctEntry2.modelClassNameId and ctEntry1.modelClassPK = ",
-					"ctEntry2.modelClassPK where ctEntry1.modelClassNameId = ",
-					_modelClassNameId, " and ctEntry1.changeType = ",
+					WorkflowConstants.STATUS_DRAFT, " inner join (select ",
+					"CTCollection.ctCollectionId, modelClassNameId, ",
+					"modelClassPK, changeType from CTEntry inner join ",
+					"CTCollection on CTEntry.ctCollectionId = ",
+					"CTCollection.ctCollectionId and CTCollection.status = ",
+					WorkflowConstants.STATUS_DRAFT, ") ctEntry2 on ",
+					"ctEntry1.modelClassNameId = ctEntry2.modelClassNameId ",
+					"and ctEntry1.modelClassPK = ctEntry2.modelClassPK where ",
+					"ctEntry1.modelClassNameId = ", _modelClassNameId, " and ",
+					"ctEntry1.changeType = ",
 					CTConstants.CT_CHANGE_TYPE_DELETION,
 					" and ctEntry1.ctCollectionId = ", _sourceCTCollectionId,
 					" and ctEntry2.changeType = ",
@@ -1108,7 +1113,6 @@ public class CTConflictChecker<T extends CTModel<T>> {
 	private final ServiceTrackerMap
 		<ConstraintResolverKey, ConstraintResolver<?>>
 			_constraintResolverServiceTrackerMap;
-	private final CTConflictConfiguration _ctConflictConfiguration;
 	private final ServiceTrackerMap<String, CTDisplayRenderer<?>>
 		_ctDisplayRendererServiceTrackerMap;
 	private final Set<CTEntry> _ctEntries = new HashSet<>();
@@ -1116,6 +1120,7 @@ public class CTConflictChecker<T extends CTModel<T>> {
 		_ctEntryConflictHelperServiceTrackerMap;
 	private final CTEntryLocalService _ctEntryLocalService;
 	private final CTService<T> _ctService;
+	private final CTSettingsConfiguration _ctSettingsConfiguration;
 	private final long _modelClassNameId;
 	private Map<Serializable, CTEntry> _modificationCTEntries;
 	private final long _sourceCTCollectionId;

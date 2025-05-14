@@ -17,11 +17,10 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.tools.rest.builder.test.constant.v1_0.StringTestEntity;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLName;
 import com.liferay.portal.vulcan.util.ObjectMapperUtil;
-
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 
@@ -79,7 +78,7 @@ public abstract class TestEntity implements Serializable {
 		return ObjectMapperUtil.unsafeReadValue(TestEntity.class, json);
 	}
 
-	@Schema
+	@io.swagger.v3.oas.annotations.media.Schema
 	public Date getDateCreated() {
 		if (_dateCreatedSupplier != null) {
 			dateCreated = _dateCreatedSupplier.get();
@@ -120,7 +119,7 @@ public abstract class TestEntity implements Serializable {
 	@JsonIgnore
 	private Supplier<Date> _dateCreatedSupplier;
 
-	@Schema
+	@io.swagger.v3.oas.annotations.media.Schema
 	public Date getDateModified() {
 		if (_dateModifiedSupplier != null) {
 			dateModified = _dateModifiedSupplier.get();
@@ -161,7 +160,7 @@ public abstract class TestEntity implements Serializable {
 	@JsonIgnore
 	private Supplier<Date> _dateModifiedSupplier;
 
-	@Schema
+	@io.swagger.v3.oas.annotations.media.Schema
 	public String getDescription() {
 		if (_descriptionSupplier != null) {
 			description = _descriptionSupplier.get();
@@ -202,7 +201,7 @@ public abstract class TestEntity implements Serializable {
 	@JsonIgnore
 	private Supplier<String> _descriptionSupplier;
 
-	@Schema
+	@io.swagger.v3.oas.annotations.media.Schema
 	public Long getDocumentId() {
 		if (_documentIdSupplier != null) {
 			documentId = _documentIdSupplier.get();
@@ -243,7 +242,7 @@ public abstract class TestEntity implements Serializable {
 	@JsonIgnore
 	private Supplier<Long> _documentIdSupplier;
 
-	@Schema
+	@io.swagger.v3.oas.annotations.media.Schema
 	public Long getId() {
 		if (_idSupplier != null) {
 			id = _idSupplier.get();
@@ -282,7 +281,7 @@ public abstract class TestEntity implements Serializable {
 	@JsonIgnore
 	private Supplier<Long> _idSupplier;
 
-	@Schema
+	@io.swagger.v3.oas.annotations.media.Schema
 	public String getJsonProperty() {
 		if (_jsonPropertySupplier != null) {
 			jsonProperty = _jsonPropertySupplier.get();
@@ -324,7 +323,7 @@ public abstract class TestEntity implements Serializable {
 	@JsonIgnore
 	private Supplier<String> _jsonPropertySupplier;
 
-	@Schema
+	@io.swagger.v3.oas.annotations.media.Schema
 	public String getName() {
 		if (_nameSupplier != null) {
 			name = _nameSupplier.get();
@@ -363,7 +362,7 @@ public abstract class TestEntity implements Serializable {
 	@JsonIgnore
 	private Supplier<String> _nameSupplier;
 
-	@Schema
+	@io.swagger.v3.oas.annotations.media.Schema
 	@Valid
 	public NestedTestEntity getNestedTestEntity() {
 		if (_nestedTestEntitySupplier != null) {
@@ -406,7 +405,7 @@ public abstract class TestEntity implements Serializable {
 	@JsonIgnore
 	private Supplier<NestedTestEntity> _nestedTestEntitySupplier;
 
-	@Schema
+	@io.swagger.v3.oas.annotations.media.Schema
 	public String getSelf() {
 		if (_selfSupplier != null) {
 			self = _selfSupplier.get();
@@ -445,7 +444,93 @@ public abstract class TestEntity implements Serializable {
 	@JsonIgnore
 	private Supplier<String> _selfSupplier;
 
-	@Schema
+	@io.swagger.v3.oas.annotations.media.Schema
+	@Valid
+	public StringTestEntity[] getStringTestEntities() {
+		if (_stringTestEntitiesSupplier != null) {
+			stringTestEntities = _stringTestEntitiesSupplier.get();
+
+			_stringTestEntitiesSupplier = null;
+		}
+
+		return stringTestEntities;
+	}
+
+	public void setStringTestEntities(StringTestEntity[] stringTestEntities) {
+		this.stringTestEntities = stringTestEntities;
+
+		_stringTestEntitiesSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setStringTestEntities(
+		UnsafeSupplier<StringTestEntity[], Exception>
+			stringTestEntitiesUnsafeSupplier) {
+
+		_stringTestEntitiesSupplier = () -> {
+			try {
+				return stringTestEntitiesUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected StringTestEntity[] stringTestEntities;
+
+	@JsonIgnore
+	private Supplier<StringTestEntity[]> _stringTestEntitiesSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
+	@Valid
+	public StringTestEntity getStringTestEntity() {
+		if (_stringTestEntitySupplier != null) {
+			stringTestEntity = _stringTestEntitySupplier.get();
+
+			_stringTestEntitySupplier = null;
+		}
+
+		return stringTestEntity;
+	}
+
+	public void setStringTestEntity(StringTestEntity stringTestEntity) {
+		this.stringTestEntity = stringTestEntity;
+
+		_stringTestEntitySupplier = null;
+	}
+
+	@JsonIgnore
+	public void setStringTestEntity(
+		UnsafeSupplier<StringTestEntity, Exception>
+			stringTestEntityUnsafeSupplier) {
+
+		_stringTestEntitySupplier = () -> {
+			try {
+				return stringTestEntityUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected StringTestEntity stringTestEntity;
+
+	@JsonIgnore
+	private Supplier<StringTestEntity> _stringTestEntitySupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema
 	@Valid
 	public TestEntity getTestEntities() {
 		if (_testEntitiesSupplier != null) {
@@ -487,8 +572,8 @@ public abstract class TestEntity implements Serializable {
 	@JsonIgnore
 	private Supplier<TestEntity> _testEntitiesSupplier;
 
+	@io.swagger.v3.oas.annotations.media.Schema
 	@JsonGetter("type")
-	@Schema
 	@Valid
 	public Type getType() {
 		if (_typeSupplier != null) {
@@ -701,6 +786,40 @@ public abstract class TestEntity implements Serializable {
 			sb.append("\"");
 		}
 
+		StringTestEntity[] stringTestEntities = getStringTestEntities();
+
+		if (stringTestEntities != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"stringTestEntities\": ");
+
+			sb.append("[");
+
+			for (int i = 0; i < stringTestEntities.length; i++) {
+				sb.append(stringTestEntities[i]);
+
+				if ((i + 1) < stringTestEntities.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+		}
+
+		StringTestEntity stringTestEntity = getStringTestEntity();
+
+		if (stringTestEntity != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"stringTestEntity\": ");
+
+			sb.append(stringTestEntity);
+		}
+
 		TestEntity testEntities = getTestEntities();
 
 		if (testEntities != null) {
@@ -734,8 +853,8 @@ public abstract class TestEntity implements Serializable {
 		return sb.toString();
 	}
 
-	@Schema(
-		accessMode = Schema.AccessMode.READ_ONLY,
+	@io.swagger.v3.oas.annotations.media.Schema(
+		accessMode = io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY,
 		defaultValue = "com.liferay.portal.tools.rest.builder.test.dto.v1_0.TestEntity",
 		name = "x-class-name"
 	)

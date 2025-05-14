@@ -16,8 +16,6 @@ import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLName;
 import com.liferay.portal.vulcan.util.ObjectMapperUtil;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-
 import java.io.Serializable;
 
 import java.util.Iterator;
@@ -50,7 +48,7 @@ public class SEOSettings implements Serializable {
 		return ObjectMapperUtil.unsafeReadValue(SEOSettings.class, json);
 	}
 
-	@Schema(
+	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The localized canonical URL of the page, if it exists."
 	)
 	@Valid
@@ -99,7 +97,7 @@ public class SEOSettings implements Serializable {
 	@JsonIgnore
 	private Supplier<Map<String, String>> _customCanonicalURL_i18nSupplier;
 
-	@Schema(
+	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The localized descriptions of the page to be used as summary for search engines."
 	)
 	@Valid
@@ -146,7 +144,7 @@ public class SEOSettings implements Serializable {
 	@JsonIgnore
 	private Supplier<Map<String, String>> _description_i18nSupplier;
 
-	@Schema(
+	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The localized main titles of the page to be used by search engines."
 	)
 	@Valid
@@ -193,7 +191,7 @@ public class SEOSettings implements Serializable {
 	@JsonIgnore
 	private Supplier<Map<String, String>> _htmlTitle_i18nSupplier;
 
-	@Schema(
+	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "A localized tag telling search engines if and how they should crawl the page."
 	)
 	@Valid
@@ -240,7 +238,7 @@ public class SEOSettings implements Serializable {
 	@JsonIgnore
 	private Supplier<Map<String, String>> _robots_i18nSupplier;
 
-	@Schema(
+	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "A list of localized target keywords of the page to be used by search engines."
 	)
 	@Valid
@@ -287,32 +285,34 @@ public class SEOSettings implements Serializable {
 	@JsonIgnore
 	private Supplier<Map<String, String>> _seoKeywords_i18nSupplier;
 
-	@Schema(description = "Represents settings related with the site map.")
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "Represents settings related with the site map."
+	)
 	@Valid
-	public SiteMapSettings getSiteMapSettings() {
-		if (_siteMapSettingsSupplier != null) {
-			siteMapSettings = _siteMapSettingsSupplier.get();
+	public SitemapSettings getSitemapSettings() {
+		if (_sitemapSettingsSupplier != null) {
+			sitemapSettings = _sitemapSettingsSupplier.get();
 
-			_siteMapSettingsSupplier = null;
+			_sitemapSettingsSupplier = null;
 		}
 
-		return siteMapSettings;
+		return sitemapSettings;
 	}
 
-	public void setSiteMapSettings(SiteMapSettings siteMapSettings) {
-		this.siteMapSettings = siteMapSettings;
+	public void setSitemapSettings(SitemapSettings sitemapSettings) {
+		this.sitemapSettings = sitemapSettings;
 
-		_siteMapSettingsSupplier = null;
+		_sitemapSettingsSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setSiteMapSettings(
-		UnsafeSupplier<SiteMapSettings, Exception>
-			siteMapSettingsUnsafeSupplier) {
+	public void setSitemapSettings(
+		UnsafeSupplier<SitemapSettings, Exception>
+			sitemapSettingsUnsafeSupplier) {
 
-		_siteMapSettingsSupplier = () -> {
+		_sitemapSettingsSupplier = () -> {
 			try {
-				return siteMapSettingsUnsafeSupplier.get();
+				return sitemapSettingsUnsafeSupplier.get();
 			}
 			catch (RuntimeException runtimeException) {
 				throw runtimeException;
@@ -327,10 +327,10 @@ public class SEOSettings implements Serializable {
 		description = "Represents settings related with the site map."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected SiteMapSettings siteMapSettings;
+	protected SitemapSettings sitemapSettings;
 
 	@JsonIgnore
-	private Supplier<SiteMapSettings> _siteMapSettingsSupplier;
+	private Supplier<SitemapSettings> _sitemapSettingsSupplier;
 
 	@Override
 	public boolean equals(Object object) {
@@ -420,16 +420,16 @@ public class SEOSettings implements Serializable {
 			sb.append(_toJSON(seoKeywords_i18n));
 		}
 
-		SiteMapSettings siteMapSettings = getSiteMapSettings();
+		SitemapSettings sitemapSettings = getSitemapSettings();
 
-		if (siteMapSettings != null) {
+		if (sitemapSettings != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"siteMapSettings\": ");
+			sb.append("\"sitemapSettings\": ");
 
-			sb.append(String.valueOf(siteMapSettings));
+			sb.append(String.valueOf(sitemapSettings));
 		}
 
 		sb.append("}");
@@ -437,8 +437,8 @@ public class SEOSettings implements Serializable {
 		return sb.toString();
 	}
 
-	@Schema(
-		accessMode = Schema.AccessMode.READ_ONLY,
+	@io.swagger.v3.oas.annotations.media.Schema(
+		accessMode = io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY,
 		defaultValue = "com.liferay.headless.admin.site.dto.v1_0.SEOSettings",
 		name = "x-class-name"
 	)

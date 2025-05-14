@@ -3,8 +3,8 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {asahConfig} from '../../tests/osb-faro-web/asah.config';
-import {Nanites} from '../../tests/osb-faro-web/utils/nanites';
+import {asahConfig} from '../../tests/osb-faro-web/main/asah.config';
+import {Nanites} from '../../tests/osb-faro-web/main/utils/nanites';
 import {ApiHelpers} from '../ApiHelpers';
 
 type BlogDaily = {
@@ -42,13 +42,17 @@ type Event = {
 	applicationId: string;
 	assetId?: string;
 	assetTitle?: string;
+	browserName?: string;
 	canonicalUrl: string;
 	channelId: string;
 	dataSourceId?: number;
+	deviceType?: string;
 	eventDate: string;
 	eventId: string;
 	eventProperties?: string;
+	platformName?: string;
 	properties?: Property[];
+	referrer?: string;
 	title: string;
 	userId: string;
 };
@@ -257,7 +261,7 @@ export class JSONWebServicesOSBAsahApiHelper {
 	async closeSessions(): Promise<any> {
 		return this.apiHelpers.delete(
 			`${asahConfig.environment.backendUrl}${this.basePath}/sessions/close`,
-			this.getHeaders()
+			{headers: this.getHeaders()}
 		);
 	}
 }

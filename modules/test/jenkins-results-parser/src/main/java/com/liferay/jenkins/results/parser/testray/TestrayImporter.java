@@ -740,12 +740,14 @@ public class TestrayImporter {
 				Properties buildProperties =
 					JenkinsResultsParserUtil.getBuildProperties();
 
-				String testrayOverrideProjectName = buildProperties.getProperty(
-					"testray.override.project.name");
+				if (buildProperties.containsKey(
+						"testray.override.project.name")) {
 
-				if (testrayOverrideProjectName != null) {
+					testrayProjectName = buildProperties.getProperty(
+						"testray.override.project.name");
+
 					testrayProject = testrayServer.getTestrayProjectByName(
-						_replaceEnvVars(testrayOverrideProjectName, true));
+						_replaceEnvVars(testrayProjectName, true));
 				}
 			}
 			catch (IOException ioException) {
@@ -860,10 +862,12 @@ public class TestrayImporter {
 				Properties buildProperties =
 					JenkinsResultsParserUtil.getBuildProperties();
 
-				String testrayOverrideRoutineName = buildProperties.getProperty(
-					"testray.override.routine.name");
+				if (buildProperties.containsKey(
+						"testray.override.routine.name")) {
 
-				if (testrayOverrideRoutineName != null) {
+					testrayRoutineName = buildProperties.getProperty(
+						"testray.override.routine.name");
+
 					testrayRoutine = testrayProject.createTestrayRoutine(
 						_replaceEnvVars(testrayRoutineName, true));
 				}
@@ -1063,6 +1067,10 @@ public class TestrayImporter {
 
 						propertiesMap.put(
 							"testray.build.name", testrayBuild.getName());
+						propertiesMap.put(
+							"testray.build.time",
+							JenkinsResultsParserUtil.toDurationString(
+								testTopLevelBuild.getDuration()));
 
 						TestrayRoutine testrayRoutine =
 							testrayBuild.getTestrayRoutine();
@@ -1087,6 +1095,11 @@ public class TestrayImporter {
 
 						propertiesMap.put(
 							"testray.run.id", testrayRun.getRunIDString());
+
+						propertiesMap.put(
+							"testray.total.cpu.use.time",
+							JenkinsResultsParserUtil.toDurationString(
+								testTopLevelBuild.getTotalDuration()));
 
 						_addPropertyElements(
 							rootElement.addElement("properties"),
@@ -1358,6 +1371,16 @@ public class TestrayImporter {
 					workspaceGitRepository.addPropertyOption("docker");
 				}
 
+				String osbAsahStagingEnabled = System.getenv(
+					"OSB_ASAH_STAGING_ENABLED");
+
+				if ((osbAsahStagingEnabled != null) &&
+					osbAsahStagingEnabled.equals("true")) {
+
+					workspaceGitRepository.addPropertyOption(
+						"osb-asah-staging-enabled");
+				}
+
 				if (JenkinsResultsParserUtil.isWindows()) {
 					workspaceGitRepository.addPropertyOption("windows");
 				}
@@ -1623,7 +1646,7 @@ public class TestrayImporter {
 
 		Document document = DocumentHelper.createDocument();
 
-		Element element = document.addElement("code");
+		Element element = document.addElement("div");
 
 		Element titleElement = element.addElement("strong");
 

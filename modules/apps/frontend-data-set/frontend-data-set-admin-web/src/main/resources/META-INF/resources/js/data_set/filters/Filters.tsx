@@ -6,7 +6,8 @@
 import ClayBreadcrumb from '@clayui/breadcrumb';
 import ClayLayout from '@clayui/layout';
 import {IClientExtensionRenderer} from '@liferay/frontend-data-set-web';
-import {fetch, openModal, sub} from 'frontend-js-web';
+import {openModal} from 'frontend-js-components-web';
+import {fetch, sub} from 'frontend-js-web';
 import React, {useEffect, useState} from 'react';
 
 import {visit} from '../../components/AddDataSourceFieldsModalContent';
@@ -21,6 +22,7 @@ import {
 	EFieldFormat,
 	EFieldType,
 	EFilterType,
+	ESelectionFilterSourceType,
 	IDataSet,
 	IDateFilter,
 	IField,
@@ -48,7 +50,7 @@ const FILTER_TYPES: Record<EFilterType, IFilterTypeProps> = {
 	[EFilterType.CLIENT_EXTENSION]: {
 		Component: ClientExtensionFilterFormContent,
 		availableFieldsFilter: (item: IField) => !!item,
-		displayType: Liferay.Language.get('client-extension-filter'),
+		displayType: () => Liferay.Language.get('client-extension-filter'),
 		fdsViewRelationship:
 			OBJECT_RELATIONSHIP.DATA_SET_CLIENT_EXTENSION_FILTERS,
 		fdsViewRelationshipId:
@@ -61,7 +63,7 @@ const FILTER_TYPES: Record<EFilterType, IFilterTypeProps> = {
 		availableFieldsFilter: (item: IField) =>
 			item.format === EFieldFormat.DATE ||
 			item.format === EFieldFormat.DATE_TIME,
-		displayType: Liferay.Language.get('date-filter'),
+		displayType: () => Liferay.Language.get('date-filter'),
 		fdsViewRelationship: OBJECT_RELATIONSHIP.DATA_SET_DATE_FILTERS,
 		fdsViewRelationshipId: OBJECT_RELATIONSHIP.DATA_SET_DATE_FILTERS_ID,
 		label: Liferay.Language.get('date-range'),
@@ -72,7 +74,13 @@ const FILTER_TYPES: Record<EFilterType, IFilterTypeProps> = {
 		availableFieldsFilter: (item: IField) =>
 			(item.type === EFieldType.STRING && !item.format) ||
 			item.type === EFieldType.INTEGER,
-		displayType: Liferay.Language.get('dynamic-filter'),
+		displayType: (filter: IFilter | undefined) => {
+			if (filter?.sourceType === ESelectionFilterSourceType.ITEM_PROXY) {
+				return Liferay.Language.get('system-filter');
+			}
+
+			return Liferay.Language.get('selection-filter');
+		},
 		fdsViewRelationship: OBJECT_RELATIONSHIP.DATA_SET_SELECTION_FILTERS,
 		fdsViewRelationshipId:
 			OBJECT_RELATIONSHIP.DATA_SET_SELECTION_FILTERS_ID,
@@ -143,7 +151,7 @@ function FilterFormComponent({
 
 		openDefaultSuccessToast();
 
-		onSave({...responseJSON, displayType, filterType});
+		onSave({...responseJSON, displayType: displayType(filter), filterType});
 	};
 
 	return (
@@ -190,6 +198,8 @@ function Filters({
 	const [availableFields, setAvailableFields] = useState(fields);
 	const [fieldNames, setFieldNames] = useState<string[]>([]);
 	const [filters, setFilters] = useState<IFilter[]>([]);
+	const [toggleActiveDisabled, setToogleActiveDisabled] =
+		useState<boolean>(false);
 
 	useEffect(() => {
 		const getFilters = async () => {
@@ -209,16 +219,16 @@ function Filters({
 			let filtersOrdered: FilterCollection = [];
 
 			Object.keys(FILTER_TYPES).forEach((type) => {
+				const filterTypeProps: IFilterTypeProps =
+					FILTER_TYPES[type as EFilterType];
+
 				const filtersArray =
-					responseJSON[
-						FILTER_TYPES[type as EFilterType].fdsViewRelationship
-					];
+					responseJSON[filterTypeProps.fdsViewRelationship];
 
 				filtersArray.forEach((filter: any) => {
 					filtersOrdered.push({
 						...filter,
-						displayType:
-							FILTER_TYPES[type as EFilterType].displayType,
+						displayType: filterTypeProps.displayType(filter),
 						filterType: type as EFilterType,
 					});
 				});
@@ -362,19 +372,6 @@ function Filters({
 		}
 	};
 
-	const onEdit = ({item}: {item: IFilter}) => {
-		if (
-			item.filterType === EFilterType.CLIENT_EXTENSION &&
-			!filterClientExtensionRenderers.length
-		) {
-			noFilterClientExtensionsAvailableModal();
-		}
-		else {
-			setActiveMode(FILTER_MODE.EDITION);
-			setActiveFilter(item);
-		}
-	};
-
 	const onDelete = async ({item}: {item: IFilter}) => {
 		openModal({
 			bodyHTML: Liferay.Language.get(
@@ -419,6 +416,64 @@ function Filters({
 			status: 'danger',
 			title: Liferay.Language.get('delete-filter'),
 		});
+	};
+
+	const onEdit = ({item}: {item: IFilter}) => {
+		if (
+			item.filterType === EFilterType.CLIENT_EXTENSION &&
+			!filterClientExtensionRenderers.length
+		) {
+			noFilterClientExtensionsAvailableModal();
+		}
+		else {
+			setActiveMode(FILTER_MODE.EDITION);
+			setActiveFilter(item);
+		}
+	};
+
+	const updateActive = async (item: IFilter) => {
+		setToogleActiveDisabled(true);
+
+		const type: any =
+			item.filterType === 'DATE_RANGE'
+				? 'DATE_FILTERS'
+				: `${item.filterType}_FILTERS`;
+
+		const response = await fetch(
+			`${API_URL[type]}/by-external-reference-code/${item.externalReferenceCode}`,
+			{
+				body: JSON.stringify({active: !item.active}),
+				headers: DEFAULT_FETCH_HEADERS,
+				method: 'PATCH',
+			}
+		);
+
+		if (!response.ok) {
+			openDefaultFailureToast();
+
+			return;
+		}
+
+		const dataSetFilter: IFilter = await response.json();
+
+		if (dataSetFilter?.id) {
+			const updatedFilters = filters.map((filter) => {
+				if (filter.id === dataSetFilter.id) {
+					filter = {...filter, ...dataSetFilter};
+				}
+
+				return filter;
+			});
+
+			setFilters(updatedFilters);
+
+			openDefaultSuccessToast();
+		}
+		else {
+			openDefaultFailureToast();
+		}
+
+		setToogleActiveDisabled(false);
 	};
 
 	const getBreadcrumbItems = () => {
@@ -550,6 +605,8 @@ function Filters({
 						editFilter={onEdit}
 						filterTypes={FILTER_TYPES}
 						filters={filters}
+						toogleActiveDisabled={toggleActiveDisabled}
+						updateActive={updateActive}
 						updateFiltersOrder={updateFiltersOrder}
 					/>
 				</ClayLayout.ContainerFluid>

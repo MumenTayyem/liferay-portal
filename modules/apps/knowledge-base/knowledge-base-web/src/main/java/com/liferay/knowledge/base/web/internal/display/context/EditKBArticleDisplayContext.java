@@ -108,7 +108,9 @@ public class EditKBArticleDisplayContext {
 	}
 
 	public String getCancelURL() {
-		if (!FeatureFlagManagerUtil.isEnabled("LPD-11003")) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				_themeDisplay.getCompanyId(), "LPD-11003")) {
+
 			return getRedirect();
 		}
 
@@ -179,7 +181,7 @@ public class EditKBArticleDisplayContext {
 			return StringPool.BLANK;
 		}
 
-		return "class=\"container-fluid container-fluid-max-xl " +
+		return "class=\"container-fluid container-fluid-max-lg " +
 			"container-form-lg\"";
 	}
 

@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {FrameLocator, Locator, Page} from '@playwright/test';
+import {FrameLocator, Locator, Page, expect} from '@playwright/test';
 
 import {DataApiHelpers} from '../../helpers/ApiHelpers';
 import getRandomString from '../../utils/getRandomString';
@@ -71,7 +71,9 @@ export class EditAccountPage {
 			name: 'Addresses',
 		});
 		this.assignUserMessage = page.getByText('Assign a user to this person');
-		this.backButton = page.getByRole('link', {exact: true, name: 'Back'});
+		this.backButton = page
+			.getByRole('link', {exact: true, name: 'Back'})
+			.or(page.getByRole('link', {name: 'Return to Full Page'}));
 		this.categoryClearAllButton = page.getByLabel('Clear All');
 		this.categoryLabel = (name) =>
 			page.getByLabel('Public Categories').getByText(name);
@@ -210,6 +212,9 @@ export class EditAccountPage {
 
 		if (domains && domains.length) {
 			await this.addDomainLink.click();
+
+			await expect(this.frameDomainInput).toBeEnabled();
+
 			await this.frameDomainInput.fill(domains.join());
 			await this.frameSaveButton.click();
 		}

@@ -38,6 +38,13 @@ const Radio = ({
 	value: initialValue,
 	...otherProps
 }) => {
+	const accessibleProps = {
+		...((otherProps.errorMessage || otherProps.tip) && {
+			'aria-describedby': `${otherProps.id ?? name}_fieldFeedback`,
+		}),
+		'aria-required': otherProps.required,
+	};
+
 	const predefinedValueMemo = useMemo(() => {
 		if (typeof predefinedValue === 'string') {
 			return predefinedValue;
@@ -64,6 +71,7 @@ const Radio = ({
 			<div className="ddm__radio" onBlur={onBlur} onFocus={onFocus}>
 				<ClayRadioGroup
 					inline={inline}
+					name={name}
 					onChange={(value) => {
 						setCurrentValue(value);
 						onChange({target: {value}});
@@ -78,9 +86,9 @@ const Radio = ({
 					}}
 					value={currentValue}
 				>
-					{options.map((option, index) => (
+					{options.map((option) => (
 						<ClayRadio
-							aria-required={otherProps.required}
+							{...accessibleProps}
 							containerProps={{
 								'data-checked': currentValue === option.value,
 							}}
@@ -88,7 +96,6 @@ const Radio = ({
 							disabled={disabled}
 							key={option.value}
 							label={option.label}
-							name={`${name}_${index}`}
 							value={option.value}
 						/>
 					))}

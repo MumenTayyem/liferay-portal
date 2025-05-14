@@ -115,6 +115,7 @@ const LAYOUT_DATA_CHECK_ALLOWED_CHILDREN = {
 type Result = {
 	reason?:
 		| 'input-outside-form'
+		| 'disabled-part-of-collection'
 		| 'existing-stepper'
 		| 'noninstanceable-widget-inside-collection'
 		| 'stepper-outside-form'
@@ -139,6 +140,9 @@ export default function checkAllowedChild(
 ): Result {
 	if (isUnmappedCollection(parent)) {
 		return {reason: 'unmapped-collection', valid: false};
+	}
+	else if (parent.type === LAYOUT_DATA_ITEM_TYPES.collection) {
+		return {reason: 'disabled-part-of-collection', valid: false};
 	}
 
 	if (isUnmappedForm(parent)) {
@@ -203,7 +207,10 @@ export default function checkAllowedChild(
 		}
 	}
 
-	if (!formParent && hasInputChild(child, layoutData, fragmentEntryLinks)) {
+	if (
+		!formParent &&
+		hasInputChildOutsideForm(child, layoutData, fragmentEntryLinks)
+	) {
 		return {reason: 'input-outside-form', valid: false};
 	}
 
@@ -214,7 +221,7 @@ export default function checkAllowedChild(
 	return {valid: true};
 }
 
-function hasInputChild(
+function hasInputChildOutsideForm(
 	child: MovementItem,
 	layoutData: LayoutData,
 	fragmentEntryLinks: FragmentEntryLinkMap
@@ -228,7 +235,7 @@ function hasInputChild(
 
 	const childItem = layoutData.items[child.itemId];
 
-	if (!childItem) {
+	if (!childItem || childItem.type === LAYOUT_DATA_ITEM_TYPES.form) {
 		return false;
 	}
 
@@ -245,7 +252,7 @@ function hasInputChild(
 	return childItem.children?.some((childId) => {
 		const child = layoutData.items[childId];
 
-		return hasInputChild(
+		return hasInputChildOutsideForm(
 			child as MovementItem,
 			layoutData,
 			fragmentEntryLinks

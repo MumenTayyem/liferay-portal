@@ -21,6 +21,7 @@ import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.exception.NoSuchObjectDefinitionException;
 import com.liferay.object.info.field.converter.ObjectFieldInfoFieldConverter;
 import com.liferay.object.info.item.ObjectEntryInfoItemFields;
+import com.liferay.object.info.item.util.ObjectEntryInfoItemUtil;
 import com.liferay.object.model.ObjectAction;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
@@ -31,6 +32,7 @@ import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -80,7 +82,7 @@ public class ObjectEntryInfoItemFormProviderUtil {
 
 					unsafeConsumer.accept(
 						_getInfoFieldSet(
-							true, currentObjectDefinition.getLabelMap(),
+							true, false, currentObjectDefinition.getLabelMap(),
 							currentObjectDefinition.getName(),
 							ObjectField.class.getSimpleName(),
 							currentObjectDefinition,
@@ -235,13 +237,12 @@ public class ObjectEntryInfoItemFormProviderUtil {
 
 					unsafeConsumer.accept(
 						_getInfoFieldSet(
-							true, fieldSetLabelMap,
-							objectRelationship.getName(),
-							StringBundler.concat(
-								ObjectRelationship.class.getSimpleName(),
-								StringPool.POUND,
-								parentObjectDefinition.getName(),
-								StringPool.POUND, objectRelationship.getName()),
+							true,
+							FeatureFlagManagerUtil.isEnabled(
+								objectDefinition.getCompanyId(), "LPD-21926"),
+							fieldSetLabelMap, objectRelationship.getName(),
+							ObjectEntryInfoItemUtil.getInfoFieldNamespace(
+								parentObjectDefinition, objectRelationship),
 							parentObjectDefinition,
 							objectDefinitionLocalService,
 							objectFieldInfoFieldConverter,
@@ -305,8 +306,8 @@ public class ObjectEntryInfoItemFormProviderUtil {
 	}
 
 	private static InfoFieldSet _getInfoFieldSet(
-		boolean editable, Map<Locale, String> labelMap, String name,
-		String namespace, ObjectDefinition objectDefinition,
+		boolean editable, boolean friendlyURL, Map<Locale, String> labelMap,
+		String name, String namespace, ObjectDefinition objectDefinition,
 		ObjectDefinitionLocalService objectDefinitionLocalService,
 		ObjectFieldInfoFieldConverter objectFieldInfoFieldConverter,
 		ObjectFieldLocalService objectFieldLocalService,
@@ -345,6 +346,13 @@ public class ObjectEntryInfoItemFormProviderUtil {
 					unsafeConsumer.accept(
 						objectFieldInfoFieldConverter.getInfoField(
 							editable, namespace, objectField));
+				}
+
+				if (friendlyURL) {
+					unsafeConsumer.accept(
+						ObjectEntryInfoItemFields.getFriendlyURLInfoField(
+							objectDefinition.isEnableFriendlyURLCustomization(),
+							name, namespace));
 				}
 			}
 		).labelInfoLocalizedValue(

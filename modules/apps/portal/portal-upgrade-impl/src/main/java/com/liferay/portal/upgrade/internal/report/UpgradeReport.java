@@ -5,6 +5,7 @@
 
 package com.liferay.portal.upgrade.internal.report;
 
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.events.StartupHelperUtil;
@@ -149,7 +150,7 @@ public class UpgradeReport {
 	}
 
 	private List<MessagesPrinter> _getMessagesPrinters(
-		Map<String, Map<String, Integer>> map1) {
+		boolean includeOccurrences, Map<String, Map<String, Integer>> map1) {
 
 		List<MessagesPrinter> messagesPrinters = new ArrayList<>();
 
@@ -173,7 +174,8 @@ public class UpgradeReport {
 
 			for (Map.Entry<String, Integer> entry2 : map2.entrySet()) {
 				messagesPrinter.addMessagePrinter(
-					entry2.getKey(), entry2.getValue());
+					entry2.getKey(),
+					includeOccurrences ? entry2.getValue() : null);
 			}
 		}
 
@@ -492,8 +494,6 @@ public class UpgradeReport {
 					return null;
 				}
 
-				List<TablePrinter> tablePrinters = new ArrayList<>();
-
 				List<String> tableNames = new ArrayList<>();
 
 				tableNames.addAll(_initialTableCounts.keySet());
@@ -514,28 +514,29 @@ public class UpgradeReport {
 						return tableName1.compareTo(tableName2);
 					});
 
-				for (String tableName : tableNames) {
-					int finalTableCount = finalTableCounts.getOrDefault(
-						tableName, -1);
-					int initialTableCount = _initialTableCounts.getOrDefault(
-						tableName, -1);
+				return TransformUtil.transform(
+					tableNames,
+					tableName -> {
+						int finalTableCount = finalTableCounts.getOrDefault(
+							tableName, -1);
+						int initialTableCount =
+							_initialTableCounts.getOrDefault(tableName, -1);
 
-					if ((finalTableCount <= 0) && (initialTableCount <= 0)) {
-						continue;
-					}
+						if ((finalTableCount <= 0) &&
+							(initialTableCount <= 0)) {
 
-					tablePrinters.add(
-						new TablePrinter(
+							return null;
+						}
+
+						return new TablePrinter(
 							(finalTableCount >= 0) ?
 								String.valueOf(finalTableCount) :
 									StringPool.DASH,
 							(initialTableCount >= 0) ?
 								String.valueOf(initialTableCount) :
 									StringPool.DASH,
-							tableName));
-				}
-
-				return tablePrinters;
+							tableName);
+					});
 			}
 		).build();
 	}
@@ -548,7 +549,12 @@ public class UpgradeReport {
 		).put(
 			"execution.time", _executionTimeString
 		).put(
-			"errors", _getMessagesPrinters(upgradeRecorder.getErrorMessages())
+			"data.clean.up",
+			_getMessagesPrinters(
+				false, upgradeRecorder.getDataCleanUpMessages())
+		).put(
+			"errors",
+			_getMessagesPrinters(true, upgradeRecorder.getErrorMessages())
 		).put(
 			"failed.sqls", UpgradeSQLRecorder.getFailedSQLs()
 		).put(
@@ -567,33 +573,25 @@ public class UpgradeReport {
 				Map<String, Long> upgradeProcessDurations = new HashMap<>();
 
 				for (String message : messages) {
-					int startIndex = message.indexOf("com.");
+					String[] parts = StringUtil.split(
+						message, StringPool.SPACE);
 
-					int endIndex = message.indexOf(
-						StringPool.SPACE, startIndex);
+					String upgradeProcessClassName = parts[3];
 
-					String className = message.substring(startIndex, endIndex);
-
-					if (className.equals(
+					if (upgradeProcessClassName.equals(
 							PortalUpgradeProcess.class.getName())) {
 
 						continue;
 					}
 
-					startIndex = message.indexOf(
-						StringPool.SPACE, endIndex + 1);
-
-					endIndex = message.indexOf(
-						StringPool.SPACE, startIndex + 1);
-
-					long duration = GetterUtil.getLong(
-						message.substring(startIndex, endIndex));
+					long duration = GetterUtil.getLong(parts[parts.length - 2]);
 
 					if (duration >=
 							PropsValues.
 								UPGRADE_REPORT_UPGRADE_PROCESS_THRESHOLD) {
 
-						upgradeProcessDurations.put(className, duration);
+						upgradeProcessDurations.put(
+							upgradeProcessClassName, duration);
 					}
 				}
 
@@ -637,7 +635,7 @@ public class UpgradeReport {
 			}
 		).put(
 			"warnings",
-			_getMessagesPrinters(upgradeRecorder.getWarningMessages())
+			_getMessagesPrinters(true, upgradeRecorder.getWarningMessages())
 		).build();
 	}
 
@@ -1026,7 +1024,7 @@ public class UpgradeReport {
 			_className = className;
 		}
 
-		public void addMessagePrinter(String message, int occurrences) {
+		public void addMessagePrinter(String message, Integer occurrences) {
 			_messagePrinters.add(new MessagePrinter(message, occurrences));
 		}
 
@@ -1057,24 +1055,28 @@ public class UpgradeReport {
 
 		private class MessagePrinter {
 
-			public MessagePrinter(String message, int occurrences) {
+			public MessagePrinter(String message, Integer occurrences) {
 				_message = message;
 				_occurrences = occurrences;
 			}
 
 			@Override
 			public String toString() {
-				if (_logContext) {
-					return _occurrences + StringPool.COLON + _message;
+				if (_occurrences != null) {
+					if (_logContext) {
+						return _occurrences + StringPool.COLON + _message;
+					}
+
+					return StringBundler.concat(
+						_occurrences, " occurrences of the following event: ",
+						_message);
 				}
 
-				return StringBundler.concat(
-					_occurrences, " occurrences of the following event: ",
-					_message);
+				return _message;
 			}
 
 			private final String _message;
-			private final int _occurrences;
+			private final Integer _occurrences;
 
 		}
 

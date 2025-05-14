@@ -126,6 +126,37 @@ public class FreeMarkerTool {
 		return false;
 	}
 
+	public boolean generateCRUD(
+		ConfigYAML configYAML, List<JavaMethodSignature> javaMethodSignatures,
+		String schemaName) {
+
+		if (!configYAML.isGenerateCRUD() ||
+			!isVersionCompatible(configYAML, 7)) {
+
+			return false;
+		}
+
+		JavaMethodSignature javaMethodSignature = getJavaMethodSignature(
+			javaMethodSignatures, "get" + schemaName);
+
+		if (javaMethodSignature == null) {
+			return false;
+		}
+
+		for (JavaMethodParameter javaMethodParameter :
+				javaMethodSignature.getPathJavaMethodParameters()) {
+
+			if (isIdParameter(javaMethodParameter, schemaName) &&
+				StringUtil.equals(
+					javaMethodParameter.getParameterType(), "java.lang.Long")) {
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	public String getActionName(String propertyName) {
 		if (StringUtil.equals(propertyName, "delete")) {
 			return ActionKeys.DELETE;
@@ -712,10 +743,28 @@ public class FreeMarkerTool {
 		List<JavaMethodSignature> javaMethodSignatures, String parameterName,
 		String schemaName) {
 
+		String parentSchemaName = parameterName;
+
+		if (parentSchemaName.startsWith("parent")) {
+			parentSchemaName = parentSchemaName.substring(6);
+		}
+
+		if (parentSchemaName.endsWith("ExternalReferenceCode")) {
+			parentSchemaName = parentSchemaName.substring(
+				0, parentSchemaName.length() - 21);
+		}
+
+		if (parentSchemaName.endsWith("Id")) {
+			parentSchemaName = parentSchemaName.substring(
+				0, parentSchemaName.length() - 2);
+		}
+
 		for (JavaMethodSignature javaMethodSignature : javaMethodSignatures) {
 			Operation operation = javaMethodSignature.getOperation();
 
-			if (!Objects.equals(getHTTPMethod(operation), "post")) {
+			if (!Objects.equals(getHTTPMethod(operation), "post") ||
+				!hasParameter(javaMethodSignature, parameterName)) {
+
 				continue;
 			}
 
@@ -723,16 +772,7 @@ public class FreeMarkerTool {
 
 			sb.append(getHTTPMethod(operation));
 
-			if (parameterName.startsWith("parent")) {
-				parameterName = parameterName.substring(6);
-			}
-
-			if (parameterName.endsWith("Id")) {
-				parameterName = parameterName.substring(
-					0, parameterName.length() - 2);
-			}
-
-			sb.append(StringUtil.upperCaseFirstLetter(parameterName));
+			sb.append(StringUtil.upperCaseFirstLetter(parentSchemaName));
 
 			sb.append(StringUtil.upperCaseFirstLetter(schemaName));
 
@@ -1105,6 +1145,20 @@ public class FreeMarkerTool {
 		}
 
 		return true;
+	}
+
+	public boolean isIdParameter(
+		JavaMethodParameter javaMethodParameter, String schemaName) {
+
+		if (StringUtil.equals(javaMethodParameter.getParameterName(), "id") ||
+			StringUtil.equals(
+				javaMethodParameter.getParameterName(),
+				TextFormatter.format(schemaName, TextFormatter.I) + "Id")) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	public boolean isParameter(

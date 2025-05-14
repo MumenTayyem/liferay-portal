@@ -5,6 +5,7 @@
 
 package com.liferay.jenkins.results.parser.scancode;
 
+import com.liferay.jenkins.results.parser.CloudBucketUtil;
 import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
 
 import java.io.IOException;
@@ -39,31 +40,35 @@ public class MapDevelopToDeployScanCodePipeline extends BaseScanCodePipeline {
 	}
 
 	public JSONObject getJSONObject() throws IOException {
-		JSONObject jsonObject = new JSONObject();
+		String tomcatURL = getTomcatURL();
 
-		List<String> inputURLS = new ArrayList<>();
+		if (JenkinsResultsParserUtil.isNullOrEmpty(tomcatURL)) {
+			throw new NullPointerException("Tomcat URL is null");
+		}
 
-		String tomcatURL = JenkinsResultsParserUtil.getBuildParameter(
-			_buildURL, "TEST_PORTAL_RELEASE_TOMCAT_URL");
+		List<String> inputURLs = new ArrayList<>();
 
-		inputURLS.add(tomcatURL + "#to");
-
-		inputURLS.add(getReleaseTarballLink());
-		inputURLS.add(
+		inputURLs.add(tomcatURL + "#to");
+		inputURLs.add(getReleaseTarballLink());
+		inputURLs.add(
 			JenkinsResultsParserUtil.getBuildProperty("scancode.tar.gz.url"));
-		inputURLS.add(
+		inputURLs.add(
 			JenkinsResultsParserUtil.getBuildProperty(
 				"scancode.config.file.url"));
+		inputURLs.add(
+			JenkinsResultsParserUtil.getBuildProperty(
+				"scancode.policies.file.url"));
 
 		String portalReleaseVersion =
 			JenkinsResultsParserUtil.getBuildParameter(
 				_buildURL, "TEST_PORTAL_RELEASE_VERSION");
 		SimpleDateFormat simpleDateFormat = getSimpleDateFormat();
 
-		jsonObject.put(
+		return new JSONObject(
+		).put(
 			"execute_now", true
 		).put(
-			"input_urls", inputURLS
+			"input_urls", inputURLs
 		).put(
 			"labels", getLabels(new String[] {portalReleaseVersion})
 		).put(
@@ -74,8 +79,6 @@ public class MapDevelopToDeployScanCodePipeline extends BaseScanCodePipeline {
 		).put(
 			"pipeline", "map_deploy_to_develop:Java,Javascript"
 		);
-
-		return jsonObject;
 	}
 
 	public String getReleaseTarballLink() {
@@ -95,16 +98,44 @@ public class MapDevelopToDeployScanCodePipeline extends BaseScanCodePipeline {
 		return sb.toString();
 	}
 
-	protected MapDevelopToDeployScanCodePipeline(
-		String buildURL, String pipelineName) {
+	public String getTomcatURL() {
+		String tomcatURL = JenkinsResultsParserUtil.getBuildParameter(
+			_buildURL, "TEST_PORTAL_RELEASE_TOMCAT_URL");
 
-		super(buildURL, pipelineName);
+		if (!tomcatURL.matches(_GCP_URL_REGEX + ".*")) {
+			return tomcatURL;
+		}
+
+		tomcatURL = tomcatURL.replaceAll(_GCP_URL_REGEX, "gs://");
+
+		try {
+			String credentialsFile = JenkinsResultsParserUtil.getBuildProperty(
+				"google.application.crendential.file[jenkins]");
+
+			return CloudBucketUtil.getSignedURL(15, credentialsFile, tomcatURL);
+		}
+		catch (Exception exception) {
+			exception.printStackTrace();
+		}
+
+		return null;
+	}
+
+	protected MapDevelopToDeployScanCodePipeline(
+		String buildURL, String pipelineName, String releaseBuildURL) {
+
+		super(buildURL, pipelineName, releaseBuildURL);
 
 		_buildURL = buildURL;
 		_pipelineName = pipelineName;
+		_releaseBuildURL = releaseBuildURL;
 	}
+
+	private static final String _GCP_URL_REGEX =
+		"https:\\/\\/storage.(cloud\\.google\\.com|googleapis\\.com)\\/";
 
 	private final String _buildURL;
 	private final String _pipelineName;
+	private final String _releaseBuildURL;
 
 }

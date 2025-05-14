@@ -139,7 +139,13 @@ public class ObjectEntryPersistenceTest {
 
 		newObjectEntry.setRootObjectEntryId(RandomTestUtil.nextLong());
 
+		newObjectEntry.setDefaultLanguageId(RandomTestUtil.randomString());
+
+		newObjectEntry.setExpirationDate(RandomTestUtil.nextDate());
+
 		newObjectEntry.setTreePath(RandomTestUtil.randomString());
+
+		newObjectEntry.setVersion(RandomTestUtil.nextInt());
 
 		newObjectEntry.setLastPublishDate(RandomTestUtil.nextDate());
 
@@ -191,7 +197,15 @@ public class ObjectEntryPersistenceTest {
 			existingObjectEntry.getRootObjectEntryId(),
 			newObjectEntry.getRootObjectEntryId());
 		Assert.assertEquals(
+			existingObjectEntry.getDefaultLanguageId(),
+			newObjectEntry.getDefaultLanguageId());
+		Assert.assertEquals(
+			Time.getShortTimestamp(existingObjectEntry.getExpirationDate()),
+			Time.getShortTimestamp(newObjectEntry.getExpirationDate()));
+		Assert.assertEquals(
 			existingObjectEntry.getTreePath(), newObjectEntry.getTreePath());
+		Assert.assertEquals(
+			existingObjectEntry.getVersion(), newObjectEntry.getVersion());
 		Assert.assertEquals(
 			Time.getShortTimestamp(existingObjectEntry.getLastPublishDate()),
 			Time.getShortTimestamp(newObjectEntry.getLastPublishDate()));
@@ -251,6 +265,14 @@ public class ObjectEntryPersistenceTest {
 	}
 
 	@Test
+	public void testCountByG_OEFI() throws Exception {
+		_persistence.countByG_OEFI(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
+
+		_persistence.countByG_OEFI(0L, 0L);
+	}
+
+	@Test
 	public void testCountByU_ODI() throws Exception {
 		_persistence.countByU_ODI(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
@@ -264,6 +286,14 @@ public class ObjectEntryPersistenceTest {
 			RandomTestUtil.nextLong(), RandomTestUtil.nextInt());
 
 		_persistence.countByODI_NotS(0L, 0);
+	}
+
+	@Test
+	public void testCountByROEI_NotS() throws Exception {
+		_persistence.countByROEI_NotS(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextInt());
+
+		_persistence.countByROEI_NotS(0L, 0);
 	}
 
 	@Test
@@ -334,7 +364,8 @@ public class ObjectEntryPersistenceTest {
 			true, "companyId", true, "userId", true, "userName", true,
 			"createDate", true, "modifiedDate", true, "objectDefinitionId",
 			true, "objectEntryFolderId", true, "rootObjectEntryId", true,
-			"treePath", true, "lastPublishDate", true, "status", true,
+			"defaultLanguageId", true, "expirationDate", true, "treePath", true,
+			"version", true, "lastPublishDate", true, "status", true,
 			"statusByUserId", true, "statusByUserName", true, "statusDate",
 			true);
 	}
@@ -674,7 +705,13 @@ public class ObjectEntryPersistenceTest {
 
 		objectEntry.setRootObjectEntryId(RandomTestUtil.nextLong());
 
+		objectEntry.setDefaultLanguageId(RandomTestUtil.randomString());
+
+		objectEntry.setExpirationDate(RandomTestUtil.nextDate());
+
 		objectEntry.setTreePath(RandomTestUtil.randomString());
+
+		objectEntry.setVersion(RandomTestUtil.nextInt());
 
 		objectEntry.setLastPublishDate(RandomTestUtil.nextDate());
 

@@ -12,6 +12,7 @@ export {default as CodeMirrorKeyboardMessage} from './code_mirror_keyboard_messa
 export {default as FeatureIndicator} from './feature_indicator/FeatureIndicator';
 
 export {default as FieldBase} from './forms/common/FieldBase';
+export {RequiredMask} from './forms/common/FieldBase';
 export {default as FieldFeedback} from './forms/common/FieldFeedback';
 
 export {default as InputLocalized} from './forms/input/InputLocalized';
@@ -27,6 +28,24 @@ export {
 } from './learn_message/LearnMessage';
 
 export {default as ManagementToolbar} from './management_toolbar/ManagementToolbar';
+
+export {default as openAlertModal} from './modal/commands/openAlertModal';
+export {default as openCategorySelectionModal} from './modal/commands/openCategorySelectionModal';
+export {default as openConfirmModal} from './modal/commands/openConfirmModal';
+export {default as openModal} from './modal/commands/openModal';
+export {default as openPortletModal} from './modal/commands/openPortletModal';
+export {default as openPortletWindow} from './modal/commands/openPortletWindow';
+export {
+	default as openSelectionModal,
+	OpenSelectionModalSelectedItem,
+} from './modal/commands/openSelectionModal';
+export {default as openSimpleInputModal} from './modal/commands/openSimpleInputModal';
+export {default as openTagSelectionModal} from './modal/commands/openTagSelectionModal';
+
+export {ModalStatus} from './modal/components/Modal';
+
+export {default as openToast} from './toast/openToast';
+export type {OpenToastProps} from './toast/openToast';
 
 export {Locale} from './translation_manager/TranslationAdminContent';
 export {default as TranslationAdminItem} from './translation_manager/TranslationAdminItem';

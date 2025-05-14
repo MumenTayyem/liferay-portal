@@ -343,6 +343,8 @@ public class LayoutStructure {
 
 		_updateLayoutStructure(formStyledLayoutStructureItem, position);
 
+		_formStyledLayoutStructureItems.add(formStyledLayoutStructureItem);
+
 		return formStyledLayoutStructureItem;
 	}
 
@@ -1390,8 +1392,6 @@ public class LayoutStructure {
 					_log.debug(portalException);
 				}
 			}
-
-			return;
 		}
 
 		for (String childrenItemId : layoutStructureItem.getChildrenItemIds()) {

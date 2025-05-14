@@ -9,7 +9,7 @@ import {
 	CONSTANTS,
 	accessibilityMenuAtom,
 } from '@liferay/accessibility-settings-state-web';
-import {useLiferayState} from '@liferay/frontend-js-state-web';
+import {useLiferayState} from '@liferay/frontend-js-state-web/react';
 import React, {useMemo} from 'react';
 import * as ReactDOM from 'react-dom';
 import {createRoot} from 'react-dom/client';
@@ -73,12 +73,10 @@ export default function render(
 		}
 
 		if (hasBodyContent) {
-			const children = container.querySelectorAll(
-				'.tag-body-content > *'
-			);
+			const tagBodyContent = container.querySelector('.tag-body-content');
 
-			if (children.length) {
-				componentProps.children = children;
+			if (tagBodyContent?.children.length) {
+				componentProps.children = tagBodyContent.children;
 			}
 		}
 

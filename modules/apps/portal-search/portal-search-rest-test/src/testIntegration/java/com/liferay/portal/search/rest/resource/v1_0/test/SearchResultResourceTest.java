@@ -65,6 +65,7 @@ import com.liferay.portal.search.rest.dto.v1_0.FacetConfiguration;
 import com.liferay.portal.search.rest.dto.v1_0.SearchRequestBody;
 import com.liferay.portal.search.rest.dto.v1_0.SearchResult;
 import com.liferay.portal.search.rest.pagination.SearchPage;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -109,7 +110,11 @@ import org.junit.runner.RunWith;
  * @author Petteri Karttunen
  * @author Almir Ferreira
  */
-@FeatureFlags({"LPD-11232", "LPS-179669"})
+@FeatureFlags(
+	featureFlags = {
+		@FeatureFlag(value = "LPD-11232"), @FeatureFlag(value = "LPS-179669")
+	}
+)
 @RunWith(Arquillian.class)
 public class SearchResultResourceTest extends BaseSearchResultResourceTestCase {
 
@@ -388,6 +393,11 @@ public class SearchResultResourceTest extends BaseSearchResultResourceTestCase {
 		_baseURI = "portal-search-rest";
 
 		testPostSearchPage();
+	}
+
+	@Override
+	protected String[] getIgnoredEntityFieldNames() {
+		return _IGNORED_ENTITY_FIELD_NAMES;
 	}
 
 	@Override
@@ -1394,6 +1404,11 @@ public class SearchResultResourceTest extends BaseSearchResultResourceTestCase {
 				jsonObject.getInt("page"), jsonObject.getInt("pageSize")),
 			jsonObject.getLong("totalCount"));
 	}
+
+	private static final String[] _IGNORED_ENTITY_FIELD_NAMES = {
+		"cmsSection", "dateDisplay", "dateExpiration", "datePublish",
+		"dateReview", "folderId", "objectFolderExternalReferenceCode"
+	};
 
 	@Inject
 	private static DTOConverterRegistry _dtoConverterRegistry;

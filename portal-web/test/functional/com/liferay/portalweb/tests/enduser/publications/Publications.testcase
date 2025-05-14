@@ -654,9 +654,15 @@ definition {
 
 		Navigator.openSpecificURL(url = "${portalURL}/web/site-name/test-page-name?previewCTCollectionId=${ctCollectionId2}");
 
-		AssertElementPresent(
-			key_title = "HTTP Status 404",
-			locator1 = "Header#H1_TITLE");
+		ContentPages.viewFragmentText(
+			fragmentName = "heading",
+			id = "element-text",
+			text = "Page Not Found");
+
+		ContentPages.viewFragmentText(
+			fragmentName = "paragraph",
+			id = "element-text",
+			text = "Error Code: 404");
 	}
 
 	@description = "This is the use case for LPS-183473."
@@ -856,30 +862,38 @@ definition {
 			JSONPublications.selectPublication(publicationName = "Test Publication");
 		}
 
-		task ("Add an Image fragment with an image to the Content Page") {
+		task ("Add a web content display widget showing Web Content 1") {
+			JSONWebcontent.addWebContent(
+				content = "WC Content 1",
+				groupName = "Guest",
+				title = "WC Title 1");
+
 			ContentPagesNavigator.openEditContentPage(
 				pageName = "Test Content Page",
 				siteName = "Guest");
 
-			PageEditor.addFragment(
-				collectionName = "Basic Components",
-				fragmentName = "Image");
+			PageEditor.addWidget(
+				collectionName = "Content Management",
+				portletName = "Web Content Display");
 
-			PageEditor.editFragmentImage(
-				fileName = "Document_1.jpg",
-				fragmentName = "Image",
-				id = "image-square");
+			WebContentDisplayPortlet.selectWebContent(webContentTitle = "WC Title 1");
+
+			IFrame.closeFrame();
 		}
 
-		task ("Add a new Experience, change the image fragment with another image and publish the page") {
+		task ("Add a new Experience, change the web content display widget to show Web Content 2") {
+			JSONWebcontent.addWebContent(
+				content = "WC Content 2",
+				groupName = "Guest",
+				title = "WC Title 2");
+
 			PageEditor.addExperience(
 				experienceName = "New Experience",
 				segmentName = "Anyone");
 
-			PageEditor.editFragmentImage(
-				fileName = "Document_2.jpg",
-				fragmentName = "Image",
-				id = "image-square");
+			WebContentDisplayPortlet.selectWebContent(webContentTitle = "WC Title 2");
+
+			IFrame.closeFrame();
 
 			PageEditor.publish();
 		}
@@ -1262,9 +1276,9 @@ definition {
 				pageName = "Home",
 				siteName = "Guest");
 
-			PageEditor.addFragment(
+			PageEditor.addWidget(
 				collectionName = "Basic Components",
-				fragmentName = "Button",
+				portletName = "Button",
 				targetFragmentName = "Image");
 
 			PageEditor.publish();
@@ -1591,9 +1605,9 @@ definition {
 				pageName = "Test Page Name",
 				siteName = "Site Name");
 
-			PageEditor.addFragment(
+			PageEditor.addWidget(
 				collectionName = "Basic Components",
-				fragmentName = "Button");
+				portletName = "Button");
 
 			PageEditor.publish();
 		}
@@ -1952,18 +1966,6 @@ definition {
 		Publications.viewPublicationOrderInHistory(publicationList = "Publication Name 1,Publication Name 2,Publication Name 3,Publication Name 4,Publication Name 5,Publication Name 6,Publication Name 7");
 
 		Pagination.viewResults(results = "Showing 1 to 7 of 7 entries.");
-
-		Pagination.changePagination(itemsPerPage = "4 Items");
-
-		Pagination.viewResults(results = "Showing 1 to 4 of 7 entries.");
-
-		Publications.viewPublicationOrderInHistory(publicationList = "Publication Name 1,Publication Name 2,Publication Name 3,Publication Name 4");
-
-		Click(locator1 = "Pagination#NEXT_LINK");
-
-		Pagination.viewResults(results = "Showing 5 to 7 of 7 entries.");
-
-		Publications.viewPublicationOrderInHistory(publicationList = "Publication Name 5,Publication Name 6,Publication Name 7");
 	}
 
 	@description = "This is a use case for LPS-200858"

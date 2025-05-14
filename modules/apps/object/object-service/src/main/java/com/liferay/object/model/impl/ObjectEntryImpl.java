@@ -5,10 +5,10 @@
 
 package com.liferay.object.model.impl;
 
+import com.liferay.exportimport.kernel.lar.StagedModelType;
 import com.liferay.friendly.url.model.FriendlyURLEntry;
 import com.liferay.friendly.url.service.FriendlyURLEntryLocalServiceUtil;
 import com.liferay.object.constants.ObjectEntryFolderConstants;
-import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.entry.util.ObjectEntryValuesUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
@@ -27,10 +27,13 @@ import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.MapUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -99,7 +102,69 @@ public class ObjectEntryImpl extends ObjectEntryBaseImpl {
 	}
 
 	@Override
+	public StagedModelType getStagedModelType() {
+		return new StagedModelType(
+			PortalUtil.getClassNameId(getModelClassName()));
+	}
+
+	@Override
+	public Map<Locale, String> getTitleMap() throws PortalException {
+		ObjectDefinition objectDefinition =
+			ObjectDefinitionLocalServiceUtil.getObjectDefinition(
+				getObjectDefinitionId());
+
+		if ((objectDefinition == null) ||
+			(objectDefinition.getTitleObjectFieldId() == 0)) {
+
+			return Collections.emptyMap();
+		}
+
+		ObjectField objectField = ObjectFieldLocalServiceUtil.fetchObjectField(
+			objectDefinition.getTitleObjectFieldId());
+
+		if ((objectField == null) || !objectField.isLocalized()) {
+			return Collections.emptyMap();
+		}
+
+		Map<String, Serializable> values = getValues();
+
+		Map<String, Serializable> localizedValues =
+			(Map<String, Serializable>)values.get(
+				objectField.getI18nObjectFieldName());
+
+		if (MapUtil.isEmpty(localizedValues)) {
+			return Collections.emptyMap();
+		}
+
+		Map<Locale, String> titleMap = new HashMap<>();
+
+		for (Map.Entry<String, Serializable> entry :
+				localizedValues.entrySet()) {
+
+			titleMap.put(
+				LocaleUtil.fromLanguageId(entry.getKey()),
+				String.valueOf(
+					ObjectEntryValuesUtil.getValue(
+						entry.getKey(), objectField, new HashMap<>(values))));
+		}
+
+		return titleMap;
+	}
+
+	@Override
 	public String getTitleValue() throws PortalException {
+		return getTitleValue(null);
+	}
+
+	@Override
+	public String getTitleValue(String languageId) throws PortalException {
+		return getTitleValue(languageId, false);
+	}
+
+	@Override
+	public String getTitleValue(String languageId, boolean useDefault)
+		throws PortalException {
+
 		ObjectDefinition objectDefinition =
 			ObjectDefinitionLocalServiceUtil.getObjectDefinition(
 				getObjectDefinitionId());
@@ -112,21 +177,22 @@ public class ObjectEntryImpl extends ObjectEntryBaseImpl {
 					objectDefinition.getTitleObjectFieldId());
 
 			if (objectField != null) {
-				String title = ObjectEntryValuesUtil.getValueString(
-					objectField, getValues());
+				String title = String.valueOf(
+					ObjectEntryValuesUtil.getValue(
+						languageId, objectField, new HashMap<>(getValues())));
+
+				if (Validator.isNull(title) && useDefault) {
+					title = String.valueOf(
+						ObjectEntryValuesUtil.getValue(
+							getDefaultLanguageId(), objectField,
+							new HashMap<>(getValues())));
+				}
 
 				if (Validator.isNotNull(title)) {
 					return title;
 				}
 
-				if (!Objects.equals(
-						objectField.getBusinessType(),
-						ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT) &&
-					!Objects.equals(
-						objectField.getBusinessType(),
-						ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT) &&
-					Objects.equals(objectField.getName(), "id")) {
-
+				if (Objects.equals(objectField.getName(), "id")) {
 					return String.valueOf(getObjectEntryId());
 				}
 
@@ -140,7 +206,7 @@ public class ObjectEntryImpl extends ObjectEntryBaseImpl {
 	}
 
 	@Override
-	public String getURLTitle(Locale locale) throws PortalException {
+	public String getURLTitle(Locale locale) {
 		if (!FeatureFlagManagerUtil.isEnabled("LPD-21926")) {
 			return null;
 		}
@@ -158,7 +224,7 @@ public class ObjectEntryImpl extends ObjectEntryBaseImpl {
 	}
 
 	@Override
-	public Map<String, String> getURLTitleMap() throws PortalException {
+	public Map<String, String> getURLTitleMap() {
 		if (!FeatureFlagManagerUtil.isEnabled("LPD-21926")) {
 			return null;
 		}

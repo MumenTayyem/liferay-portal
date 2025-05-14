@@ -13,7 +13,7 @@ import {useAccount} from '../../hooks/data/useAccounts';
 import {useCatalogs} from '../../hooks/data/useCatalogs';
 import {useSupplierAccounts} from '../../hooks/data/useSupplierAccounts';
 import {Liferay} from '../../liferay/liferay';
-import CommerceSelectAccountImpl from '../../services/rest/CommerceSelectAccount';
+import CommerceSelectAccount from '../../services/rest/CommerceSelectAccount';
 import PublishedDashboardOutlet from './PublisherDashboardOutlet';
 import Accounts from './pages/Accounts/Accounts';
 import Apps from './pages/Apps';
@@ -26,10 +26,12 @@ import Licensing from './pages/NewAppFlow/pages/Licensing';
 import LicensePrices from './pages/NewAppFlow/pages/Licensing/LicensePrices';
 import Pricing from './pages/NewAppFlow/pages/Pricing';
 import Storefront from './pages/NewAppFlow/pages/Storefront';
+import SubmitApp from './pages/NewAppFlow/pages/Submit';
 import Support from './pages/NewAppFlow/pages/Support';
 import Version from './pages/NewAppFlow/pages/Version';
 import Solutions from './pages/Solutions';
-import PublishSolutionOutlet from './pages/Solutions/NewSolutionFlow/PublishSolutionOutlet';
+import SolutionsDetails from './pages/Solutions/Solution';
+import PublishSolutionOutlet from './pages/Solutions/SolutionForm/PublishSolutionOutlet';
 import {
 	CompanyProfile,
 	ContactUs,
@@ -38,8 +40,7 @@ import {
 	Header,
 	Profile,
 	Submit,
-} from './pages/Solutions/NewSolutionFlow/pages';
-import SolutionsDetails from './pages/Solutions/Solution';
+} from './pages/Solutions/SolutionForm/pages';
 
 const PublisherDashboardRouter = () => {
 	const {accountId} = Liferay.CommerceContext.account || {};
@@ -49,7 +50,7 @@ const PublisherDashboardRouter = () => {
 
 	useEffect(() => {
 		const checkAccount = async (accountId: number) => {
-			await CommerceSelectAccountImpl.selectAccount(accountId);
+			await CommerceSelectAccount.selectAccount(accountId);
 
 			Liferay.CommerceContext.account = {
 				accountId,
@@ -91,6 +92,7 @@ const PublisherDashboardRouter = () => {
 							<Route element={<Pricing />} path="pricing" />
 							<Route element={<Storefront />} path="storefront" />
 							<Route element={<Version />} path="version" />
+							<Route element={<SubmitApp />} path="submit" />
 
 							<Route
 								element={<LicensePrices />}

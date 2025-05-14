@@ -13,6 +13,12 @@ export class ObjectEntryApiHelper {
 		this.apiHelpers = apiHelpers;
 	}
 
+	async deleteObjectEntry(applicationName: string, objectEntryId: string) {
+		return this.apiHelpers.delete(
+			`${this.apiHelpers.baseUrl}${applicationName}/${objectEntryId}`
+		);
+	}
+
 	async deleteObjectEntryByExternalReferenceCode(
 		applicationName: string,
 		scopeKey: string,
@@ -76,6 +82,17 @@ export class ObjectEntryApiHelper {
 
 		return this.apiHelpers.post(
 			`${this.apiHelpers.baseUrl}${applicationName}/`,
+			{data}
+		);
+	}
+
+	async putObjectEntry(
+		data: DataObject,
+		applicationName: string,
+		objectEntryId: number
+	): Promise<ObjectEntry> {
+		return this.apiHelpers.put(
+			`${this.apiHelpers.baseUrl}${applicationName}/${objectEntryId}`,
 			{data}
 		);
 	}

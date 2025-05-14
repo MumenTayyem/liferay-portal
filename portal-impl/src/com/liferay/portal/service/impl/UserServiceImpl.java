@@ -1525,27 +1525,6 @@ public class UserServiceImpl extends UserServiceBaseImpl {
 		return user;
 	}
 
-	/**
-	 * Returns the user with the external reference code.
-	 *
-	 * @param  companyId the primary key of the user's company
-	 * @param  externalReferenceCode the user's external reference code
-	 * @return the user with the external reference code
-	 */
-	@Override
-	public User getUserByExternalReferenceCode(
-			long companyId, String externalReferenceCode)
-		throws PortalException {
-
-		User user = userLocalService.getUserByExternalReferenceCode(
-			externalReferenceCode, companyId);
-
-		UserPermissionUtil.check(
-			getPermissionChecker(), user.getUserId(), ActionKeys.VIEW);
-
-		return user;
-	}
-
 	@Override
 	public User getUserByExternalReferenceCode(
 			String externalReferenceCode, long companyId)
@@ -2348,25 +2327,6 @@ public class UserServiceImpl extends UserServiceBaseImpl {
 			getPermissionChecker(), userId, ActionKeys.DELETE);
 
 		return userLocalService.updateLockoutById(userId, lockout);
-	}
-
-	/**
-	 * Updates the user's OpenID.
-	 *
-	 * @param      userId the primary key of the user
-	 * @param      openId the new OpenID
-	 * @return     the user
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	@Override
-	public User updateOpenId(long userId, String openId)
-		throws PortalException {
-
-		UserPermissionUtil.check(
-			getPermissionChecker(), userId, ActionKeys.UPDATE);
-
-		return userLocalService.updateOpenId(userId, openId);
 	}
 
 	/**

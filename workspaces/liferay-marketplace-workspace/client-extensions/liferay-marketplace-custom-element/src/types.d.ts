@@ -312,6 +312,7 @@ type DefaultProperties = {
 	productId: string;
 	trialAccountCheck: 'false' | 'true';
 	trialEulaURL: string;
+	useSiteTaxonomyVocabularyQuery: boolean;
 };
 
 type DeliveryProduct = {
@@ -332,6 +333,7 @@ type DeliveryProduct = {
 	shortDescription: string;
 	skus: DeliverySKU[];
 	urlImage: string;
+	urls: {en_US: string};
 };
 
 type DeliveryProductAttachment = {
@@ -414,6 +416,7 @@ type OfferingType = {
 type Order = {
 	account: {
 		id: number;
+		name: string;
 		type: string;
 	};
 	accountExternalReferenceCode?: string;
@@ -447,16 +450,23 @@ type Order = {
 		},
 	];
 	orderStatus: number;
-	orderStatusInfo?: {
+	orderStatusInfo: {
+		code: number;
 		label: string;
 		label_i18n: string;
 	};
 	orderTypeExternalReferenceCode?: string;
 	orderTypeId?: number;
+	paymentStatusInfo: {
+		code: number;
+		label: string;
+		label_i18n: string;
+	};
 	placedOrderItems?: any;
 	shippingAmount?: number;
 	shippingWithTaxAmount?: number;
 	totalAmount?: number;
+	totalFormatted: string;
 };
 
 type OrderType = {
@@ -494,6 +504,7 @@ type PlacedOrder = {
 		label_i18n: string;
 	};
 	orderTypeExternalReferenceCode: string;
+	paymentStatus: number;
 	placedOrderBillingAddress: any;
 	placedOrderBillingAddressId: number;
 	placedOrderItems: PlacedOrderItems[];
@@ -523,45 +534,15 @@ type PlacedOrderItems = {
 	virtualItems: VirtualItem[];
 };
 
-type PostCartResponse = {
-	account: string;
-	accountId: number;
-	author: string;
-	billingAddressId: number;
-	createDate: string;
-	customFields: object;
-	id: number;
-	modifiedDate: string;
-	orderStatusInfo: {
-		cod: number;
-		label: string;
-		label_i18: string;
-	};
-	orderTypeId: number;
-	orderUUID: string;
-	paymentMethod: string;
-	paymentStatus: number;
-	paymentStatusInfo: {
-		cod: number;
-		label: string;
-		label_i18: string;
-	};
-	paymentStatusLabel: string;
-	purchaseOrderNumber: string;
-	status: string;
-};
-
-type PostCheckoutCartResponse = {
-	cartItems: CartItem[];
-} & PostCartResponse;
-
 type Product = {
+	__marketplaceProduct: any;
 	active: boolean;
 	attachments: ProductAttachment[];
 	catalog: Catalog;
 	catalogId: number;
 	catalogName?: string;
 	categories: ProductCategories[];
+	createDate: string;
 	customFields?: CustomField[];
 	description: {[key: string]: string};
 	externalReferenceCode: string;
@@ -572,11 +553,14 @@ type Product = {
 	name: {[key: string]: string};
 	price?: number;
 	productId: number;
+	productOptions: ProductOption[];
 	productSpecifications: ProductSpecification[];
 	productStatus: number;
 	productType: string;
 	skus: SKU[];
 	thumbnail: string;
+	urlImage: string;
+	urls: {en_US: string};
 	version: number;
 	workflowStatusInfo: {
 		code: number;
@@ -606,6 +590,27 @@ type ProductCategories = {
 
 type ProductImages = ProductAttachment;
 
+type ProductOption = {
+	customFields: any[];
+	description: {[key: string]: string};
+	facetable: boolean;
+	fieldType: string;
+	id: number;
+	key: string;
+	name: {[key: string]: string};
+	optionExternalReferenceCode: string;
+	optionId: number;
+	priceType: string;
+	productOptionValues: {
+		id: number;
+		key: string;
+		name: {en_US: string};
+	}[];
+	required: boolean;
+	skuContributor: boolean;
+	typeSettings: string;
+};
+
 type ProductOptionItem = {
 	id: number;
 	key: string;
@@ -624,6 +629,8 @@ type ProductSpecification = {
 };
 
 type PublisherRequestInfo = {
+	creator: {name: string};
+	dateCreated: string;
 	emailAddress?: string;
 	extension?: string;
 	firstName?: string;
@@ -668,6 +675,20 @@ type Specification = {
 	key?: string;
 	optionCategory?: OptionCategory;
 	title?: {[key: string]: string};
+};
+
+type TaxonomyCategory = {
+	externalReferenceCode: string;
+	id: number;
+	name: string;
+};
+
+type TaxonomyVocabulary = {
+	externalReferenceCode: string;
+	id: number;
+	label: string;
+	name: string;
+	taxonomyCategories: APIResponse<TaxonomyCategory>;
 };
 
 type TierPrice = {

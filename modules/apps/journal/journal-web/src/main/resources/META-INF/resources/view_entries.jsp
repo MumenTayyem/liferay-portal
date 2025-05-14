@@ -62,25 +62,7 @@ Map<String, Object> componentContext = journalDisplayContext.getComponentContext
 				String editURL = StringPool.BLANK;
 
 				if (JournalArticlePermission.contains(permissionChecker, curArticle, ActionKeys.UPDATE)) {
-					editURL = PortletURLBuilder.createRenderURL(
-						liferayPortletResponse
-					).setMVCRenderCommandName(
-						"/journal/edit_article"
-					).setRedirect(
-						currentURL
-					).setParameter(
-						"articleId", curArticle.getArticleId()
-					).setParameter(
-						"backURLTitle", portletDisplay.getPortletDisplayName()
-					).setParameter(
-						"folderId", curArticle.getFolderId()
-					).setParameter(
-						"groupId", curArticle.getGroupId()
-					).setParameter(
-						"referringPortletResource", referringPortletResource
-					).setParameter(
-						"version", curArticle.getVersion()
-					).buildString();
+					editURL = JournalPortletUtil.getEditArticlePortletURL(curArticle, request, portletDisplay, currentURL, referringPortletResource);
 				}
 				%>
 
@@ -306,8 +288,9 @@ Map<String, Object> componentContext = journalDisplayContext.getComponentContext
 						</c:if>
 
 						<liferay-ui:search-container-column-date
-							cssClass="table-cell-expand-smallest table-cell-ws-nowrap"
+							cssClass="table-cell-expand-smallest"
 							name="modified-date"
+							userName="<%= curArticle.getStatusByUserName() %>"
 							value="<%= curArticle.getModifiedDate() %>"
 						/>
 

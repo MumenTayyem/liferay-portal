@@ -10,7 +10,7 @@ import com.adyen.model.notification.NotificationRequestItem;
 import com.adyen.util.HMACValidator;
 
 import com.liferay.client.extension.util.spring.boot3.BaseRestController;
-import com.liferay.client.extension.util.spring.boot3.LiferayOAuth2AccessTokenManager;
+import com.liferay.client.extension.util.spring.boot3.client.LiferayOAuth2AccessTokenManager;
 
 import java.nio.charset.StandardCharsets;
 
@@ -132,7 +132,7 @@ public class NotificationsRestController extends BaseRestController {
 					_liferayOAuth2AccessTokenManager.getAuthorization(
 						"liferay-adyen-commerce-payment-integration-oauth-" +
 							"application-headless-server"),
-					null,
+					"",
 					"/o/c/n1a0adyenwebhooks/by-external-reference-code/" +
 						externalReferenceCode);
 			}

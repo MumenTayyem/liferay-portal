@@ -10,6 +10,7 @@ import React from 'react';
 import type {FieldChangeEventHandler, LocalizedValue} from '../types';
 
 const Switcher: React.FC<ISwitcherProps> = ({
+	accessibleProps,
 	checked,
 	disabled,
 	label,
@@ -24,7 +25,7 @@ const Switcher: React.FC<ISwitcherProps> = ({
 		<>
 			<label className="toggle-switch">
 				<ClayToggle
-					aria-required={required}
+					{...accessibleProps}
 					disabled={disabled}
 					name={name}
 					onToggle={(checked) => {
@@ -66,6 +67,7 @@ const Switcher: React.FC<ISwitcherProps> = ({
 };
 
 const Toggle: React.FC<ISwitcherProps> = ({
+	accessibleProps,
 	checked,
 	disabled,
 	label,
@@ -80,6 +82,7 @@ const Toggle: React.FC<ISwitcherProps> = ({
 }) => {
 	return showAsSwitcher ? (
 		<Switcher
+			accessibleProps={accessibleProps}
 			checked={checked}
 			disabled={disabled}
 			label={label}
@@ -93,7 +96,7 @@ const Toggle: React.FC<ISwitcherProps> = ({
 		/>
 	) : (
 		<ClayCheckbox
-			aria-required={required}
+			{...accessibleProps}
 			checked={checked}
 			disabled={disabled}
 			label={showLabel ? label : ''}
@@ -113,6 +116,8 @@ const Toggle: React.FC<ISwitcherProps> = ({
 
 export default function CheckboxBase({
 	checked,
+	editOnlyInDefaultLanguage,
+	isLocalizationSupported,
 	name,
 	readOnly,
 	showAsSwitcher = true,
@@ -123,6 +128,12 @@ export default function CheckboxBase({
 	return (
 		<>
 			<Toggle
+				accessibleProps={{
+					...((otherProps.errorMessage || otherProps.tip) && {
+						'aria-describedby': `${otherProps.id ?? name}_fieldFeedback`,
+					}),
+					'aria-required': !!otherProps.required,
+				}}
 				checked={checked}
 				disabled={readOnly}
 				name={name}
@@ -133,6 +144,25 @@ export default function CheckboxBase({
 			/>
 
 			<ClayInput name={name} type="hidden" value={`${checked}`} />
+
+			{editOnlyInDefaultLanguage && showLabel && readOnly && (
+				<span
+					className="c-ml-2 text-4 text-secondary"
+					data-testid="tooltip"
+					tabIndex={0}
+					title={
+						isLocalizationSupported
+							? Liferay.Language.get(
+									'translation-is-disabled-for-this-field'
+								)
+							: Liferay.Language.get(
+									'this-field-does-not-support-translations'
+								)
+					}
+				>
+					<ClayIcon symbol="question-circle-full" />
+				</span>
+			)}
 		</>
 	);
 }
@@ -152,15 +182,24 @@ export interface ICheckboxBaseProps {
 }
 
 interface ISwitcherProps extends ICheckboxBaseProps {
+	accessibleProps: {
+		'aria-describedby'?: string;
+		'aria-required': boolean;
+	};
 	showMaximumRepetitionsInfo: boolean;
 	systemSettingsURL: string;
 }
 
 interface IProps extends ICheckboxBaseProps {
+	editOnlyInDefaultLanguage: boolean;
+	errorMessage: string;
+	id?: string;
+	isLocalizationSupported: boolean;
 	predefinedValue?: boolean | String[];
 	readOnly?: boolean;
 	showAsSwitcher?: boolean;
 	showMaximumRepetitionsInfo?: boolean;
 	systemSettingsURL: string;
+	tip: string;
 	visible?: boolean;
 }

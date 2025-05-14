@@ -158,6 +158,9 @@ export interface Config {
 	infoItemPreviewSelectorURL: string;
 	infoItemSelectorURL: string;
 	isConversionDraft: boolean;
+	isMarketplaceButtonVisited: boolean;
+	fragmentPortletNamespace: string;
+	fragmentsImportURL: string;
 	isPrivateLayoutsEnabled: boolean;
 	layoutConversionWarningMessages: string[] | null;
 	layoutItemSelectorURL: String;

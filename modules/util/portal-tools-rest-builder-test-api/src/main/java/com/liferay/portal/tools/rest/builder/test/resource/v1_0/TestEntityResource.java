@@ -6,8 +6,6 @@
 package com.liferay.portal.tools.rest.builder.test.resource.v1_0;
 
 import com.liferay.portal.kernel.change.tracking.CTAware;
-import com.liferay.portal.kernel.search.Sort;
-import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
@@ -15,10 +13,13 @@ import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.odata.filter.ExpressionConvert;
 import com.liferay.portal.odata.filter.FilterParserProvider;
 import com.liferay.portal.odata.sort.SortParserProvider;
+import com.liferay.portal.tools.rest.builder.test.dto.v1_0.Filter;
+import com.liferay.portal.tools.rest.builder.test.dto.v1_0.Sort;
 import com.liferay.portal.tools.rest.builder.test.dto.v1_0.TestEntity;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineExportTaskResource;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineImportTaskResource;
+import com.liferay.portal.vulcan.multipart.MultipartBody;
 import com.liferay.portal.vulcan.pagination.Page;
 
 import java.util.Collections;
@@ -49,9 +50,24 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface TestEntityResource {
 
-	public Response postReservedWord(Boolean booleanValue) throws Exception;
+	public Response deleteTestEntity(Long testEntityId, Boolean permanent)
+		throws Exception;
+
+	public Response deleteTestEntityBatch(
+			Boolean permanent, String callbackURL, Object object)
+		throws Exception;
 
 	public Page<TestEntity> getTestEntitiesPage() throws Exception;
+
+	public TestEntity getTestEntity(Long testEntityId) throws Exception;
+
+	public Integer getTestEntityCount() throws Exception;
+
+	public TestEntity patchTestEntity(
+			Long testEntityId, Long optionalParameter, TestEntity testEntity)
+		throws Exception;
+
+	public Response postReservedWord(Boolean booleanValue) throws Exception;
 
 	public Response postTestEntitiesPageExportBatch(
 			String callbackURL, String contentType, String fieldNames)
@@ -62,12 +78,7 @@ public interface TestEntityResource {
 	public Response postTestEntityBatch(String callbackURL, Object object)
 		throws Exception;
 
-	public Integer getTestEntityCount() throws Exception;
-
-	public TestEntity getTestEntity(Long testEntityId) throws Exception;
-
-	public TestEntity patchTestEntity(
-			Long testEntityId, Long optionalParameter, TestEntity testEntity)
+	public Response postTestEntityMultipartBulk(MultipartBody multipartBody)
 		throws Exception;
 
 	public TestEntity putTestEntity(
@@ -100,7 +111,8 @@ public interface TestEntityResource {
 		com.liferay.portal.kernel.model.User contextUser);
 
 	public void setExpressionConvert(
-		ExpressionConvert<Filter> expressionConvert);
+		ExpressionConvert<com.liferay.portal.kernel.search.filter.Filter>
+			expressionConvert);
 
 	public void setFilterParserProvider(
 		FilterParserProvider filterParserProvider);
@@ -125,19 +137,23 @@ public interface TestEntityResource {
 		VulcanBatchEngineImportTaskResource
 			vulcanBatchEngineImportTaskResource);
 
-	public default Filter toFilter(String filterString) {
+	public default com.liferay.portal.kernel.search.filter.Filter toFilter(
+		String filterString) {
+
 		return toFilter(
 			filterString, Collections.<String, List<String>>emptyMap());
 	}
 
-	public default Filter toFilter(
+	public default com.liferay.portal.kernel.search.filter.Filter toFilter(
 		String filterString, Map<String, List<String>> multivaluedMap) {
 
 		return null;
 	}
 
-	public default Sort[] toSorts(String sortsString) {
-		return new Sort[0];
+	public default com.liferay.portal.kernel.search.Sort[] toSorts(
+		String sortsString) {
+
+		return new com.liferay.portal.kernel.search.Sort[0];
 	}
 
 	@ProviderType

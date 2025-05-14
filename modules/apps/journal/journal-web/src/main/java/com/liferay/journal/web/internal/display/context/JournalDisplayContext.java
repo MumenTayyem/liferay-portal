@@ -9,8 +9,8 @@ import com.liferay.asset.display.page.portlet.AssetDisplayPageFriendlyURLProvide
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
 import com.liferay.depot.util.SiteConnectedGroupGroupProviderUtil;
+import com.liferay.dynamic.data.mapping.item.selector.DDMStructureItemSelectorCriterion;
 import com.liferay.dynamic.data.mapping.item.selector.DDMStructureItemSelectorReturnType;
-import com.liferay.dynamic.data.mapping.item.selector.criterion.DDMStructureItemSelectorCriterion;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalServiceUtil;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
@@ -684,7 +684,7 @@ public class JournalDisplayContext {
 
 		return _getSubtitle(
 			folder.getModifiedDate(), "modified-x-ago-by-x",
-			folder.getUserName());
+			folder.getStatusByUserName());
 	}
 
 	public long getHighlightedDDMStructureId() {
@@ -939,11 +939,7 @@ public class JournalDisplayContext {
 			return new JournalRecentArticlesResultRowSplitter(_themeDisplay);
 		}
 
-		if (Objects.equals(getDisplayStyle(), "icon")) {
-			return new JournalResultRowSplitter();
-		}
-
-		return null;
+		return new JournalResultRowSplitter();
 	}
 
 	public String getScheduledArticleMessage(JournalArticle journalArticle) {
@@ -1173,6 +1169,25 @@ public class JournalDisplayContext {
 		).build();
 	}
 
+	public boolean hasAdvancedUpdateDLFolderPermission()
+		throws PortalException {
+
+		if (getFolder() == null) {
+			return true;
+		}
+
+		if (_advancedUpdateDLFolderPermission != null) {
+			return _advancedUpdateDLFolderPermission;
+		}
+
+		_advancedUpdateDLFolderPermission = JournalFolderPermission.contains(
+			_themeDisplay.getPermissionChecker(),
+			_themeDisplay.getScopeGroupId(), getFolderId(),
+			ActionKeys.ADVANCED_UPDATE);
+
+		return _advancedUpdateDLFolderPermission;
+	}
+
 	public boolean hasAssetFilter() {
 		if (ArrayUtil.isEmpty(_getAssetCategoryIds()) &&
 			ArrayUtil.isEmpty(_getAssetTagNames())) {
@@ -1217,6 +1232,22 @@ public class JournalDisplayContext {
 		}
 
 		return false;
+	}
+
+	public boolean hasUpdateDLFolderPermission() throws PortalException {
+		if (getFolder() == null) {
+			return true;
+		}
+
+		if (_updateJournalFolderPermission != null) {
+			return _updateJournalFolderPermission;
+		}
+
+		_updateJournalFolderPermission = JournalFolderPermission.contains(
+			_themeDisplay.getPermissionChecker(),
+			_themeDisplay.getScopeGroupId(), getFolderId(), ActionKeys.UPDATE);
+
+		return _updateJournalFolderPermission;
 	}
 
 	public boolean hasVersionsResults() throws PortalException {
@@ -2117,6 +2148,7 @@ public class JournalDisplayContext {
 		JournalDisplayContext.class);
 
 	private long[] _addMenuFavItems;
+	private Boolean _advancedUpdateDLFolderPermission;
 	private JournalArticle _article;
 	private JournalArticleDisplay _articleDisplay;
 	private SearchContainer<?> _articleSearchContainer;
@@ -2159,5 +2191,6 @@ public class JournalDisplayContext {
 	private final ThemeDisplay _themeDisplay;
 	private final TrashHelper _trashHelper;
 	private String _type;
+	private Boolean _updateJournalFolderPermission;
 
 }

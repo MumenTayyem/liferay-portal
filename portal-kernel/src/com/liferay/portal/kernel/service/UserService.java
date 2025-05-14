@@ -833,18 +833,6 @@ public interface UserService extends BaseService {
 	public User getUserByEmailAddress(long companyId, String emailAddress)
 		throws PortalException;
 
-	/**
-	 * Returns the user with the external reference code.
-	 *
-	 * @param companyId the primary key of the user's company
-	 * @param externalReferenceCode the user's external reference code
-	 * @return the user with the external reference code
-	 */
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public User getUserByExternalReferenceCode(
-			long companyId, String externalReferenceCode)
-		throws PortalException;
-
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public User getUserByExternalReferenceCode(
 			String externalReferenceCode, long companyId)
@@ -1244,17 +1232,6 @@ public interface UserService extends BaseService {
 	 */
 	public User updateLockoutById(long userId, boolean lockout)
 		throws PortalException;
-
-	/**
-	 * Updates the user's OpenID.
-	 *
-	 * @param userId the primary key of the user
-	 * @param openId the new OpenID
-	 * @return the user
-	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
-	 */
-	@Deprecated
-	public User updateOpenId(long userId, String openId) throws PortalException;
 
 	/**
 	 * Sets the organizations that the user is in, removing and adding

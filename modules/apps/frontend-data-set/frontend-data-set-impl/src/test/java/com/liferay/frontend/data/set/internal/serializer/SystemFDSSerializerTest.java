@@ -6,45 +6,70 @@
 package com.liferay.frontend.data.set.internal.serializer;
 
 import com.liferay.frontend.data.set.SystemFDSEntry;
-import com.liferay.frontend.data.set.SystemFDSEntryRegistry;
 import com.liferay.frontend.data.set.action.FDSBulkActions;
-import com.liferay.frontend.data.set.action.FDSBulkActionsRegistry;
 import com.liferay.frontend.data.set.action.FDSCreationMenu;
-import com.liferay.frontend.data.set.action.FDSCreationMenuRegistry;
 import com.liferay.frontend.data.set.action.FDSItemsActions;
-import com.liferay.frontend.data.set.action.FDSItemsActionsRegistry;
-import com.liferay.frontend.data.set.internal.SystemFDSEntryRegistryImpl;
+import com.liferay.frontend.data.set.constants.FDSConstants;
+import com.liferay.frontend.data.set.constants.FDSEntityFieldTypes;
+import com.liferay.frontend.data.set.filter.BaseClientExtensionFDSFilter;
+import com.liferay.frontend.data.set.filter.BaseDateRangeFDSFilter;
+import com.liferay.frontend.data.set.filter.BaseSelectionFDSFilter;
+import com.liferay.frontend.data.set.filter.DateFDSFilterItem;
+import com.liferay.frontend.data.set.filter.FDSFilter;
+import com.liferay.frontend.data.set.filter.FDSFilterContextContributor;
+import com.liferay.frontend.data.set.filter.SelectionFDSFilterItem;
 import com.liferay.frontend.data.set.internal.action.FDSBulkActionsRegistryImpl;
-import com.liferay.frontend.data.set.internal.action.FDSCreationMenuRegistryImpl;
-import com.liferay.frontend.data.set.internal.action.FDSItemsActionsRegistryImpl;
+import com.liferay.frontend.data.set.internal.filter.ClientExtensionFDSFilterContextContributor;
+import com.liferay.frontend.data.set.internal.filter.DateRangeFDSFilterContextContributor;
+import com.liferay.frontend.data.set.internal.filter.FDSFilterContextContributorRegistryImpl;
+import com.liferay.frontend.data.set.internal.filter.FDSFilterRegistryImpl;
+import com.liferay.frontend.data.set.internal.filter.SelectionFDSFilterContextContributor;
 import com.liferay.frontend.data.set.internal.url.FDSAPIURLResolverRegistryImpl;
+import com.liferay.frontend.data.set.internal.view.cards.CardsFDSViewContextContributor;
+import com.liferay.frontend.data.set.internal.view.cards.FDSCardSchemaBuilderImpl;
+import com.liferay.frontend.data.set.internal.view.list.ListFDSViewContextContributor;
+import com.liferay.frontend.data.set.internal.view.table.FDSTableSchemaBuilderImpl;
+import com.liferay.frontend.data.set.internal.view.table.TableFDSViewContextContributor;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
-import com.liferay.frontend.data.set.serializer.FDSSerializer;
+import com.liferay.frontend.data.set.model.FDSSortItem;
+import com.liferay.frontend.data.set.model.FDSSortItemBuilder;
+import com.liferay.frontend.data.set.model.FDSSortItemList;
+import com.liferay.frontend.data.set.model.FDSSortItemListBuilder;
+import com.liferay.frontend.data.set.sort.FDSSorts;
 import com.liferay.frontend.data.set.url.FDSAPIURLResolver;
-import com.liferay.frontend.data.set.url.FDSAPIURLResolverRegistry;
+import com.liferay.frontend.data.set.view.FDSView;
+import com.liferay.frontend.data.set.view.FDSViewContextContributor;
+import com.liferay.frontend.data.set.view.cards.BaseCardsFDSView;
+import com.liferay.frontend.data.set.view.cards.FDSCardSchema;
+import com.liferay.frontend.data.set.view.cards.FDSCardSchemaBuilder;
+import com.liferay.frontend.data.set.view.list.BaseListFDSView;
+import com.liferay.frontend.data.set.view.table.BaseTableFDSView;
+import com.liferay.frontend.data.set.view.table.FDSTableSchema;
+import com.liferay.frontend.data.set.view.table.FDSTableSchemaBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenuBuilder;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemBuilder;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerCustomizerFactory;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.module.util.SystemBundleUtil;
-import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
-import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+import com.liferay.portal.util.PropsValues;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -54,517 +79,1526 @@ import org.mockito.Mockito;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 
+import org.skyscreamer.jsonassert.JSONAssert;
+import org.skyscreamer.jsonassert.JSONCompareMode;
+
 /**
  * @author Daniel Sanz
  */
-public class SystemFDSSerializerTest {
+public class SystemFDSSerializerTest extends BaseFDSSerializerTestCase {
 
 	@ClassRule
 	@Rule
 	public static final LiferayUnitTestRule liferayUnitTestRule =
 		LiferayUnitTestRule.INSTANCE;
 
-	@Before
-	public void setUp() throws Exception {
-		_bundleContext = SystemBundleUtil.getBundleContext();
-
-		_serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
-			_bundleContext, SystemFDSEntry.class, "frontend.data.set.name");
-
-		ReflectionTestUtil.setFieldValue(
-			_systemFDSEntryRegistry, "_serviceTrackerMap", _serviceTrackerMap);
-	}
-
-	@After
-	public void tearDown() {
-		_serviceTrackerMap.close();
-	}
-
 	@Test
-	public void testSerializeAPIURL() throws Exception {
+	public void testSerializeAdditionalAPIURLParameters() throws Exception {
+
+		// No parameters
+
 		ServiceTrackerMap
 			<String,
 			 ServiceTrackerCustomizerFactory.ServiceWrapper<FDSAPIURLResolver>>
 				serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
-					_bundleContext, FDSAPIURLResolver.class,
+					bundleContext, FDSAPIURLResolver.class,
 					"fds.rest.application.key",
 					ServiceTrackerCustomizerFactory.
-						<FDSAPIURLResolver>serviceWrapper(_bundleContext));
+						<FDSAPIURLResolver>serviceWrapper(bundleContext));
 
-		FDSAPIURLResolverRegistry fdsAPIURLResolverRegistry =
-			new FDSAPIURLResolverRegistryImpl();
-
-		ReflectionTestUtil.setFieldValue(
-			fdsAPIURLResolverRegistry, "_serviceTrackerMap", serviceTrackerMap);
-
-		ReflectionTestUtil.setFieldValue(
-			_fdsSerializer, "fdsAPIURLResolverRegistry",
-			fdsAPIURLResolverRegistry);
-
-		ReflectionTestUtil.setFieldValue(
-			_fdsSerializer, "_systemFDSEntryRegistry", _systemFDSEntryRegistry);
+		systemFDSSerializer.fdsAPIURLResolverRegistry =
+			new FDSAPIURLResolverRegistryImpl(serviceTrackerMap);
 
 		ThemeDisplay themeDisplay = Mockito.mock(ThemeDisplay.class);
 
 		Mockito.when(
-			_httpServletRequest.getAttribute(WebKeys.THEME_DISPLAY)
+			httpServletRequest.getAttribute(WebKeys.THEME_DISPLAY)
 		).thenReturn(
 			themeDisplay
 		);
 
-		// Different resolvers
+		_registerServices(_registerSystemFDSEntry(FDS_NAMES[0]));
 
-		ServiceRegistration<FDSAPIURLResolver> fdsAPIURLServiceRegistration =
-			_registerFDSAPIURLResolver(
-				"/app1", "schema", new String[] {"{foo}"},
-				new String[] {"bar"});
-		ServiceRegistration<SystemFDSEntry> systemFDSEntryServiceRegistration1 =
+		Assert.assertNull(
+			systemFDSSerializer.serializeAdditionalAPIURLParameters(
+				FDS_NAMES[0], httpServletRequest));
+
+		_unregisterServices();
+
+		// Parameters
+
+		_registerServices(
 			_registerSystemFDSEntry(
-				null, "fdsName1", "/app1", "/endpoint/{foo}", "schema");
-		ServiceRegistration<SystemFDSEntry> systemFDSEntryServiceRegistration2 =
-			_registerSystemFDSEntry(
-				null, "fdsName2", "/app2", "/endpoint/{foo}", "schema");
+				SystemFDSEntryFactory.create(
+					FDS_NAMES[0]
+				).withAdditionalURLParameters(
+					API_URL_PARAMETERS
+				)));
 
 		Assert.assertEquals(
-			"/o/app1/endpoint/bar",
-			_fdsSerializer.serializeAPIURL("fdsName1", _httpServletRequest));
-		Assert.assertEquals(
-			"/o/app2/endpoint/{foo}",
-			_fdsSerializer.serializeAPIURL("fdsName2", _httpServletRequest));
+			API_URL_PARAMETERS,
+			systemFDSSerializer.serializeAdditionalAPIURLParameters(
+				FDS_NAMES[0], httpServletRequest));
 
-		fdsAPIURLServiceRegistration.unregister();
-		systemFDSEntryServiceRegistration1.unregister();
-		systemFDSEntryServiceRegistration2.unregister();
+		_unregisterServices();
 
-		// No resolver, URL
+		serviceTrackerMap.close();
+	}
 
-		systemFDSEntryServiceRegistration1 = _registerSystemFDSEntry(
-			null, "fdsName", "/app", "/endpoint", "schema");
+	@Test
+	public void testSerializeAPIURL() throws Exception {
+
+		// No parameters
+
+		ServiceTrackerMap
+			<String,
+			 ServiceTrackerCustomizerFactory.ServiceWrapper<FDSAPIURLResolver>>
+				serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
+					bundleContext, FDSAPIURLResolver.class,
+					"fds.rest.application.key",
+					ServiceTrackerCustomizerFactory.
+						<FDSAPIURLResolver>serviceWrapper(bundleContext));
+
+		systemFDSSerializer.fdsAPIURLResolverRegistry =
+			new FDSAPIURLResolverRegistryImpl(serviceTrackerMap);
+
+		ThemeDisplay themeDisplay = Mockito.mock(ThemeDisplay.class);
+
+		Mockito.when(
+			httpServletRequest.getAttribute(WebKeys.THEME_DISPLAY)
+		).thenReturn(
+			themeDisplay
+		);
+
+		_registerServices(_registerSystemFDSEntry(FDS_NAMES[0]));
 
 		Assert.assertEquals(
 			"/o/app/endpoint",
-			_fdsSerializer.serializeAPIURL("fdsName", _httpServletRequest));
+			systemFDSSerializer.serializeAPIURL(
+				FDS_NAMES[0], httpServletRequest));
 
-		systemFDSEntryServiceRegistration1.unregister();
+		_unregisterServices();
 
-		// No resolver, URL with parameters
+		// Parameters
 
-		systemFDSEntryServiceRegistration1 = _registerSystemFDSEntry(
-			"param=3", "fdsName", "/app", "/endpoint", "schema");
-
-		Assert.assertEquals(
-			"/o/app/endpoint?param=3",
-			_fdsSerializer.serializeAPIURL("fdsName", _httpServletRequest));
-
-		systemFDSEntryServiceRegistration1.unregister();
-
-		// Resolver with interpolation
-
-		fdsAPIURLServiceRegistration = _registerFDSAPIURLResolver(
-			"/app", "schema", new String[] {"{foo}"}, new String[] {"bar"});
-		systemFDSEntryServiceRegistration1 = _registerSystemFDSEntry(
-			"{foo}=3", "fdsName", "/app", "/endpoint/{foo}", "schema");
+		_registerServices(
+			_registerSystemFDSEntry(
+				SystemFDSEntryFactory.create(
+					FDS_NAMES[0]
+				).withAdditionalURLParameters(
+					"nestedFields=creator"
+				)));
 
 		Assert.assertEquals(
-			"/o/app/endpoint/bar?bar=3",
-			_fdsSerializer.serializeAPIURL("fdsName", _httpServletRequest));
+			"/o/app/endpoint",
+			systemFDSSerializer.serializeAPIURL(
+				FDS_NAMES[0], httpServletRequest));
 
-		fdsAPIURLServiceRegistration.unregister();
-		systemFDSEntryServiceRegistration1.unregister();
-
-		// Shared resolver
-
-		fdsAPIURLServiceRegistration = _registerFDSAPIURLResolver(
-			"/app", "schema", new String[] {"{foo}"}, new String[] {"bar"});
-		systemFDSEntryServiceRegistration1 = _registerSystemFDSEntry(
-			null, "fdsName1", "/app", "/endpoint/{foo}", "schema");
-		systemFDSEntryServiceRegistration2 = _registerSystemFDSEntry(
-			null, "fdsName2", "/app", "/endpoint/{foo}", "schema");
-
-		Assert.assertEquals(
-			"/o/app/endpoint/bar",
-			_fdsSerializer.serializeAPIURL("fdsName1", _httpServletRequest));
-		Assert.assertEquals(
-			"/o/app/endpoint/bar",
-			_fdsSerializer.serializeAPIURL("fdsName2", _httpServletRequest));
-
-		fdsAPIURLServiceRegistration.unregister();
-		systemFDSEntryServiceRegistration1.unregister();
-		systemFDSEntryServiceRegistration2.unregister();
+		_unregisterServices();
 
 		serviceTrackerMap.close();
 	}
 
 	@Test
 	public void testSerializeBulkActions() throws Exception {
+
+		// Different bulk actions
+
 		ServiceTrackerMap
 			<String,
 			 ServiceTrackerCustomizerFactory.ServiceWrapper<FDSBulkActions>>
 				serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
-					_bundleContext, FDSBulkActions.class,
+					bundleContext, FDSBulkActions.class,
 					"frontend.data.set.name",
 					ServiceTrackerCustomizerFactory.
-						<FDSBulkActions>serviceWrapper(_bundleContext));
+						<FDSBulkActions>serviceWrapper(bundleContext));
 
-		FDSBulkActionsRegistry fdsBulkActionsRegistry =
-			new FDSBulkActionsRegistryImpl();
-
-		ReflectionTestUtil.setFieldValue(
-			fdsBulkActionsRegistry, "_serviceTrackerMap", serviceTrackerMap);
-
-		ReflectionTestUtil.setFieldValue(
-			_fdsSerializer, "_fdsBulkActionsRegistry", fdsBulkActionsRegistry);
-
-		// Different bulk actions
-
-		ServiceRegistration<SystemFDSEntry> systemFDSEntryServiceRegistration1 =
-			_registerSystemFDSEntry(
-				null, "fdsName1", "/app", "/endpoint", "schema");
+		systemFDSSerializer.fdsBulkActionsRegistry =
+			new FDSBulkActionsRegistryImpl(serviceTrackerMap);
 
 		List<FDSActionDropdownItem> fdsActionDropdownItems1 =
 			ListUtil.fromArray(
 				new FDSActionDropdownItem(
-					null, "trash", "delete", "delete", "delete", "delete",
+					null, ICONS[0], IDS[0], LABELS[0], "delete", "delete",
 					"headless"));
 
-		ServiceRegistration<FDSBulkActions> bulkActionsServiceRegistration1 =
-			_registerFDSBulkActions(fdsActionDropdownItems1, "fdsName1");
+		_registerServices(
+			_registerFDSBulkActions(fdsActionDropdownItems1, FDS_NAMES[0]),
+			_registerSystemFDSEntry(FDS_NAMES[0]));
 
 		Assert.assertEquals(
 			fdsActionDropdownItems1,
-			_fdsSerializer.serializeBulkActions(
-				"fdsName1", _httpServletRequest));
-
-		ServiceRegistration<SystemFDSEntry> systemFDSEntryServiceRegistration2 =
-			_registerSystemFDSEntry(
-				null, "fdsName2", "/app", "/endpoint", "schema");
+			systemFDSSerializer.serializeBulkActions(
+				FDS_NAMES[0], httpServletRequest));
 
 		List<FDSActionDropdownItem> fdsActionDropdownItems2 =
 			ListUtil.fromArray(
 				new FDSActionDropdownItem(
-					null, "cog", "permissions", "permissions", "get",
-					"permissions", "modal-permissions"));
+					null, ICONS[1], IDS[1], LABELS[1], "get", "permissions",
+					"modal-permissions"));
 
-		ServiceRegistration<FDSBulkActions> bulkActionsServiceRegistration2 =
-			_registerFDSBulkActions(fdsActionDropdownItems2, "fdsName2");
+		_registerServices(
+			_registerFDSBulkActions(fdsActionDropdownItems2, FDS_NAMES[1]),
+			_registerSystemFDSEntry(FDS_NAMES[0]));
 
 		Assert.assertEquals(
 			fdsActionDropdownItems2,
-			_fdsSerializer.serializeBulkActions(
-				"fdsName2", _httpServletRequest));
+			systemFDSSerializer.serializeBulkActions(
+				FDS_NAMES[1], httpServletRequest));
 
 		Assert.assertNotEquals(
-			_fdsSerializer.serializeBulkActions(
-				"fdsName1", _httpServletRequest),
-			_fdsSerializer.serializeBulkActions(
-				"fdsName2", _httpServletRequest));
+			systemFDSSerializer.serializeBulkActions(
+				FDS_NAMES[0], httpServletRequest),
+			systemFDSSerializer.serializeBulkActions(
+				FDS_NAMES[1], httpServletRequest));
 
-		bulkActionsServiceRegistration1.unregister();
-		bulkActionsServiceRegistration2.unregister();
-		systemFDSEntryServiceRegistration1.unregister();
-		systemFDSEntryServiceRegistration2.unregister();
+		_unregisterServices();
 
 		// No bulk actions
 
-		systemFDSEntryServiceRegistration1 = _registerSystemFDSEntry(
-			null, "fdsName", "/app", "/endpoint", "schema");
+		_registerServices(_registerSystemFDSEntry(FDS_NAMES[0]));
 
 		Assert.assertTrue(
-			_fdsSerializer.serializeBulkActions(
-				"fdsName", _httpServletRequest
+			systemFDSSerializer.serializeBulkActions(
+				FDS_NAMES[0], httpServletRequest
 			).isEmpty());
 
-		systemFDSEntryServiceRegistration1.unregister();
+		_unregisterServices();
 
 		// Shared bulk actions
 
-		systemFDSEntryServiceRegistration1 = _registerSystemFDSEntry(
-			null, "fdsName1", "/app", "/endpoint", "schema");
-		systemFDSEntryServiceRegistration2 = _registerSystemFDSEntry(
-			null, "fdsName2", "/app", "/endpoint", "schema");
-
 		fdsActionDropdownItems1 = ListUtil.fromArray(
 			new FDSActionDropdownItem(
-				null, "trash", "delete", "delete", "delete", "delete",
+				null, ICONS[0], IDS[0], LABELS[0], "delete", "delete",
 				"headless"));
 
-		bulkActionsServiceRegistration1 = _registerFDSBulkActions(
-			fdsActionDropdownItems1, "fdsName1");
-		bulkActionsServiceRegistration2 = _registerFDSBulkActions(
-			fdsActionDropdownItems1, "fdsName2");
+		_registerServices(
+			_registerFDSBulkActions(fdsActionDropdownItems1, FDS_NAMES[0]),
+			_registerFDSBulkActions(fdsActionDropdownItems1, FDS_NAMES[1]),
+			_registerSystemFDSEntry(FDS_NAMES[0]),
+			_registerSystemFDSEntry(FDS_NAMES[1]));
 
 		Assert.assertEquals(
-			_fdsSerializer.serializeBulkActions(
-				"fdsName1", _httpServletRequest),
-			_fdsSerializer.serializeBulkActions(
-				"fdsName2", _httpServletRequest));
+			systemFDSSerializer.serializeBulkActions(
+				FDS_NAMES[0], httpServletRequest),
+			systemFDSSerializer.serializeBulkActions(
+				FDS_NAMES[1], httpServletRequest));
 
-		bulkActionsServiceRegistration1.unregister();
-		bulkActionsServiceRegistration2.unregister();
-		systemFDSEntryServiceRegistration1.unregister();
-		systemFDSEntryServiceRegistration2.unregister();
+		_unregisterServices();
 
 		serviceTrackerMap.close();
 	}
 
 	@Test
 	public void testSerializeCreationMenu() throws Exception {
-		ServiceTrackerMap
-			<String,
-			 ServiceTrackerCustomizerFactory.ServiceWrapper<FDSCreationMenu>>
-				serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
-					_bundleContext, FDSCreationMenu.class,
-					"frontend.data.set.name",
-					ServiceTrackerCustomizerFactory.
-						<FDSCreationMenu>serviceWrapper(_bundleContext));
-
-		FDSCreationMenuRegistry fdsCreationMenuRegistry =
-			new FDSCreationMenuRegistryImpl();
-
-		ReflectionTestUtil.setFieldValue(
-			fdsCreationMenuRegistry, "_serviceTrackerMap", serviceTrackerMap);
-
-		ReflectionTestUtil.setFieldValue(
-			_fdsSerializer, "_fdsCreationMenuRegistry",
-			fdsCreationMenuRegistry);
 
 		// Different creation menu
 
-		ServiceRegistration<SystemFDSEntry> systemFDSEntryServiceRegistration1 =
-			_registerSystemFDSEntry(
-				null, "fdsName1", "/app", "/endpoint", "schema");
-
 		CreationMenu creationMenu1 = CreationMenuBuilder.addDropdownItem(
 			DropdownItemBuilder.setIcon(
-				"times"
+				ICONS[0]
+			).setLabel(
+				LABELS[0]
 			).build()
 		).build();
 
-		ServiceRegistration<FDSCreationMenu> creationMenuServiceRegistration1 =
-			_registerFDSCreationMenu(creationMenu1, "fdsName1");
+		_registerServices(
+			_registerFDSCreationMenu(creationMenu1, FDS_NAMES[0]),
+			_registerSystemFDSEntry(FDS_NAMES[0]));
 
 		Assert.assertEquals(
 			creationMenu1,
-			_fdsSerializer.serializeCreationMenu(
-				"fdsName1", _httpServletRequest));
-
-		ServiceRegistration<SystemFDSEntry> systemFDSEntryServiceRegistration2 =
-			_registerSystemFDSEntry(
-				null, "fdsName2", "/app", "/endpoint", "schema");
+			systemFDSSerializer.serializeCreationMenu(
+				FDS_NAMES[0], httpServletRequest));
 
 		CreationMenu creationMenu2 = CreationMenuBuilder.addDropdownItem(
 			DropdownItemBuilder.setIcon(
-				"cog"
+				ICONS[1]
+			).setLabel(
+				LABELS[1]
 			).build()
 		).build();
 
-		ServiceRegistration<FDSCreationMenu> creationMenuServiceRegistration2 =
-			_registerFDSCreationMenu(creationMenu2, "fdsName2");
+		_registerServices(
+			_registerFDSCreationMenu(creationMenu2, FDS_NAMES[1]),
+			_registerSystemFDSEntry(FDS_NAMES[0]));
 
 		Assert.assertEquals(
 			creationMenu2,
-			_fdsSerializer.serializeCreationMenu(
-				"fdsName2", _httpServletRequest));
+			systemFDSSerializer.serializeCreationMenu(
+				FDS_NAMES[1], httpServletRequest));
 
 		Assert.assertNotEquals(
-			_fdsSerializer.serializeCreationMenu(
-				"fdsName1", _httpServletRequest),
-			_fdsSerializer.serializeCreationMenu(
-				"fdsName2", _httpServletRequest));
+			systemFDSSerializer.serializeCreationMenu(
+				FDS_NAMES[0], httpServletRequest),
+			systemFDSSerializer.serializeCreationMenu(
+				FDS_NAMES[1], httpServletRequest));
 
-		creationMenuServiceRegistration1.unregister();
-		creationMenuServiceRegistration2.unregister();
-		systemFDSEntryServiceRegistration1.unregister();
-		systemFDSEntryServiceRegistration2.unregister();
+		_unregisterServices();
 
 		// No creation menu
 
-		systemFDSEntryServiceRegistration1 = _registerSystemFDSEntry(
-			null, "fdsName", "/app", "/endpoint", "schema");
+		_registerServices(_registerSystemFDSEntry(FDS_NAMES[0]));
 
 		Assert.assertTrue(
-			_fdsSerializer.serializeCreationMenu(
-				"fdsName", _httpServletRequest
+			systemFDSSerializer.serializeCreationMenu(
+				FDS_NAMES[0], httpServletRequest
 			).isEmpty());
 
-		systemFDSEntryServiceRegistration1.unregister();
+		_unregisterServices();
 
 		// Shared creation menu
 
-		systemFDSEntryServiceRegistration1 = _registerSystemFDSEntry(
-			null, "fdsName1", "/app", "/endpoint", "schema");
-		systemFDSEntryServiceRegistration2 = _registerSystemFDSEntry(
-			null, "fdsName2", "/app", "/endpoint", "schema");
-
 		creationMenu1 = CreationMenuBuilder.addDropdownItem(
 			DropdownItemBuilder.setIcon(
-				"times"
+				ICONS[0]
+			).setLabel(
+				LABELS[0]
 			).build()
 		).build();
 
-		creationMenuServiceRegistration1 = _registerFDSCreationMenu(
-			creationMenu1, "fdsName1");
-		creationMenuServiceRegistration2 = _registerFDSCreationMenu(
-			creationMenu1, "fdsName2");
+		_registerServices(
+			_registerFDSCreationMenu(creationMenu1, FDS_NAMES[0]),
+			_registerFDSCreationMenu(creationMenu1, FDS_NAMES[1]),
+			_registerSystemFDSEntry(FDS_NAMES[0]),
+			_registerSystemFDSEntry(FDS_NAMES[1]));
 
 		Assert.assertEquals(
-			_fdsSerializer.serializeCreationMenu(
-				"fdsName1", _httpServletRequest),
-			_fdsSerializer.serializeCreationMenu(
-				"fdsName2", _httpServletRequest));
+			systemFDSSerializer.serializeCreationMenu(
+				FDS_NAMES[0], httpServletRequest),
+			systemFDSSerializer.serializeCreationMenu(
+				FDS_NAMES[1], httpServletRequest));
 
-		creationMenuServiceRegistration1.unregister();
-		creationMenuServiceRegistration2.unregister();
-		systemFDSEntryServiceRegistration1.unregister();
-		systemFDSEntryServiceRegistration2.unregister();
+		_unregisterServices();
+	}
 
-		serviceTrackerMap.close();
+	@Test
+	public void testSerializeFilters() throws Exception {
+
+		// Client extension filter
+
+		ServiceTrackerMap
+			<String,
+			 List
+				 <ServiceTrackerCustomizerFactory.ServiceWrapper
+					 <FDSFilterContextContributor>>> serviceTrackerMap1 =
+						ServiceTrackerMapFactory.openMultiValueMap(
+							bundleContext, FDSFilterContextContributor.class,
+							"frontend.data.set.filter.type",
+							ServiceTrackerCustomizerFactory.
+								<FDSFilterContextContributor>serviceWrapper(
+									bundleContext));
+
+		systemFDSSerializer.fdsFilterContextContributorRegistry =
+			new FDSFilterContextContributorRegistryImpl(serviceTrackerMap1);
+
+		ServiceTrackerMap
+			<String,
+			 List<ServiceTrackerCustomizerFactory.ServiceWrapper<FDSFilter>>>
+				serviceTrackerMap2 = ServiceTrackerMapFactory.openMultiValueMap(
+					bundleContext, FDSFilter.class, "frontend.data.set.name",
+					ServiceTrackerCustomizerFactory.<FDSFilter>serviceWrapper(
+						bundleContext));
+
+		systemFDSSerializer.fdsFilterRegistry = new FDSFilterRegistryImpl(
+			serviceTrackerMap2);
+
+		mockLanguage();
+
+		_registerServices(
+			_registerFDSFilter(
+				new BaseClientExtensionFDSFilter() {
+
+					@Override
+					public String getCETExternalReferenceCode() {
+						return "";
+					}
+
+					@Override
+					public String getId() {
+						return IDS[0];
+					}
+
+					@Override
+					public String getLabel() {
+						return LABELS[0];
+					}
+
+					@Override
+					public String getModuleURL() {
+						return URL;
+					}
+
+					@Override
+					public Map<String, Object> getPreloadedData() {
+						return new HashMapBuilder<>().<String, Object>put(
+							IDS[1], LABELS[1]
+						).put(
+							IDS[2], LABELS[2]
+						).build();
+					}
+
+				},
+				FDS_NAMES[0]),
+			bundleContext.registerService(
+				FDSFilterContextContributor.class,
+				new ClientExtensionFDSFilterContextContributor(),
+				MapUtil.singletonDictionary(
+					"frontend.data.set.filter.type", "clientExtension")),
+			_registerSystemFDSEntry(FDS_NAMES[0]));
+
+		JSONAssert.assertEquals(
+			JSONUtil.putAll(
+				JSONUtil.put(
+					"clientExtensionFilterURL", URL
+				).put(
+					"id", IDS[0]
+				).put(
+					"label", LABELS[0]
+				).put(
+					"preloadedData",
+					JSONUtil.put(
+						IDS[1], LABELS[1]
+					).put(
+						IDS[2], LABELS[2]
+					)
+				).put(
+					"type", "clientExtension"
+				)
+			).toString(),
+			systemFDSSerializer.serializeFilters(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// Date range filter
+
+		_registerServices(
+			_registerFDSFilter(
+				_createFDSFilterDate(
+					IDS[0], LABELS[0], new DateFDSFilterItem(1, 12, 2000),
+					new DateFDSFilterItem(16, 3, 1977),
+					new HashMapBuilder<>().<String, Object>put(
+						"from", new DateFDSFilterItem(30, 11, 1985)
+					).put(
+						"to", new DateFDSFilterItem(27, 5, 1995)
+					).build()),
+				FDS_NAMES[0]),
+			bundleContext.registerService(
+				FDSFilterContextContributor.class,
+				new DateRangeFDSFilterContextContributor(),
+				MapUtil.singletonDictionary(
+					"frontend.data.set.filter.type", "dateRange")),
+			_registerSystemFDSEntry(FDS_NAMES[0]));
+
+		JSONAssert.assertEquals(
+			JSONUtil.putAll(
+				JSONUtil.put(
+					"entityFieldType", FDSEntityFieldTypes.DATE
+				).put(
+					"id", IDS[0]
+				).put(
+					"label", LABELS[0]
+				).put(
+					"max",
+					JSONUtil.put(
+						"day", 1
+					).put(
+						"month", 12
+					).put(
+						"year", 2000
+					)
+				).put(
+					"min",
+					JSONUtil.put(
+						"day", 16
+					).put(
+						"month", 3
+					).put(
+						"year", 1977
+					)
+				).put(
+					"preloadedData",
+					JSONUtil.put(
+						"from",
+						JSONUtil.put(
+							"day", 30
+						).put(
+							"month", 11
+						).put(
+							"year", 1985
+						)
+					).put(
+						"to",
+						JSONUtil.put(
+							"day", 27
+						).put(
+							"month", 5
+						).put(
+							"year", 1995
+						)
+					)
+				).put(
+					"type", "dateRange"
+				)
+			).toString(),
+			systemFDSSerializer.serializeFilters(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// Different filters
+
+		_registerServices(
+			_registerFDSFilter(
+				_createFDSFilterDate(
+					IDS[0], LABELS[0], new DateFDSFilterItem(1, 1, 1980),
+					new DateFDSFilterItem(0, 0, 0), null),
+				FDS_NAMES[0]),
+			_registerFDSFilter(
+				_createFDSFilterDate(
+					IDS[1], LABELS[1], new DateFDSFilterItem(31, 12, 1987),
+					new DateFDSFilterItem(1, 2, 1900), null),
+				FDS_NAMES[1]),
+			bundleContext.registerService(
+				FDSFilterContextContributor.class,
+				new DateRangeFDSFilterContextContributor(),
+				MapUtil.singletonDictionary(
+					"frontend.data.set.filter.type", "dateRange")),
+			_registerSystemFDSEntry(FDS_NAMES[0]),
+			_registerSystemFDSEntry(FDS_NAMES[1]));
+
+		JSONAssert.assertNotEquals(
+			systemFDSSerializer.serializeFilters(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			systemFDSSerializer.serializeFilters(
+				FDS_NAMES[1], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// Disabled filter
+
+		_registerServices(
+			_registerFDSFilter(
+				new FDSFilter() {
+
+					@Override
+					public String getId() {
+						return IDS[0];
+					}
+
+					@Override
+					public String getLabel() {
+						return LABELS[0];
+					}
+
+					@Override
+					public String getType() {
+						return "dateRange";
+					}
+
+					@Override
+					public boolean isEnabled() {
+						return false;
+					}
+
+				},
+				FDS_NAMES[0]),
+			_registerSystemFDSEntry(FDS_NAMES[0]));
+
+		JSONAssert.assertEquals(
+			"[]",
+			systemFDSSerializer.serializeFilters(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// No filter
+
+		_registerServices(_registerSystemFDSEntry(FDS_NAMES[0]));
+
+		JSONAssert.assertEquals(
+			"[]",
+			systemFDSSerializer.serializeFilters(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// Selection filter
+
+		_registerServices(
+			_registerFDSFilter(
+				new BaseSelectionFDSFilter() {
+
+					@Override
+					public String getAPIURL() {
+						return URL;
+					}
+
+					@Override
+					public String getEntityFieldType() {
+						return FDSEntityFieldTypes.COLLECTION;
+					}
+
+					@Override
+					public String getId() {
+						return IDS[0];
+					}
+
+					@Override
+					public String getItemKey() {
+						return ITEM_KEY;
+					}
+
+					@Override
+					public String getItemLabel() {
+						return LABELS[0];
+					}
+
+					@Override
+					public String getLabel() {
+						return LABELS[1];
+					}
+
+					@Override
+					public Map<String, Object> getPreloadedData() {
+						return new HashMapBuilder<>().<String, Object>put(
+							"exclude", false
+						).build();
+					}
+
+					@Override
+					public List<SelectionFDSFilterItem>
+						getSelectionFDSFilterItems(Locale locale) {
+
+						return ListUtil.fromArray(
+							new SelectionFDSFilterItem(LABELS[2], IDS[2]),
+							new SelectionFDSFilterItem(LABELS[3], IDS[3]));
+					}
+
+					@Override
+					public boolean isAutocompleteEnabled() {
+						return true;
+					}
+
+					@Override
+					public boolean isMultiple() {
+						return true;
+					}
+
+				},
+				FDS_NAMES[0]),
+			bundleContext.registerService(
+				FDSFilterContextContributor.class,
+				new SelectionFDSFilterContextContributor(),
+				MapUtil.singletonDictionary(
+					"frontend.data.set.filter.type", "selection")),
+			_registerSystemFDSEntry(
+				SystemFDSEntryFactory.create(FDS_NAMES[0])));
+
+		JSONAssert.assertEquals(
+			JSONUtil.putAll(
+				JSONUtil.put(
+					"apiURL", URL
+				).put(
+					"autocompleteEnabled", true
+				).put(
+					"entityFieldType", FDSEntityFieldTypes.COLLECTION
+				).put(
+					"id", IDS[0]
+				).put(
+					"inputPlaceholder", "search"
+				).put(
+					"itemKey", ITEM_KEY
+				).put(
+					"itemLabel", LABELS[0]
+				).put(
+					"items",
+					JSONUtil.putAll(
+						JSONUtil.put(
+							"label", LABELS[2]
+						).put(
+							"value", IDS[2]
+						),
+						JSONUtil.put(
+							"label", LABELS[3]
+						).put(
+							"value", IDS[3]
+						))
+				).put(
+					"label", LABELS[1]
+				).put(
+					"multiple", true
+				).put(
+					"preloadedData", JSONUtil.put("exclude", false)
+				).put(
+					"type", "selection"
+				)
+			).toString(),
+			systemFDSSerializer.serializeFilters(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// Shared filters
+
+		FDSFilter dateRangeFDSFilter = _createFDSFilterDate(
+			FIELD_NAMES[0], LABELS[0], new DateFDSFilterItem(1, 1, 1980),
+			new DateFDSFilterItem(0, 0, 0), null);
+
+		_registerServices(
+			_registerFDSFilter(dateRangeFDSFilter, FDS_NAMES[0]),
+			_registerFDSFilter(dateRangeFDSFilter, FDS_NAMES[1]),
+			_registerSystemFDSEntry(FDS_NAMES[0]),
+			_registerSystemFDSEntry(FDS_NAMES[1]));
+
+		JSONAssert.assertEquals(
+			systemFDSSerializer.serializeFilters(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			systemFDSSerializer.serializeFilters(
+				FDS_NAMES[1], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		serviceTrackerMap1.close();
+		serviceTrackerMap2.close();
 	}
 
 	@Test
 	public void testSerializeItemsActions() throws Exception {
-		ServiceTrackerMap
-			<String,
-			 ServiceTrackerCustomizerFactory.ServiceWrapper<FDSItemsActions>>
-				serviceTrackerMap = ServiceTrackerMapFactory.openSingleValueMap(
-					_bundleContext, FDSItemsActions.class,
-					"frontend.data.set.name",
-					ServiceTrackerCustomizerFactory.
-						<FDSItemsActions>serviceWrapper(_bundleContext));
-
-		FDSItemsActionsRegistry fdsItemsActionsRegistry =
-			new FDSItemsActionsRegistryImpl();
-
-		ReflectionTestUtil.setFieldValue(
-			fdsItemsActionsRegistry, "_serviceTrackerMap", serviceTrackerMap);
-
-		ReflectionTestUtil.setFieldValue(
-			_fdsSerializer, "_fdsItemsActionsRegistry",
-			fdsItemsActionsRegistry);
 
 		// Different items actions
-
-		ServiceRegistration<SystemFDSEntry> systemFDSEntryServiceRegistration1 =
-			_registerSystemFDSEntry(
-				null, "fdsName1", "/app", "/endpoint", "schema");
 
 		List<FDSActionDropdownItem> fdsActionDropdownItems1 =
 			ListUtil.fromArray(
 				new FDSActionDropdownItem(
-					null, "trash", "delete", "delete", "delete", "delete",
+					null, ICONS[0], IDS[0], LABELS[0], "delete", "delete",
 					"headless"));
-
-		ServiceRegistration<FDSItemsActions> itemsActionsServiceRegistration1 =
-			_registerFDSItemsActions(fdsActionDropdownItems1, "fdsName1");
-
-		Assert.assertEquals(
-			fdsActionDropdownItems1,
-			_fdsSerializer.serializeItemsActions(
-				"fdsName1", _httpServletRequest));
-
-		ServiceRegistration<SystemFDSEntry> systemFDSEntryServiceRegistration2 =
-			_registerSystemFDSEntry(
-				null, "fdsName2", "/app", "/endpoint", "schema");
 
 		List<FDSActionDropdownItem> fdsActionDropdownItems2 =
 			ListUtil.fromArray(
 				new FDSActionDropdownItem(
-					null, "cog", "permissions", "permissions", "get",
-					"permissions", "modal-permissions"));
+					null, ICONS[1], IDS[1], LABELS[1], "get", "permissions",
+					"modal-permissions"));
 
-		ServiceRegistration<FDSItemsActions> itemsActionsServiceRegistration2 =
-			_registerFDSItemsActions(fdsActionDropdownItems2, "fdsName2");
+		_registerServices(
+			_registerFDSItemsActions(fdsActionDropdownItems1, FDS_NAMES[0]),
+			_registerFDSItemsActions(fdsActionDropdownItems2, FDS_NAMES[1]),
+			_registerSystemFDSEntry(FDS_NAMES[0]),
+			_registerSystemFDSEntry(FDS_NAMES[1]));
 
 		Assert.assertEquals(
+			fdsActionDropdownItems1,
+			systemFDSSerializer.serializeItemsActions(
+				FDS_NAMES[0], httpServletRequest));
+		Assert.assertEquals(
 			fdsActionDropdownItems2,
-			_fdsSerializer.serializeItemsActions(
-				"fdsName2", _httpServletRequest));
-
+			systemFDSSerializer.serializeItemsActions(
+				FDS_NAMES[1], httpServletRequest));
 		Assert.assertNotEquals(
-			_fdsSerializer.serializeItemsActions(
-				"fdsName1", _httpServletRequest),
-			_fdsSerializer.serializeItemsActions(
-				"fdsName2", _httpServletRequest));
+			systemFDSSerializer.serializeItemsActions(
+				FDS_NAMES[0], httpServletRequest),
+			systemFDSSerializer.serializeItemsActions(
+				FDS_NAMES[1], httpServletRequest));
 
-		itemsActionsServiceRegistration1.unregister();
-		itemsActionsServiceRegistration2.unregister();
-		systemFDSEntryServiceRegistration1.unregister();
-		systemFDSEntryServiceRegistration2.unregister();
+		_unregisterServices();
 
 		// No items actions
 
-		systemFDSEntryServiceRegistration1 = _registerSystemFDSEntry(
-			null, "fdsName", "/app", "/endpoint", "schema");
+		_registerServices(_registerSystemFDSEntry(FDS_NAMES[0]));
 
 		Assert.assertTrue(
-			_fdsSerializer.serializeItemsActions(
-				"fdsName", _httpServletRequest
+			systemFDSSerializer.serializeItemsActions(
+				FDS_NAMES[0], httpServletRequest
 			).isEmpty());
 
-		systemFDSEntryServiceRegistration1.unregister();
+		_unregisterServices();
 
 		// Shared items actions
 
-		systemFDSEntryServiceRegistration1 = _registerSystemFDSEntry(
-			null, "fdsName1", "/app", "/endpoint", "schema");
-		systemFDSEntryServiceRegistration2 = _registerSystemFDSEntry(
-			null, "fdsName2", "/app", "/endpoint", "schema");
-
 		fdsActionDropdownItems1 = ListUtil.fromArray(
 			new FDSActionDropdownItem(
-				null, "trash", "delete", "delete", "delete", "delete",
+				null, ICONS[0], IDS[0], LABELS[0], "delete", "delete",
 				"headless"));
 
-		itemsActionsServiceRegistration1 = _registerFDSItemsActions(
-			fdsActionDropdownItems1, "fdsName1");
-		itemsActionsServiceRegistration2 = _registerFDSItemsActions(
-			fdsActionDropdownItems1, "fdsName2");
+		_registerServices(
+			_registerFDSItemsActions(fdsActionDropdownItems1, FDS_NAMES[0]),
+			_registerFDSItemsActions(fdsActionDropdownItems1, FDS_NAMES[1]),
+			_registerSystemFDSEntry(FDS_NAMES[0]),
+			_registerSystemFDSEntry(FDS_NAMES[1]));
 
 		Assert.assertEquals(
-			_fdsSerializer.serializeItemsActions(
-				"fdsName1", _httpServletRequest),
-			_fdsSerializer.serializeItemsActions(
-				"fdsName2", _httpServletRequest));
+			systemFDSSerializer.serializeItemsActions(
+				FDS_NAMES[0], httpServletRequest),
+			systemFDSSerializer.serializeItemsActions(
+				FDS_NAMES[1], httpServletRequest));
 
-		itemsActionsServiceRegistration1.unregister();
-		itemsActionsServiceRegistration2.unregister();
-		systemFDSEntryServiceRegistration1.unregister();
-		systemFDSEntryServiceRegistration2.unregister();
-
-		serviceTrackerMap.close();
+		_unregisterServices();
 	}
 
-	private ServiceRegistration<FDSAPIURLResolver> _registerFDSAPIURLResolver(
-		String restApplication, String restSchema, String[] tokens,
-		String[] values) {
+	@Test
+	public void testSerializePagination() throws Exception {
 
-		return _bundleContext.registerService(
-			FDSAPIURLResolver.class,
-			new FDSAPIURLResolver() {
+		// Default pagination
 
-				@Override
-				public String getSchema() {
-					return restSchema;
-				}
+		_registerServices(_registerSystemFDSEntry(FDS_NAMES[0]));
 
-				@Override
-				public String resolve(
-						String baseURL, HttpServletRequest httpServletRequest)
-					throws PortalException {
+		JSONAssert.assertEquals(
+			defaultPagination,
+			systemFDSSerializer.serializePagination(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
 
-					return StringUtil.replace(baseURL, tokens, values);
-				}
+		_unregisterServices();
 
-			},
-			MapUtil.singletonDictionary(
-				"fds.rest.application.key",
-				restApplication + "/" + restSchema));
+		// Different pagination
+
+		_registerServices(
+			_registerSystemFDSEntry(
+				SystemFDSEntryFactory.create(
+					FDS_NAMES[0]
+				).withPagination(
+					DEFAULT_ITEMS_PER_PAGE_ARRAY[0],
+					LIST_OF_ITEMS_PER_PAGE_ARRAY[0]
+				)),
+			_registerSystemFDSEntry(
+				SystemFDSEntryFactory.create(
+					FDS_NAMES[1]
+				).withPagination(
+					DEFAULT_ITEMS_PER_PAGE_ARRAY[1],
+					LIST_OF_ITEMS_PER_PAGE_ARRAY[1]
+				)));
+
+		JSONAssert.assertEquals(
+			JSONUtil.put(
+				"deltas",
+				() -> JSONUtil.toJSONArray(
+					ListUtil.fromArray(LIST_OF_ITEMS_PER_PAGE_ARRAY[0]),
+					itemsPerPage -> JSONUtil.put("label", itemsPerPage))
+			).put(
+				"initialDelta", DEFAULT_ITEMS_PER_PAGE_ARRAY[0]
+			).toString(),
+			systemFDSSerializer.serializePagination(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		JSONAssert.assertEquals(
+			JSONUtil.put(
+				"deltas",
+				() -> JSONUtil.toJSONArray(
+					ListUtil.fromArray(LIST_OF_ITEMS_PER_PAGE_ARRAY[1]),
+					itemsPerPage -> JSONUtil.put("label", itemsPerPage))
+			).put(
+				"initialDelta", DEFAULT_ITEMS_PER_PAGE_ARRAY[1]
+			).toString(),
+			systemFDSSerializer.serializePagination(
+				FDS_NAMES[1], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// Shared pagination
+
+		_registerServices(
+			_registerSystemFDSEntry(
+				SystemFDSEntryFactory.create(
+					FDS_NAMES[0]
+				).withPagination(
+					DEFAULT_ITEMS_PER_PAGE_ARRAY[0],
+					LIST_OF_ITEMS_PER_PAGE_ARRAY[0]
+				)),
+			_registerSystemFDSEntry(
+				SystemFDSEntryFactory.create(
+					FDS_NAMES[1]
+				).withPagination(
+					DEFAULT_ITEMS_PER_PAGE_ARRAY[0],
+					LIST_OF_ITEMS_PER_PAGE_ARRAY[0]
+				)));
+
+		JSONAssert.assertEquals(
+			systemFDSSerializer.serializePagination(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			systemFDSSerializer.serializePagination(
+				FDS_NAMES[1], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// Wrong pagination
+
+		_registerServices(
+			_registerSystemFDSEntry(
+				SystemFDSEntryFactory.create(
+					FDS_NAMES[0]
+				).withPagination(
+					0, LIST_OF_ITEMS_PER_PAGE_ARRAY[2]
+				)),
+			_registerSystemFDSEntry(
+				SystemFDSEntryFactory.create(
+					FDS_NAMES[1]
+				).withPagination(
+					-1, null
+				)));
+
+		JSONAssert.assertEquals(
+			JSONUtil.put(
+				"deltas",
+				() -> JSONUtil.toJSONArray(
+					ListUtil.fromArray(LIST_OF_ITEMS_PER_PAGE_ARRAY[3]),
+					itemsPerPage -> JSONUtil.put("label", itemsPerPage))
+			).put(
+				"initialDelta", PropsValues.SEARCH_CONTAINER_PAGE_DEFAULT_DELTA
+			).toString(),
+			systemFDSSerializer.serializePagination(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		JSONAssert.assertEquals(
+			defaultPagination,
+			systemFDSSerializer.serializePagination(
+				FDS_NAMES[1], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+	}
+
+	@Test
+	public void testSerializePropsTransformer() throws Exception {
+
+		// Different props transformer
+
+		_registerServices(
+			_registerSystemFDSEntry(
+				SystemFDSEntryFactory.create(
+					FDS_NAMES[0]
+				).withPropsTransformer(
+					PROPS_TRANSFORMERS[0]
+				)),
+			_registerSystemFDSEntry(
+				SystemFDSEntryFactory.create(
+					FDS_NAMES[1]
+				).withPropsTransformer(
+					PROPS_TRANSFORMERS[1]
+				)));
+
+		Assert.assertEquals(
+			PROPS_TRANSFORMERS[0],
+			systemFDSSerializer.serializePropsTransformer(
+				FDS_NAMES[0], httpServletRequest));
+
+		Assert.assertEquals(
+			PROPS_TRANSFORMERS[1],
+			systemFDSSerializer.serializePropsTransformer(
+				FDS_NAMES[1], httpServletRequest));
+
+		_unregisterServices();
+
+		// No props transformer
+
+		_registerServices(_registerSystemFDSEntry(FDS_NAMES[0]));
+
+		Assert.assertNull(
+			systemFDSSerializer.serializePropsTransformer(
+				FDS_NAMES[0], httpServletRequest));
+
+		_unregisterServices();
+
+		// Shared props transformer
+
+		_registerServices(
+			_registerSystemFDSEntry(
+				SystemFDSEntryFactory.create(
+					FDS_NAMES[0]
+				).withPropsTransformer(
+					PROPS_TRANSFORMERS[0]
+				)),
+			_registerSystemFDSEntry(
+				SystemFDSEntryFactory.create(
+					FDS_NAMES[1]
+				).withPropsTransformer(
+					PROPS_TRANSFORMERS[0]
+				)));
+
+		Assert.assertEquals(
+			PROPS_TRANSFORMERS[0],
+			systemFDSSerializer.serializePropsTransformer(
+				FDS_NAMES[0], httpServletRequest),
+			systemFDSSerializer.serializePropsTransformer(
+				FDS_NAMES[1], httpServletRequest));
+
+		_unregisterServices();
+	}
+
+	@Test
+	public void testSerializeSortItems() throws Exception {
+
+		// Different sorts
+
+		FDSSortItemList fdsSortItemList1 = FDSSortItemListBuilder.add(
+			FDSSortItemBuilder.setActive(
+				true
+			).setDirection(
+				"asc"
+			).setKey(
+				IDS[0]
+			).setLabel(
+				LABELS[0]
+			).build()
+		).add(
+			FDSSortItemBuilder.setActive(
+				false
+			).setDirection(
+				"desc"
+			).setKey(
+				IDS[1]
+			).setLabel(
+				LABELS[1]
+			).build()
+		).add(
+			FDSSortItemBuilder.setActive(
+				false
+			).setDirection(
+				"desc"
+			).setKey(
+				IDS[2]
+			).setLabel(
+				LABELS[2]
+			).build()
+		).build();
+
+		_registerServices(
+			_registerFDSSorts(FDS_NAMES[0], fdsSortItemList1),
+			_registerSystemFDSEntry(FDS_NAMES[0]));
+
+		Assert.assertEquals(
+			fdsSortItemList1,
+			systemFDSSerializer.serializeSorts(
+				FDS_NAMES[0], httpServletRequest));
+
+		FDSSortItemList fdsSortItemList2 = FDSSortItemListBuilder.add(
+			FDSSortItemBuilder.setActive(
+				false
+			).setDirection(
+				"asc"
+			).setKey(
+				IDS[2]
+			).setLabel(
+				LABELS[0]
+			).build()
+		).add(
+			FDSSortItemBuilder.setActive(
+				true
+			).setDirection(
+				"asc"
+			).setKey(
+				IDS[1]
+			).setLabel(
+				LABELS[1]
+			).build()
+		).add(
+			FDSSortItemBuilder.setActive(
+				false
+			).setDirection(
+				"asc"
+			).setKey(
+				IDS[0]
+			).setLabel(
+				LABELS[2]
+			).build()
+		).build();
+
+		_registerServices(
+			_registerFDSSorts(FDS_NAMES[1], fdsSortItemList2),
+			_registerSystemFDSEntry(FDS_NAMES[1]));
+
+		Assert.assertEquals(
+			fdsSortItemList2,
+			systemFDSSerializer.serializeSorts(
+				FDS_NAMES[1], httpServletRequest));
+
+		Assert.assertNotEquals(
+			systemFDSSerializer.serializeSorts(
+				FDS_NAMES[0], httpServletRequest),
+			systemFDSSerializer.serializeSorts(
+				FDS_NAMES[1], httpServletRequest));
+
+		_unregisterServices();
+
+		// No sorts
+
+		_registerServices(_registerSystemFDSEntry(FDS_NAMES[0]));
+
+		Assert.assertTrue(
+			systemFDSSerializer.serializeSorts(
+				FDS_NAMES[0], httpServletRequest
+			).isEmpty());
+
+		_unregisterServices();
+
+		// Shared sort
+
+		_registerServices(
+			_registerFDSSorts(FDS_NAMES[0], fdsSortItemList1),
+			_registerFDSSorts(FDS_NAMES[1], fdsSortItemList1),
+			_registerSystemFDSEntry(FDS_NAMES[0]),
+			_registerSystemFDSEntry(FDS_NAMES[1]));
+
+		Assert.assertEquals(
+			systemFDSSerializer.serializeSorts(
+				FDS_NAMES[0], httpServletRequest),
+			systemFDSSerializer.serializeSorts(
+				FDS_NAMES[1], httpServletRequest));
+
+		_unregisterServices();
+	}
+
+	@Test
+	public void testSerializeViews() throws Exception {
+
+		// Cards view
+
+		mockLanguage();
+
+		FDSView cardsFDSView = new BaseCardsFDSView() {
+
+			@Override
+			public String getDescription() {
+				return DESCRIPTIONS[0];
+			}
+
+			@Override
+			public FDSCardSchema getFDSCardSchema(Locale locale) {
+				FDSCardSchemaBuilder fdsCardSchemaBuilder =
+					new FDSCardSchemaBuilderImpl();
+
+				return fdsCardSchemaBuilder.add(
+					DISPLAY_TYPE_KEYS[0], DISPLAY_TYPE_VALUES[0]
+				).add(
+					DISPLAY_TYPE_KEYS[1],
+					HashMapBuilder.put(
+						DISPLAY_TYPE_KEYS[2], DISPLAY_TYPE_VALUES[1]
+					).put(
+						DISPLAY_TYPE_KEYS[3], DISPLAY_TYPE_VALUES[2]
+					).build(),
+					DISPLAY_TYPE_VALUES[3]
+				).build();
+			}
+
+			@Override
+			public String getImage() {
+				return IMAGES[0];
+			}
+
+			@Override
+			public String getLink() {
+				return LINK;
+			}
+
+			@Override
+			public String getSticker() {
+				return STICKERS[0];
+			}
+
+			@Override
+			public String getSymbol() {
+				return SYMBOLS[0];
+			}
+
+			@Override
+			public String getTitle() {
+				return TITLES[0];
+			}
+
+		};
+
+		_registerServices(
+			bundleContext.registerService(
+				FDSViewContextContributor.class,
+				new CardsFDSViewContextContributor(),
+				MapUtil.singletonDictionary(
+					"frontend.data.set.view.name", FDSConstants.CARDS)),
+			_registerFDSView(FDS_NAMES[0], cardsFDSView),
+			_registerSystemFDSEntry(FDS_NAMES[0]));
+
+		JSONAssert.assertEquals(
+			JSONUtil.putAll(
+				JSONUtil.put(
+					"contentRenderer", "cards"
+				).put(
+					"default", false
+				).put(
+					"label", "cards"
+				).put(
+					"name", "cards"
+				).put(
+					"schema",
+					JSONUtil.put(
+						"description", DESCRIPTIONS[0]
+					).put(
+						"image", IMAGES[0]
+					).put(
+						"labels",
+						JSONUtil.putAll(
+							JSONUtil.put(
+								"displayType", DISPLAY_TYPE_KEYS[0]
+							).put(
+								"value", DISPLAY_TYPE_VALUES[0]
+							),
+							JSONUtil.put(
+								"displayTypeKey", DISPLAY_TYPE_KEYS[1]
+							).put(
+								"displayTypeValues",
+								JSONUtil.put(
+									DISPLAY_TYPE_KEYS[2], DISPLAY_TYPE_VALUES[1]
+								).put(
+									DISPLAY_TYPE_KEYS[3], DISPLAY_TYPE_VALUES[2]
+								)
+							).put(
+								"value", DISPLAY_TYPE_VALUES[3]
+							))
+					).put(
+						"link", LINK
+					).put(
+						"sticker", STICKERS[0]
+					).put(
+						"symbol", SYMBOLS[0]
+					).put(
+						"title", TITLES[0]
+					)
+				).put(
+					"thumbnail", "cards2"
+				)
+			).toString(),
+			systemFDSSerializer.serializeViews(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// Different views
+
+		FDSView listFDSView = new BaseListFDSView() {
+
+			@Override
+			public String getDescription() {
+				return DESCRIPTIONS[1];
+			}
+
+			@Override
+			public String getImage() {
+				return IMAGES[1];
+			}
+
+			@Override
+			public String getSticker() {
+				return STICKERS[1];
+			}
+
+			@Override
+			public String getSymbol() {
+				return SYMBOLS[1];
+			}
+
+			@Override
+			public String getTitle() {
+				return TITLES[1];
+			}
+
+		};
+
+		_registerServices(
+			bundleContext.registerService(
+				FDSViewContextContributor.class,
+				new CardsFDSViewContextContributor(),
+				MapUtil.singletonDictionary(
+					"frontend.data.set.view.name", FDSConstants.CARDS)),
+			bundleContext.registerService(
+				FDSViewContextContributor.class,
+				new ListFDSViewContextContributor(),
+				MapUtil.singletonDictionary(
+					"frontend.data.set.view.name", FDSConstants.LIST)),
+			_registerFDSView(FDS_NAMES[0], cardsFDSView),
+			_registerFDSView(FDS_NAMES[1], listFDSView),
+			_registerSystemFDSEntry(FDS_NAMES[0]),
+			_registerSystemFDSEntry(FDS_NAMES[1]));
+
+		JSONAssert.assertNotEquals(
+			systemFDSSerializer.serializeViews(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			systemFDSSerializer.serializeViews(
+				FDS_NAMES[1], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// Empty view
+
+		_registerServices(_registerSystemFDSEntry(FDS_NAMES[0]));
+
+		JSONAssert.assertEquals(
+			"[]",
+			systemFDSSerializer.serializeViews(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// List view
+
+		_registerServices(
+			bundleContext.registerService(
+				FDSViewContextContributor.class,
+				new ListFDSViewContextContributor(),
+				MapUtil.singletonDictionary(
+					"frontend.data.set.view.name", FDSConstants.LIST)),
+			_registerFDSView(FDS_NAMES[0], listFDSView),
+			_registerSystemFDSEntry(FDS_NAMES[0]));
+
+		JSONAssert.assertEquals(
+			JSONUtil.putAll(
+				JSONUtil.put(
+					"contentRenderer", "list"
+				).put(
+					"default", false
+				).put(
+					"label", "list"
+				).put(
+					"name", "list"
+				).put(
+					"schema",
+					JSONUtil.put(
+						"description", DESCRIPTIONS[1]
+					).put(
+						"image", IMAGES[1]
+					).put(
+						"sticker", STICKERS[1]
+					).put(
+						"symbol", SYMBOLS[1]
+					).put(
+						"title", TITLES[1]
+					)
+				).put(
+					"thumbnail", "list"
+				)
+			).toString(),
+			systemFDSSerializer.serializeViews(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// Shared view
+
+		_registerServices(
+			bundleContext.registerService(
+				FDSViewContextContributor.class,
+				new CardsFDSViewContextContributor(),
+				MapUtil.singletonDictionary(
+					"frontend.data.set.view.name", FDSConstants.CARDS)),
+			_registerFDSView(FDS_NAMES[0], cardsFDSView),
+			_registerFDSView(FDS_NAMES[1], cardsFDSView),
+			_registerSystemFDSEntry(FDS_NAMES[0]),
+			_registerSystemFDSEntry(FDS_NAMES[1]));
+
+		JSONAssert.assertEquals(
+			systemFDSSerializer.serializeViews(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			systemFDSSerializer.serializeViews(
+				FDS_NAMES[1], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+
+		// Table view
+
+		_registerServices(
+			bundleContext.registerService(
+				FDSViewContextContributor.class,
+				new TableFDSViewContextContributor(),
+				MapUtil.singletonDictionary(
+					"frontend.data.set.view.name", FDSConstants.TABLE)),
+			_registerFDSView(
+				FDS_NAMES[0],
+				new BaseTableFDSView() {
+
+					@Override
+					public FDSTableSchema getFDSTableSchema(Locale locale) {
+						FDSTableSchemaBuilder fdsTableSchemaBuilder =
+							new FDSTableSchemaBuilderImpl();
+
+						return fdsTableSchemaBuilder.add(
+							FIELD_NAMES[0], LABELS[0],
+							fdsTableSchemaField ->
+								fdsTableSchemaField.setContentRenderer(
+									CONTENT_RENDERERS[0])
+						).add(
+							FIELD_NAMES[1], LABELS[1],
+							fdsTableSchemaField ->
+								fdsTableSchemaField.setContentRenderer(
+									CONTENT_RENDERERS[1])
+						).add(
+							FIELD_NAMES[2], LABELS[2],
+							fdsTableSchemaField ->
+								fdsTableSchemaField.setSortable(true)
+						).build();
+					}
+
+					@Override
+					public boolean isQuickActionsEnabled() {
+						return false;
+					}
+
+				}),
+			_registerSystemFDSEntry(FDS_NAMES[0]));
+
+		JSONAssert.assertEquals(
+			JSONUtil.putAll(
+				JSONUtil.put(
+					"contentRenderer", "table"
+				).put(
+					"default", false
+				).put(
+					"label", "table"
+				).put(
+					"name", "table"
+				).put(
+					"quickActionsEnabled", false
+				).put(
+					"schema",
+					JSONUtil.put(
+						"fields",
+						JSONUtil.putAll(
+							JSONUtil.put(
+								"contentRenderer", CONTENT_RENDERERS[0]
+							).put(
+								"contentRendererClientExtension", false
+							).put(
+								"fieldName", FIELD_NAMES[0]
+							).put(
+								"label", LABELS[0]
+							).put(
+								"localizeLabel", true
+							).put(
+								"sortable", false
+							),
+							JSONUtil.put(
+								"contentRenderer", CONTENT_RENDERERS[1]
+							).put(
+								"contentRendererClientExtension", false
+							).put(
+								"fieldName", FIELD_NAMES[1]
+							).put(
+								"label", LABELS[1]
+							).put(
+								"localizeLabel", true
+							).put(
+								"sortable", false
+							),
+							JSONUtil.put(
+								"contentRendererClientExtension", false
+							).put(
+								"fieldName", FIELD_NAMES[2]
+							).put(
+								"label", LABELS[2]
+							).put(
+								"localizeLabel", true
+							).put(
+								"sortable", true
+							)))
+				).put(
+					"thumbnail", "table"
+				)
+			).toString(),
+			systemFDSSerializer.serializeViews(
+				FDS_NAMES[0], httpServletRequest
+			).toString(),
+			JSONCompareMode.STRICT);
+
+		_unregisterServices();
+	}
+
+	public class SystemFDSEntryFactory {
+
+		public static SystemFDSEntryWrapper create(String fdsName) {
+			return new SystemFDSEntryWrapper(fdsName);
+		}
+
+	}
+
+	private FDSFilter _createFDSFilterDate(
+		String id, String label, DateFDSFilterItem maxDateFDSFilterItem,
+		DateFDSFilterItem minDateFDSFilterItem,
+		Map<String, Object> preloadedData) {
+
+		return new BaseDateRangeFDSFilter() {
+
+			@Override
+			public String getEntityFieldType() {
+				return FDSEntityFieldTypes.DATE;
+			}
+
+			@Override
+			public String getId() {
+				return id;
+			}
+
+			@Override
+			public String getLabel() {
+				return label;
+			}
+
+			@Override
+			public DateFDSFilterItem getMaxDateFDSFilterItem() {
+				return maxDateFDSFilterItem;
+			}
+
+			@Override
+			public DateFDSFilterItem getMinDateFDSFilterItem() {
+				return minDateFDSFilterItem;
+			}
+
+			@Override
+			public Map<String, Object> getPreloadedData() {
+				return preloadedData;
+			}
+
+		};
 	}
 
 	private ServiceRegistration<FDSBulkActions> _registerFDSBulkActions(
 		List<FDSActionDropdownItem> fdsActionDropdownItems, String fdsName) {
 
-		return _bundleContext.registerService(
+		return bundleContext.registerService(
 			FDSBulkActions.class,
 			new FDSBulkActions() {
 
@@ -582,7 +1616,7 @@ public class SystemFDSSerializerTest {
 	private ServiceRegistration<FDSCreationMenu> _registerFDSCreationMenu(
 		CreationMenu creationMenu, String fdsName) {
 
-		return _bundleContext.registerService(
+		return bundleContext.registerService(
 			FDSCreationMenu.class,
 			new FDSCreationMenu() {
 
@@ -597,10 +1631,18 @@ public class SystemFDSSerializerTest {
 			MapUtil.singletonDictionary("frontend.data.set.name", fdsName));
 	}
 
+	private ServiceRegistration<FDSFilter> _registerFDSFilter(
+		FDSFilter fdsFilter, String fdsName) {
+
+		return bundleContext.registerService(
+			FDSFilter.class, fdsFilter,
+			MapUtil.singletonDictionary("frontend.data.set.name", fdsName));
+	}
+
 	private ServiceRegistration<FDSItemsActions> _registerFDSItemsActions(
 		List<FDSActionDropdownItem> fdsActionDropdownItems, String fdsName) {
 
-		return _bundleContext.registerService(
+		return bundleContext.registerService(
 			FDSItemsActions.class,
 			new FDSItemsActions() {
 
@@ -615,59 +1657,176 @@ public class SystemFDSSerializerTest {
 			MapUtil.singletonDictionary("frontend.data.set.name", fdsName));
 	}
 
-	private ServiceRegistration<SystemFDSEntry> _registerSystemFDSEntry(
-		String additionalURLParameters, String fdsName, String restApplication,
-		String restEndpoint, String restSchema) {
+	private ServiceRegistration<FDSSorts> _registerFDSSorts(
+		String fdsName, List<FDSSortItem> fdsSortItems) {
 
-		return _bundleContext.registerService(
-			SystemFDSEntry.class,
-			new SystemFDSEntry() {
-
-				@Override
-				public String getAdditionalAPIURLParameters() {
-					return additionalURLParameters;
-				}
+		return bundleContext.registerService(
+			FDSSorts.class,
+			new FDSSorts() {
 
 				@Override
-				public String getDescription() {
-					return "";
-				}
+				public List<FDSSortItem> getFDSSortItems(
+					HttpServletRequest httpServletRequest) {
 
-				@Override
-				public String getName() {
-					return fdsName;
-				}
-
-				@Override
-				public String getRESTApplication() {
-					return restApplication;
-				}
-
-				@Override
-				public String getRESTEndpoint() {
-					return restEndpoint;
-				}
-
-				@Override
-				public String getRESTSchema() {
-					return restSchema;
-				}
-
-				@Override
-				public String getTitle() {
-					return "";
+					return fdsSortItems;
 				}
 
 			},
 			MapUtil.singletonDictionary("frontend.data.set.name", fdsName));
 	}
 
-	private BundleContext _bundleContext = SystemBundleUtil.getBundleContext();
-	private final FDSSerializer _fdsSerializer = new SystemFDSSerializer();
-	private final HttpServletRequest _httpServletRequest = Mockito.mock(
-		HttpServletRequest.class);
-	private ServiceTrackerMap<String, SystemFDSEntry> _serviceTrackerMap;
-	private final SystemFDSEntryRegistry _systemFDSEntryRegistry =
-		new SystemFDSEntryRegistryImpl();
+	private ServiceRegistration<FDSView> _registerFDSView(
+		String fdsName, FDSView fdsView) {
+
+		return bundleContext.registerService(
+			FDSView.class, fdsView,
+			MapUtil.singletonDictionary("frontend.data.set.name", fdsName));
+	}
+
+	private void _registerServices(
+		ServiceRegistration<?>... serviceRegistrations) {
+
+		for (ServiceRegistration<?> serviceRegistration :
+				serviceRegistrations) {
+
+			_serviceRegistrations.add(serviceRegistration);
+		}
+	}
+
+	private ServiceRegistration<SystemFDSEntry> _registerSystemFDSEntry(
+		String fdsName) {
+
+		return _registerSystemFDSEntry(SystemFDSEntryFactory.create(fdsName));
+	}
+
+	private ServiceRegistration<SystemFDSEntry> _registerSystemFDSEntry(
+		SystemFDSEntryWrapper systemFDSEntryWrapper) {
+
+		return systemFDSEntryWrapper.register(bundleContext);
+	}
+
+	private void _unregisterServices() {
+		for (ServiceRegistration<?> serviceRegistration :
+				_serviceRegistrations) {
+
+			serviceRegistration.unregister();
+		}
+
+		_serviceRegistrations.clear();
+	}
+
+	private final List<ServiceRegistration<?>> _serviceRegistrations =
+		new ArrayList<>();
+
+	private static class SystemFDSEntryWrapper {
+
+		public SystemFDSEntryWrapper(String fdsName) {
+			_fdsName = fdsName;
+		}
+
+		public ServiceRegistration<SystemFDSEntry> register(
+			BundleContext bundleContext) {
+
+			return bundleContext.registerService(
+				SystemFDSEntry.class,
+				new SystemFDSEntry() {
+
+					@Override
+					public String getAdditionalAPIURLParameters() {
+						return _additionalURLParameters;
+					}
+
+					public int getDefaultItemsPerPage() {
+						if (_defaultItemsPerPage > 0) {
+							return _defaultItemsPerPage;
+						}
+
+						return SystemFDSEntry.super.getDefaultItemsPerPage();
+					}
+
+					@Override
+					public String getDescription() {
+						return "";
+					}
+
+					public int[] getListOfItemsPerPage() {
+						if (_listOfItemsPerPage != null) {
+							return _listOfItemsPerPage;
+						}
+
+						return SystemFDSEntry.super.getListOfItemsPerPage();
+					}
+
+					@Override
+					public String getName() {
+						return _fdsName;
+					}
+
+					@Override
+					public String getPropsTransformer() {
+						if (Validator.isNotNull(_propsTransformer)) {
+							return _propsTransformer;
+						}
+
+						return SystemFDSEntry.super.getPropsTransformer();
+					}
+
+					@Override
+					public String getRESTApplication() {
+						return REST_APPLICATION;
+					}
+
+					@Override
+					public String getRESTEndpoint() {
+						return REST_ENDPOINT;
+					}
+
+					@Override
+					public String getRESTSchema() {
+						return REST_SCHEMA;
+					}
+
+					@Override
+					public String getTitle() {
+						return "";
+					}
+
+				},
+				MapUtil.singletonDictionary(
+					"frontend.data.set.name", _fdsName));
+		}
+
+		public SystemFDSEntryWrapper withAdditionalURLParameters(
+			String additionalURLParameters) {
+
+			_additionalURLParameters = additionalURLParameters;
+
+			return this;
+		}
+
+		public SystemFDSEntryWrapper withPagination(
+			int defaultItemsPerPage, int[] listOfItemsPerPage) {
+
+			_defaultItemsPerPage = defaultItemsPerPage;
+			_listOfItemsPerPage = listOfItemsPerPage;
+
+			return this;
+		}
+
+		public SystemFDSEntryWrapper withPropsTransformer(
+			String propsTransformer) {
+
+			_propsTransformer = propsTransformer;
+
+			return this;
+		}
+
+		private String _additionalURLParameters;
+		private int _defaultItemsPerPage = -1;
+		private final String _fdsName;
+		private int[] _listOfItemsPerPage;
+		private String _propsTransformer;
+
+	}
 
 }

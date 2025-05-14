@@ -260,7 +260,7 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 				regex, StringPool.COMMA_AND_SPACE, ",[?\\s\\w]*");
 		}
 		else {
-			regex = regex + "[,;> ({]";
+			regex = regex + "[,;> (){]";
 		}
 
 		if (regex.contains(StringPool.PERIOD)) {
@@ -399,7 +399,7 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 
 				newContent = StringUtil.replaceFirst(
 					newContent, methodCall,
-					StringUtil.replace(methodCall, from, to));
+					StringUtil.replace(methodCall, from, to), matcher.start());
 			}
 		}
 
@@ -437,6 +437,8 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 				continue;
 			}
 
+			int index = newContent.indexOf(javaContent);
+
 			Pattern pattern = _getPattern(jsonObject);
 
 			Matcher matcher = pattern.matcher(javaContent);
@@ -459,7 +461,16 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 				String to = jsonObject.getString("to");
 
 				if (from.startsWith("regex:")) {
-					newContent = newContent.replaceAll(pattern.toString(), to);
+					if (classNames.length > 0) {
+						newContent = StringUtil.replaceFirst(
+							newContent, methodCall,
+							methodCall.replaceFirst(pattern.toString(), to),
+							index + matcher.start());
+					}
+					else {
+						newContent = newContent.replaceAll(
+							pattern.toString(), to);
+					}
 				}
 				else if (from.contains(StringPool.OPEN_PARENTHESIS)) {
 					newContent = _formatMethodCall(
@@ -473,7 +484,8 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 				else {
 					newContent = StringUtil.replaceFirst(
 						newContent, methodCall,
-						StringUtil.replace(methodCall, from, to));
+						StringUtil.replace(methodCall, from, to),
+						matcher.start());
 				}
 			}
 		}
@@ -552,6 +564,11 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 
 		newMethodCall = _addOrReplaceMethodParameters(
 			parameterNames, newMethodCall, JavaSourceUtil.getParameterList(to));
+
+		String removedFirstMethodCall = StringUtil.removeSubstring(
+			to, JavaSourceUtil.getMethodCall(to, 0));
+
+		newMethodCall = newMethodCall + removedFirstMethodCall;
 
 		return StringUtil.replaceFirst(newContent, methodCall, newMethodCall);
 	}

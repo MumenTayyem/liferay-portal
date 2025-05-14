@@ -39,22 +39,23 @@ public class PlacedOrderEntityModel implements EntityModel {
 			new DateTimeEntityField(
 				"orderDate", locale -> Field.getSortableFieldName("orderDate"),
 				locale -> "orderDate"),
+			new DateTimeEntityField(
+				"requestedDeliveryDate",
+				locale -> Field.getSortableFieldName("requestedDeliveryDate"),
+				locale -> "requestedDeliveryDate"),
 			new IntegerEntityField(
 				"id",
 				locale -> Field.getSortableFieldName(Field.ENTRY_CLASS_PK)),
 			new StringEntityField(
-				"account", locale -> Field.getSortableFieldName("accountName"),
-				locale -> "accountName"),
+				"account", locale -> Field.getSortableFieldName("accountName")),
 			new StringEntityField(
-				"author", locale -> Field.getSortableFieldName(Field.USER_NAME),
-				locale -> Field.USER_NAME),
+				"author",
+				locale -> Field.getSortableFieldName(Field.USER_NAME)),
 			new StringEntityField(
 				"externalReferenceCode",
-				locale -> Field.getSortableFieldName("externalReferenceCode"),
-				locale -> "externalReferenceCode"),
+				locale -> Field.getSortableFieldName("externalReferenceCode")),
 			new StringEntityField(
-				"name", locale -> Field.getSortableFieldName(Field.NAME),
-				locale -> Field.NAME),
+				"name", locale -> Field.getSortableFieldName(Field.NAME)),
 			new StringEntityField(
 				"orderType",
 				locale -> Field.getSortableFieldName("commerceOrderTypeName"),
@@ -62,12 +63,10 @@ public class PlacedOrderEntityModel implements EntityModel {
 			new StringEntityField(
 				"orderTypeExternalReferenceCode",
 				locale -> Field.getSortableFieldName(
-					"commerceOrderTypeExternalReferenceCode"),
-				locale -> "commerceOrderTypeExternalReferenceCode"),
+					"commerceOrderTypeExternalReferenceCode")),
 			new StringEntityField(
 				"purchaseOrderNumber",
-				locale -> Field.getSortableFieldName("purchaseOrderNumber"),
-				locale -> "purchaseOrderNumber"));
+				locale -> Field.getSortableFieldName("purchaseOrderNumber")));
 	}
 
 	@Override

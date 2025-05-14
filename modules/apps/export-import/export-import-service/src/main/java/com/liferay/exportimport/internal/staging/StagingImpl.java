@@ -26,8 +26,10 @@ import com.liferay.exportimport.kernel.exception.ExportImportIOException;
 import com.liferay.exportimport.kernel.exception.ExportImportRuntimeException;
 import com.liferay.exportimport.kernel.exception.LARFileException;
 import com.liferay.exportimport.kernel.exception.LARFileSizeException;
+import com.liferay.exportimport.kernel.exception.LARScopeException;
 import com.liferay.exportimport.kernel.exception.LARTypeException;
 import com.liferay.exportimport.kernel.exception.LayoutImportException;
+import com.liferay.exportimport.kernel.exception.MissingPortletDataHandlerException;
 import com.liferay.exportimport.kernel.exception.MissingReferenceException;
 import com.liferay.exportimport.kernel.exception.RemoteExportException;
 import com.liferay.exportimport.kernel.lar.ExportImportClassedModelUtil;
@@ -525,11 +527,10 @@ public class StagingImpl implements Staging {
 						missingReference.getClassPK(), false));
 			}
 			else if (referrers.size() == 1) {
-				Set<Map.Entry<String, String>> referrerDisplayNames =
-					referrers.entrySet();
+				Set<Map.Entry<String, String>> entries = referrers.entrySet();
 
 				Iterator<Map.Entry<String, String>> iterator =
-					referrerDisplayNames.iterator();
+					entries.iterator();
 
 				Map.Entry<String, String> entry = iterator.next();
 
@@ -1146,6 +1147,14 @@ public class StagingImpl implements Staging {
 
 			errorType = ServletResponseConstants.SC_FILE_SIZE_EXCEPTION;
 		}
+		else if (exception instanceof LARScopeException) {
+			errorMessage = _language.get(
+				locale,
+				"the-lar-file-contains-one-or-more-entities-with-a-different-" +
+					"scope");
+
+			errorType = ServletResponseConstants.SC_FILE_CUSTOM_EXCEPTION;
+		}
 		else if (exception instanceof LARTypeException) {
 			LARTypeException larTypeException = (LARTypeException)exception;
 
@@ -1311,6 +1320,18 @@ public class StagingImpl implements Staging {
 						StringPool.COMMA_AND_SPACE)
 				},
 				false);
+
+			errorType = ServletResponseConstants.SC_FILE_CUSTOM_EXCEPTION;
+		}
+		else if (exception instanceof MissingPortletDataHandlerException) {
+			MissingPortletDataHandlerException
+				missingPortletDataHandlerException =
+					(MissingPortletDataHandlerException)exception;
+
+			errorMessage = _language.format(
+				locale,
+				"the-data-handler-for-the-x-portlet-is-missing-from-the-system",
+				missingPortletDataHandlerException.getPortletDisplayName());
 
 			errorType = ServletResponseConstants.SC_FILE_CUSTOM_EXCEPTION;
 		}

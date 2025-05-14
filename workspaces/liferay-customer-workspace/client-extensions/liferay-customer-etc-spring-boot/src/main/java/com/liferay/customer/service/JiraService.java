@@ -5,6 +5,7 @@
 
 package com.liferay.customer.service;
 
+import com.liferay.client.extension.util.spring.boot3.service.BaseService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.ArrayUtil;
@@ -27,24 +28,14 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.web.reactive.function.client.WebClient;
 
 /**
  * @author Jenny Chen
  */
 @Component
-public class JiraService {
-
-	@CacheEvict(
-		allEntries = true, value = {"affectedVersions", "issue", "issues"}
-	)
-	@Scheduled(cron = "0 0 0 * * *")
-	public void cacheEvict() throws Exception {
-	}
+public class JiraService extends BaseService {
 
 	@Cacheable("affectedVersions")
 	public JSONArray getAffectedVersionsJSONArray() throws Exception {
@@ -111,19 +102,11 @@ public class JiraService {
 	public JSONObject getIssueJSONObject(String issueKey) throws Exception {
 		try {
 			JSONObject jsonObject = new JSONObject(
-				WebClient.create(
-					_jiraURL
-				).get(
-				).uri(
-					StringBundler.concat(_URL_REST_API_2, "/issue/", issueKey)
-				).accept(
-					MediaType.APPLICATION_JSON
-				).header(
-					HttpHeaders.AUTHORIZATION, _getCredentials()
-				).retrieve(
-				).bodyToMono(
-					String.class
-				).block());
+				get(
+					_getCredentials(),
+					StringBundler.concat(
+						_URL_REST_API_2, "/issue/", issueKey,
+						"?expand=renderedFields")));
 
 			return _transformIssue(jsonObject);
 		}
@@ -135,6 +118,13 @@ public class JiraService {
 		}
 
 		return null;
+	}
+
+	@CacheEvict(
+		allEntries = true, value = {"affectedVersions", "issue", "issues"}
+	)
+	@Scheduled(cron = "0 0 0 * * *")
+	public void scheduledCacheEviction() throws Exception {
 	}
 
 	@Cacheable("issues")
@@ -282,6 +272,11 @@ public class JiraService {
 		return _transformSearchResults(jsonObject);
 	}
 
+	@Override
+	protected String getWebClientBaseURL() {
+		return _jiraURL;
+	}
+
 	private int _calculatePage(int startAt, int maxResults) {
 		return (startAt / maxResults) + 1;
 	}
@@ -343,29 +338,13 @@ public class JiraService {
 
 		try {
 			return new JSONObject(
-				WebClient.create(
-					_jiraURL
-				).get(
-				).uri(
-					uriBuilder -> uriBuilder.path(
-						_URL_REST_API_2 + "/search"
-					).queryParam(
-						"jql", jql
-					).queryParam(
-						"fields", StringUtil.merge(returnFields)
-					).queryParam(
-						"maxResults", maxResults
-					).queryParam(
-						"startAt", startAt
-					).build()
-				).accept(
-					MediaType.APPLICATION_JSON
-				).header(
-					HttpHeaders.AUTHORIZATION, _getCredentials()
-				).retrieve(
-				).bodyToMono(
-					String.class
-				).block());
+				get(
+					_getCredentials(),
+					StringBundler.concat(
+						_URL_REST_API_2,
+						"/search?expand=renderedFields&fields=",
+						StringUtil.merge(returnFields), "&jql=", jql,
+						"&maxResults=", maxResults, "&startAt=", startAt)));
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
@@ -381,13 +360,18 @@ public class JiraService {
 		return new JSONObject(
 		).put(
 			"fields",
-			_transformIssueFields(issueJSONObject.getJSONObject("fields"))
+			_transformIssueFields(
+				issueJSONObject.getJSONObject("fields"),
+				issueJSONObject.getJSONObject("renderedFields"))
 		).put(
 			"key", issueJSONObject.getString(_FIELD_ISSUE_KEY)
 		);
 	}
 
-	private JSONObject _transformIssueFields(JSONObject issueFieldsJSONObject) {
+	private JSONObject _transformIssueFields(
+		JSONObject issueFieldsJSONObject,
+		JSONObject issueRenderedFieldsJSONObject) {
+
 		return new JSONObject(
 		).put(
 			"affectedVersionsDetails",
@@ -412,7 +396,7 @@ public class JiraService {
 				issueFieldsJSONObject.getJSONArray(_FIELD_COMPONENTS))
 		).put(
 			"customerPortalDescription",
-			issueFieldsJSONObject.optString(
+			issueRenderedFieldsJSONObject.optString(
 				_jiraSecurityVulnerabilityFieldCustomerPortalDescription)
 		).put(
 			"customerPortalSummary",

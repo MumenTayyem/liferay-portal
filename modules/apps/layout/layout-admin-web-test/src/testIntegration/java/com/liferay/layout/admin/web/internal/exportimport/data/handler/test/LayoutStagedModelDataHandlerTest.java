@@ -333,6 +333,102 @@ public class LayoutStagedModelDataHandlerTest
 	}
 
 	@Test
+	@TestInfo("LPD-50217")
+	public void testExportImportContentLayoutWithSameFriendlyURL()
+		throws Exception {
+
+		Layout liveLayout = LayoutTestUtil.addTypeContentLayout(liveGroup);
+
+		Layout liveDraftLayout = liveLayout.fetchDraftLayout();
+
+		ContentLayoutTestUtil.publishLayout(liveDraftLayout, liveLayout);
+
+		initExport();
+
+		Layout stagingLayout = LayoutTestUtil.addTypeContentLayout(
+			stagingGroup);
+
+		Layout stagingDraftLayout = stagingLayout.fetchDraftLayout();
+
+		Assert.assertNotEquals(
+			stagingDraftLayout.getFriendlyURL(),
+			liveDraftLayout.getFriendlyURL());
+		Assert.assertNotEquals(
+			stagingDraftLayout.getUuid(), liveDraftLayout.getUuid());
+
+		ContentLayoutTestUtil.publishLayout(stagingDraftLayout, stagingLayout);
+
+		stagingLayout = _layoutLocalService.updateFriendlyURL(
+			TestPropsValues.getUserId(), stagingLayout.getPlid(),
+			liveLayout.getFriendlyURL(), stagingLayout.getDefaultLanguageId());
+
+		Assert.assertEquals(
+			stagingLayout.getFriendlyURL(), liveLayout.getFriendlyURL());
+		Assert.assertNotEquals(stagingLayout.getName(), liveLayout.getName());
+		Assert.assertNotEquals(stagingLayout.getUuid(), liveLayout.getUuid());
+
+		StagedModelDataHandlerUtil.exportStagedModel(
+			portletDataContext, stagingLayout);
+
+		initImport();
+
+		ExportImportLifecycleManagerUtil.fireExportImportLifecycleEvent(
+			ExportImportLifecycleConstants.EVENT_LAYOUT_IMPORT_STARTED,
+			ExportImportLifecycleConstants.
+				PROCESS_FLAG_LAYOUT_IMPORT_IN_PROCESS,
+			portletDataContext.getExportImportProcessId(),
+			PortletDataContextFactoryUtil.clonePortletDataContext(
+				portletDataContext));
+
+		StagedModelDataHandlerUtil.importStagedModel(
+			portletDataContext, readExportedStagedModel(stagingLayout));
+
+		ExportImportLifecycleManagerUtil.fireExportImportLifecycleEvent(
+			ExportImportLifecycleConstants.EVENT_LAYOUT_IMPORT_SUCCEEDED,
+			ExportImportLifecycleConstants.
+				PROCESS_FLAG_LAYOUT_IMPORT_IN_PROCESS,
+			portletDataContext.getExportImportProcessId(),
+			PortletDataContextFactoryUtil.clonePortletDataContext(
+				portletDataContext));
+
+		Assert.assertNull(
+			_layoutLocalService.fetchLayout(
+				stagingDraftLayout.getUuid(), liveGroup.getGroupId(),
+				stagingDraftLayout.isPrivateLayout()));
+		Assert.assertNull(
+			_layoutLocalService.fetchLayout(
+				stagingLayout.getUuid(), liveGroup.getGroupId(),
+				stagingLayout.isPrivateLayout()));
+
+		liveLayout = _layoutLocalService.getLayout(liveLayout.getPlid());
+
+		Assert.assertEquals(
+			stagingLayout.getFriendlyURL(), liveLayout.getFriendlyURL());
+		Assert.assertEquals(stagingLayout.getName(), liveLayout.getName());
+
+		Layout importedLiveDraftLayout = null;
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.portal.service.impl.LayoutLocalServiceImpl",
+				LoggerTestUtil.ERROR)) {
+
+			importedLiveDraftLayout = liveLayout.fetchDraftLayout();
+
+			List<LogEntry> logEntries = logCapture.getLogEntries();
+
+			Assert.assertTrue(logEntries.toString(), logEntries.isEmpty());
+		}
+
+		Assert.assertEquals(
+			stagingDraftLayout.getFriendlyURL(),
+			importedLiveDraftLayout.getFriendlyURL());
+		Assert.assertEquals(
+			liveDraftLayout.getPlid(), importedLiveDraftLayout.getPlid());
+		Assert.assertEquals(
+			liveDraftLayout.getUuid(), importedLiveDraftLayout.getUuid());
+	}
+
+	@Test
 	@TestInfo("LPD-32929")
 	public void testExportImportContentReference() throws Exception {
 		Locale locale = _portal.getSiteDefaultLocale(stagingGroup);
@@ -389,22 +485,82 @@ public class LayoutStagedModelDataHandlerTest
 	}
 
 	@Test
+	@TestInfo("LPD-50336")
+	public void testExportImportLayoutWithSameFriendlyURLAndDifferentTypes()
+		throws Exception {
+
+		initExport();
+
+		Layout stagingLayout = LayoutTestUtil.addTypeContentLayout(
+			stagingGroup);
+
+		ContentLayoutTestUtil.publishLayout(
+			stagingLayout.fetchDraftLayout(), stagingLayout);
+
+		Layout liveLayout = LayoutTestUtil.addTypePortletLayout(liveGroup);
+
+		liveLayout = _layoutLocalService.updateFriendlyURL(
+			TestPropsValues.getUserId(), liveLayout.getPlid(),
+			stagingLayout.getFriendlyURL(), liveLayout.getDefaultLanguageId());
+
+		Assert.assertEquals(
+			stagingLayout.getFriendlyURL(), liveLayout.getFriendlyURL());
+		Assert.assertNotEquals(stagingLayout.getName(), liveLayout.getName());
+
+		StagedModelDataHandlerUtil.exportStagedModel(
+			portletDataContext, stagingLayout);
+
+		initImport();
+
+		ExportImportLifecycleManagerUtil.fireExportImportLifecycleEvent(
+			ExportImportLifecycleConstants.EVENT_LAYOUT_IMPORT_STARTED,
+			ExportImportLifecycleConstants.
+				PROCESS_FLAG_LAYOUT_IMPORT_IN_PROCESS,
+			portletDataContext.getExportImportProcessId(),
+			PortletDataContextFactoryUtil.clonePortletDataContext(
+				portletDataContext));
+
+		StagedModelDataHandlerUtil.importStagedModel(
+			portletDataContext, readExportedStagedModel(stagingLayout));
+
+		ExportImportLifecycleManagerUtil.fireExportImportLifecycleEvent(
+			ExportImportLifecycleConstants.EVENT_LAYOUT_IMPORT_SUCCEEDED,
+			ExportImportLifecycleConstants.
+				PROCESS_FLAG_LAYOUT_IMPORT_IN_PROCESS,
+			portletDataContext.getExportImportProcessId(),
+			PortletDataContextFactoryUtil.clonePortletDataContext(
+				portletDataContext));
+
+		Layout importedLayout = _layoutLocalService.fetchLayout(
+			stagingLayout.getUuid(), liveGroup.getGroupId(),
+			stagingLayout.isPrivateLayout());
+
+		Assert.assertEquals(
+			stagingLayout.getFriendlyURL() + "1",
+			importedLayout.getFriendlyURL());
+		Assert.assertNotEquals(
+			liveLayout.getFriendlyURL(), importedLayout.getFriendlyURL());
+		Assert.assertEquals(stagingLayout.getName(), importedLayout.getName());
+	}
+
+	@Test
 	@TestInfo({"LPS-98030", "LPS-125564", "LPS-198068"})
 	public void testExportImportWithFileEntryContentReference()
 		throws Exception {
 
 		Layout layout = LayoutTestUtil.addTypeContentLayout(stagingGroup);
 
+		Layout draftLayout = layout.fetchDraftLayout();
+
 		long segmentsExperienceId =
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
-				layout.getPlid());
+				draftLayout.getPlid());
 
 		ContentLayoutTestUtil.addItemToLayout(
-			"{}", LayoutDataItemTypeConstants.TYPE_CONTAINER,
-			layout.fetchDraftLayout(), _layoutStructureProvider,
-			segmentsExperienceId);
+			"{}", LayoutDataItemTypeConstants.TYPE_CONTAINER, draftLayout,
+			_layoutStructureProvider, segmentsExperienceId);
 
-		ContentLayoutTestUtil.publishLayout(layout.fetchDraftLayout(), layout);
+		ContentLayoutTestUtil.publishLayout(draftLayout, layout);
 
 		Layout importedLayout = _getExportImportLayout(layout);
 
@@ -427,10 +583,9 @@ public class LayoutStagedModelDataHandlerTest
 
 		FragmentEntryLink draftLayoutFragmentEntryLink =
 			_addFragmentEntryLinkToLayout(
-				fileEntry, languageId, layout.fetchDraftLayout(),
-				segmentsExperienceId);
+				fileEntry, languageId, draftLayout, segmentsExperienceId);
 
-		ContentLayoutTestUtil.publishLayout(layout.fetchDraftLayout(), layout);
+		ContentLayoutTestUtil.publishLayout(draftLayout, layout);
 
 		Assert.assertNotNull(
 			_fragmentEntryLinkLocalService.getFragmentEntryLink(
@@ -550,7 +705,7 @@ public class LayoutStagedModelDataHandlerTest
 		LayoutPageTemplateEntry masterLayoutPageTemplateEntry =
 			_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
 				null, TestPropsValues.getUserId(), stagingGroup.getGroupId(), 0,
-				"Test Master Page",
+				null, "Test Master Page",
 				LayoutPageTemplateEntryTypeConstants.MASTER_LAYOUT, 0,
 				WorkflowConstants.STATUS_APPROVED,
 				ServiceContextTestUtil.getServiceContext(
@@ -654,7 +809,7 @@ public class LayoutStagedModelDataHandlerTest
 					"data-lfr-editable-id=\"link-1\" data-lfr-editable-type=" +
 						"\"link\">textLink1</a></div>",
 				StringPool.BLANK, false, StringPool.BLANK, null, 0, false,
-				FragmentConstants.TYPE_COMPONENT, null,
+				false, FragmentConstants.TYPE_COMPONENT, null,
 				WorkflowConstants.STATUS_APPROVED, serviceContext);
 
 		FragmentEntryLink fragmentEntryLink =
@@ -720,9 +875,11 @@ public class LayoutStagedModelDataHandlerTest
 		Layout stagingLayout = LayoutTestUtil.addTypeContentLayout(
 			stagingGroup);
 
+		Layout stagingDraftLayout = stagingLayout.fetchDraftLayout();
+
 		long stagingSegmentsExperienceId =
 			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
-				stagingLayout.getPlid());
+				stagingDraftLayout.getPlid());
 
 		_mapJournalArticleToContentDisplay(
 			journalArticle, stagingLayout, stagingSegmentsExperienceId);
@@ -747,7 +904,9 @@ public class LayoutStagedModelDataHandlerTest
 		_updateJournalArticle(updatedContent, journalArticle);
 
 		_assertRenderLayoutHTML(
-			updatedContent, stagingLayout, stagingSegmentsExperienceId);
+			updatedContent, stagingLayout,
+			_segmentsExperienceLocalService.fetchDefaultSegmentsExperienceId(
+				stagingLayout.getPlid()));
 
 		_assertRenderLayoutHTML(content, layout, segmentsExperienceId);
 
@@ -837,7 +996,7 @@ public class LayoutStagedModelDataHandlerTest
 
 		SegmentsExperience segmentsExperience1 =
 			SegmentsTestUtil.addSegmentsExperience(
-				group.getGroupId(), layout.getPlid());
+				group.getGroupId(), draftLayout.getPlid());
 
 		_layoutPageTemplateStructureRelLocalService.
 			addLayoutPageTemplateStructureRel(
@@ -850,7 +1009,7 @@ public class LayoutStagedModelDataHandlerTest
 
 		SegmentsExperience segmentsExperience2 =
 			SegmentsTestUtil.addSegmentsExperience(
-				group.getGroupId(), layout.getPlid());
+				group.getGroupId(), draftLayout.getPlid());
 
 		_layoutPageTemplateStructureRelLocalService.
 			addLayoutPageTemplateStructureRel(
@@ -863,7 +1022,7 @@ public class LayoutStagedModelDataHandlerTest
 
 		SegmentsExperience segmentsExperience3 =
 			SegmentsTestUtil.addSegmentsExperience(
-				group.getGroupId(), layout.getPlid());
+				group.getGroupId(), draftLayout.getPlid());
 
 		_layoutPageTemplateStructureRelLocalService.
 			addLayoutPageTemplateStructureRel(
@@ -1465,8 +1624,10 @@ public class LayoutStagedModelDataHandlerTest
 				"<h1 data-lfr-editable-id=\"element-text\" " +
 					"data-lfr-editable-type=\"text\">Heading Example</h1>",
 				StringPool.BLANK, false, StringPool.BLANK, null, 0, false,
-				FragmentConstants.TYPE_COMPONENT, null,
+				false, FragmentConstants.TYPE_COMPONENT, null,
 				WorkflowConstants.STATUS_APPROVED, serviceContext);
+
+		Layout draftLayout = layout.fetchDraftLayout();
 
 		FragmentEntryLink fragmentEntryLink =
 			ContentLayoutTestUtil.addFragmentEntryLinkToLayout(
@@ -1481,9 +1642,9 @@ public class LayoutStagedModelDataHandlerTest
 				fragmentEntry.getFragmentEntryKey(), fragmentEntry.getType(),
 				null, 0,
 				_segmentsExperienceLocalService.
-					fetchDefaultSegmentsExperienceId(layout.getPlid()));
+					fetchDefaultSegmentsExperienceId(draftLayout.getPlid()));
 
-		ContentLayoutTestUtil.publishLayout(layout.fetchDraftLayout(), layout);
+		ContentLayoutTestUtil.publishLayout(draftLayout, layout);
 
 		return fragmentEntryLink;
 	}
@@ -1533,7 +1694,7 @@ public class LayoutStagedModelDataHandlerTest
 		LayoutPageTemplateEntry masterLayoutPageTemplateEntry =
 			_layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
 				null, TestPropsValues.getUserId(),
-				serviceContext.getScopeGroupId(), 0,
+				serviceContext.getScopeGroupId(), 0, null,
 				RandomTestUtil.randomString(),
 				LayoutPageTemplateEntryTypeConstants.MASTER_LAYOUT, 0,
 				WorkflowConstants.STATUS_APPROVED, serviceContext);

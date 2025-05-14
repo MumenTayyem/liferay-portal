@@ -5,15 +5,15 @@
 
 package com.liferay.headless.admin.site.internal.resource.v1_0.layout.structure.item.importer;
 
-import com.liferay.fragment.contributor.FragmentCollectionContributorRegistry;
+import com.liferay.fragment.contributor.util.FragmentCollectionContributorRegistryUtil;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
-import com.liferay.fragment.service.FragmentEntryLinkLocalService;
-import com.liferay.fragment.service.FragmentEntryLocalService;
+import com.liferay.fragment.service.FragmentEntryLinkLocalServiceUtil;
+import com.liferay.fragment.service.FragmentEntryLocalServiceUtil;
 import com.liferay.headless.admin.site.dto.v1_0.DefaultFragmentReference;
+import com.liferay.headless.admin.site.dto.v1_0.FragmentInstancePageElementDefinition;
 import com.liferay.headless.admin.site.dto.v1_0.ItemExternalReference;
 import com.liferay.headless.admin.site.dto.v1_0.PageElement;
-import com.liferay.headless.admin.site.dto.v1_0.PageFragmentInstanceDefinition;
 import com.liferay.headless.admin.site.internal.resource.v1_0.layout.structure.item.importer.context.LayoutStructureItemImporterContext;
 import com.liferay.layout.util.structure.FragmentStyledLayoutStructureItem;
 import com.liferay.layout.util.structure.LayoutStructure;
@@ -30,18 +30,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 public class FragmentLayoutStructureItemImporter
 	implements LayoutStructureItemImporter {
 
-	public FragmentLayoutStructureItemImporter(
-		FragmentCollectionContributorRegistry
-			fragmentCollectionContributorRegistry,
-		FragmentEntryLinkLocalService fragmentEntryLinkLocalService,
-		FragmentEntryLocalService fragmentEntryLocalService) {
-
-		_fragmentCollectionContributorRegistry =
-			fragmentCollectionContributorRegistry;
-		_fragmentEntryLinkLocalService = fragmentEntryLinkLocalService;
-		_fragmentEntryLocalService = fragmentEntryLocalService;
-	}
-
 	@Override
 	public LayoutStructureItem addLayoutStructureItem(
 			LayoutStructure layoutStructure,
@@ -50,15 +38,18 @@ public class FragmentLayoutStructureItemImporter
 			PageElement pageElement)
 		throws Exception {
 
-		PageFragmentInstanceDefinition pageFragmentInstanceDefinition =
-			(PageFragmentInstanceDefinition)pageElement.getDefinition();
+		FragmentInstancePageElementDefinition
+			fragmentInstancePageElementDefinition =
+				(FragmentInstancePageElementDefinition)
+					pageElement.getPageElementDefinition();
 
-		if (pageFragmentInstanceDefinition == null) {
+		if (fragmentInstancePageElementDefinition == null) {
 			return null;
 		}
 
 		FragmentEntryLink fragmentEntryLink = _addFragmentEntryLink(
-			layoutStructureItemImporterContext, pageFragmentInstanceDefinition);
+			fragmentInstancePageElementDefinition,
+			layoutStructureItemImporterContext);
 
 		if (fragmentEntryLink == null) {
 			return null;
@@ -73,30 +64,32 @@ public class FragmentLayoutStructureItemImporter
 					pageElement.getPosition());
 
 		fragmentStyledLayoutStructureItem.setCssClasses(
-			SetUtil.fromArray(pageFragmentInstanceDefinition.getCssClasses()));
+			SetUtil.fromArray(
+				fragmentInstancePageElementDefinition.getCssClasses()));
 		fragmentStyledLayoutStructureItem.setCustomCSS(
-			pageFragmentInstanceDefinition.getCustomCSS());
+			fragmentInstancePageElementDefinition.getCustomCSS());
 		fragmentStyledLayoutStructureItem.setIndexed(
-			pageFragmentInstanceDefinition.getIndexed());
+			fragmentInstancePageElementDefinition.getIndexed());
 		fragmentStyledLayoutStructureItem.setName(
-			fragmentStyledLayoutStructureItem.getName());
+			fragmentInstancePageElementDefinition.getName());
 
 		return fragmentStyledLayoutStructureItem;
 	}
 
 	private FragmentEntryLink _addFragmentEntryLink(
+			FragmentInstancePageElementDefinition
+				fragmentInstancePageElementDefinition,
 			LayoutStructureItemImporterContext
-				layoutStructureItemImporterContext,
-			PageFragmentInstanceDefinition pageFragmentInstanceDefinition)
+				layoutStructureItemImporterContext)
 		throws Exception {
 
 		Layout layout = layoutStructureItemImporterContext.getLayout();
 
 		FragmentEntry fragmentEntry = _getFragmentEntry(
-			layoutStructureItemImporterContext.getGroupId(),
-			pageFragmentInstanceDefinition);
+			fragmentInstancePageElementDefinition,
+			layoutStructureItemImporterContext.getGroupId());
 
-		return _fragmentEntryLinkLocalService.addFragmentEntryLink(
+		return FragmentEntryLinkLocalServiceUtil.addFragmentEntryLink(
 			null, layoutStructureItemImporterContext.getUserId(),
 			layout.getGroupId(), 0, fragmentEntry.getFragmentEntryId(),
 			layoutStructureItemImporterContext.getSegmentsExperienceId(),
@@ -108,18 +101,21 @@ public class FragmentLayoutStructureItemImporter
 	}
 
 	private FragmentEntry _getFragmentEntry(
-		long groupId,
-		PageFragmentInstanceDefinition pageFragmentInstanceDefinition) {
+		FragmentInstancePageElementDefinition
+			fragmentInstancePageElementDefinition,
+		long groupId) {
 
-		if (pageFragmentInstanceDefinition.getFragmentReference() instanceof
-				ItemExternalReference) {
+		if (
+				fragmentInstancePageElementDefinition.
+					getFragmentReference() instanceof ItemExternalReference) {
 
 			ItemExternalReference itemExternalReference =
 				(ItemExternalReference)
-					pageFragmentInstanceDefinition.getFragmentReference();
+					fragmentInstancePageElementDefinition.
+						getFragmentReference();
 
 			FragmentEntry fragmentEntry =
-				_fragmentEntryLocalService.
+				FragmentEntryLocalServiceUtil.
 					fetchFragmentEntryByExternalReferenceCode(
 						itemExternalReference.getExternalReferenceCode(),
 						groupId);
@@ -131,15 +127,10 @@ public class FragmentLayoutStructureItemImporter
 
 		DefaultFragmentReference defaultFragmentReference =
 			(DefaultFragmentReference)
-				pageFragmentInstanceDefinition.getFragmentReference();
+				fragmentInstancePageElementDefinition.getFragmentReference();
 
-		return _fragmentCollectionContributorRegistry.getFragmentEntry(
+		return FragmentCollectionContributorRegistryUtil.getFragmentEntry(
 			defaultFragmentReference.getDefaultFragmentKey());
 	}
-
-	private final FragmentCollectionContributorRegistry
-		_fragmentCollectionContributorRegistry;
-	private final FragmentEntryLinkLocalService _fragmentEntryLinkLocalService;
-	private final FragmentEntryLocalService _fragmentEntryLocalService;
 
 }

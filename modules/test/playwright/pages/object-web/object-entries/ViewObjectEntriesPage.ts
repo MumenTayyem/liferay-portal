@@ -5,6 +5,7 @@
 
 import {ObjectField} from '@liferay/object-admin-rest-client-js';
 import {FrameLocator, Locator, Page, expect} from '@playwright/test';
+import path from 'path';
 
 import {PORTLET_URLS} from '../../../utils/portletUrls';
 
@@ -19,8 +20,6 @@ export class ViewObjectEntriesPage {
 	readonly frontendDatasetActions: Locator;
 	readonly frontendDatasetDeleteAction: Locator;
 	readonly page: Page;
-	readonly richTextIFrame: FrameLocator;
-	readonly richTextInput: Locator;
 	readonly saveObjectEntryButton: Locator;
 	readonly saveObjectEntryButtonArabic: Locator;
 	readonly searchBar: Locator;
@@ -56,12 +55,6 @@ export class ViewObjectEntriesPage {
 			name: 'Delete',
 		});
 		this.page = page;
-		this.richTextIFrame = page
-			.getByRole('application', {
-				name: /Rich Text Editor, _com_liferay_object_web_internal_object_definitions_portlet_ObjectDefinitionsPortlet_.*_ddm\$\$.*\$.*\$en_US/,
-			})
-			.frameLocator('iframe');
-		this.richTextInput = this.richTextIFrame.getByRole('textbox');
 		this.searchBar = this.frameSelect.getByPlaceholder('Search for');
 		this.searchButton = this.frameSelect.getByRole('button', {
 			name: 'Search for',
@@ -111,14 +104,21 @@ export class ViewObjectEntriesPage {
 		objectFieldLabel?: string;
 		objectFieldValue: string;
 	}) {
-		if (objectFieldBusinessType === ObjectField.BusinessTypeEnum.RichText) {
+		if (objectFieldBusinessType === 'RichText') {
 			await this.page.waitForSelector('iframe');
 
-			await this.richTextInput.fill(objectFieldValue);
+			const richTextInput = this.page
+				.getByRole('application', {
+					name: objectFieldLabel,
+				})
+				.frameLocator('iframe')
+				.getByRole('textbox');
 
-			await this.richTextInput.click({button: 'left'});
+			await richTextInput.fill(objectFieldValue);
 
-			await this.richTextInput.press('Backspace');
+			await richTextInput.click({button: 'left'});
+
+			await richTextInput.press('Backspace');
 
 			return;
 		}
@@ -139,8 +139,6 @@ export class ViewObjectEntriesPage {
 	}
 
 	async selectFileFromDocumentsAndMedia(fileName: string) {
-		await this.selectFileButton.click();
-
 		await this.selectFileIframe
 			.getByRole('link', {name: 'Sites and Libraries'})
 			.click();
@@ -181,6 +179,20 @@ export class ViewObjectEntriesPage {
 			)
 			.first()
 			.click();
+	}
+
+	async selectFileFromUserComputer(dirName: string, fileName: string) {
+		const fileChooserPromise = this.page.waitForEvent('filechooser');
+
+		await this.selectFileButton.click();
+
+		const fileChooser = await fileChooserPromise;
+
+		await fileChooser.setFiles(
+			path.join(dirName, 'dependencies', fileName)
+		);
+
+		await this.page.getByText(fileName).waitFor({state: 'visible'});
 	}
 
 	async goto(

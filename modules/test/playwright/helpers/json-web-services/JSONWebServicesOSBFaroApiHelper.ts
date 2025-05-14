@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {faroConfig} from '../../tests/osb-faro-web/faro.config';
+import {faroConfig} from '../../tests/osb-faro-web/main/faro.config';
 import {ApiHelpers} from '../ApiHelpers';
 
 type Channel = {
@@ -14,6 +14,17 @@ type Project = {
 	groupId: string;
 	name: string;
 };
+
+type ApiToken = {
+	createDate: string;
+	expirationDate: string;
+	lastAccessDate: string;
+	token: string;
+};
+
+const _authorization = `Basic ${btoa(
+	`${faroConfig.user.login}:${faroConfig.user.password}`
+)}`;
 
 export class JSONWebServicesOSBFaroApiHelper {
 	readonly apiHelpers: ApiHelpers;
@@ -39,10 +50,7 @@ export class JSONWebServicesOSBFaroApiHelper {
 
 		const header = new Headers();
 
-		header.append(
-			'Authorization',
-			this.apiHelpers.getAuthorizationHeader()
-		);
+		header.append('Authorization', _authorization);
 
 		return fetch(
 			`${faroConfig.environment.baseUrl}${this.basePath}/main/${groupId}/channel`,
@@ -64,10 +72,7 @@ export class JSONWebServicesOSBFaroApiHelper {
 
 		const header = new Headers();
 
-		header.append(
-			'Authorization',
-			this.apiHelpers.getAuthorizationHeader()
-		);
+		header.append('Authorization', _authorization);
 
 		return fetch(
 			`${faroConfig.environment.baseUrl}${this.basePath}/main/project/trial`,
@@ -86,10 +91,7 @@ export class JSONWebServicesOSBFaroApiHelper {
 
 		const header = new Headers();
 
-		header.append(
-			'Authorization',
-			this.apiHelpers.getAuthorizationHeader()
-		);
+		header.append('Authorization', _authorization);
 
 		return fetch(
 			`${faroConfig.environment.baseUrl}${this.basePath}/main/${groupId}/channel`,
@@ -104,10 +106,7 @@ export class JSONWebServicesOSBFaroApiHelper {
 	async deleteProject(groupId: number): Promise<Project> {
 		const header = new Headers();
 
-		header.append(
-			'Authorization',
-			this.apiHelpers.getAuthorizationHeader()
-		);
+		header.append('Authorization', _authorization);
 
 		return fetch(
 			`${faroConfig.environment.baseUrl}${this.basePath}/main/project/${groupId}`,
@@ -118,5 +117,14 @@ export class JSONWebServicesOSBFaroApiHelper {
 		).then((response) => {
 			return response.json();
 		});
+	}
+
+	async fetchApiToken(groupId: string, expiresIn: number): Promise<ApiToken> {
+		return this.apiHelpers.post(
+			`${faroConfig.environment.baseUrl}${this.basePath}/main/${groupId}/oauth2/tokens/new?expiresIn=${expiresIn}`,
+			{
+				headers: await this.apiHelpers.getJSONWebServicesHeaders(),
+			}
+		);
 	}
 }

@@ -4,16 +4,17 @@
  */
 
 import {
-	ObjectActionApi,
-	ObjectDefinitionApi,
-	ObjectFolderApi,
-	ObjectRelationshipApi,
+	ObjectActionAPI,
+	ObjectDefinitionAPI,
+	ObjectFolderAPI,
+	ObjectRelationshipAPI,
 } from '@liferay/object-admin-rest-client-js';
 import {Page} from '@playwright/test';
 
 import {liferayConfig} from '../liferay.config';
 import {ApiBuilderHelper} from './ApiBuilderHelper';
 import {DataEngineApiHelper} from './DataEngineApiHelper';
+import {DynamicDataMappingApiHelper} from './DynamicDataMappingApiHelper';
 import {FeatureFlagApiHelper} from './FeatureFlagApiHelper';
 import {HeadlessAdminAddressApiHelper} from './HeadlessAdminAddressApiHelper';
 import {HeadlessAdminContentApiHelper} from './HeadlessAdminContentApiHelper';
@@ -42,7 +43,10 @@ import {ObjectEntryApiHelper} from './ObjectEntryApiHelper';
 import {SCIMApiHelper} from './SCIMApiHelper';
 import {SearchExperiencesApiHelper} from './SearchExperiencesApiHelper';
 import {JSONWebServicesAnnouncementsEntryApiHelper} from './json-web-services/JSONWebServicesAnnouncementsEntryApiHelper';
+import {JSONWebServicesAssetDisplayPageEntryApiHelper} from './json-web-services/JSONWebServicesAssetDisplayPageEntryApiHelper';
 import {JSONWebServicesAssetListEntryApiHelper} from './json-web-services/JSONWebServicesAssetListEntryApiHelper';
+import {JSONWebServicesCalendarApiHelper} from './json-web-services/JSONWebServicesCalendarApiHelper';
+import {JSONWebServicesCalendarResourceApiHelper} from './json-web-services/JSONWebServicesCalendarResourceApiHelper';
 import {JSONWebServicesClassNameApiHelper} from './json-web-services/JSONWebServicesClassNameApiHelper';
 import {JSONWebServicesClientExtensionApiHelper} from './json-web-services/JSONWebServicesClientExtensionApiHelper';
 import {JSONWebServicesCompanyApiHelper} from './json-web-services/JSONWebServicesCompanyApiHelper';
@@ -61,8 +65,11 @@ import {JSONWebServicesLayoutSetPrototypeApiHelper} from './json-web-services/JS
 import {JSONWebServicesMBApiHelper} from './json-web-services/JSONWebServicesMBApiHelper';
 import {JSONWebServicesOSBAsahApiHelper} from './json-web-services/JSONWebServicesOSBAsahApiHelper';
 import {JSONWebServicesOSBFaroApiHelper} from './json-web-services/JSONWebServicesOSBFaroApiHelper';
+import {JSONWebServicesResourcePermissionApiHelper} from './json-web-services/JSONWebServicesResourcePermissionApiHelper';
 import {JSONWebServicesSegmentsEntryApiHelper} from './json-web-services/JSONWebServicesSegmentsEntryApiHelper';
 import {JSONWebServicesSiteNavigationMenuApiHelper} from './json-web-services/JSONWebServicesSiteNavigationMenuApiHelper';
+import {JSONWebServicesStagingApiHelper} from './json-web-services/JSONWebServicesStagingApiHelper';
+import {JSONWebServicesTeamApiHelper} from './json-web-services/JSONWebServicesTeamApiHelper';
 import {JSONWebServicesUserApiHelper} from './json-web-services/JSONWebServicesUserApiHelper';
 
 type ContentType = 'application/json' | 'application/x-www-form-urlencoded';
@@ -106,6 +113,7 @@ export class ApiHelpers {
 	readonly baseUrl: string;
 	readonly featureFlag: FeatureFlagApiHelper;
 	readonly dataEngine: DataEngineApiHelper;
+	readonly dynamicDataMapping: DynamicDataMappingApiHelper;
 	readonly headlessAdminAddress: HeadlessAdminAddressApiHelper;
 	readonly headlessAdminContent: HeadlessAdminContentApiHelper;
 	readonly headlessAdminTaxonomy: HeadlessAdminTaxonomyApiHelper;
@@ -127,7 +135,10 @@ export class ApiHelpers {
 	readonly headlessDelivery: HeadlessDeliveryApiHelper;
 	readonly headlessSite: HeadlessSiteApiHelper;
 	readonly jsonWebServicesAnnouncementsEntryApiHelper: JSONWebServicesAnnouncementsEntryApiHelper;
+	readonly jsonWebServicesAssetDisplayPageEntry: JSONWebServicesAssetDisplayPageEntryApiHelper;
 	readonly jsonWebServicesAssetListEntry: JSONWebServicesAssetListEntryApiHelper;
+	readonly jsonWebServicesCalendar: JSONWebServicesCalendarApiHelper;
+	readonly jsonWebServicesCalendarResource: JSONWebServicesCalendarResourceApiHelper;
 	readonly jsonWebServicesClassName: JSONWebServicesClassNameApiHelper;
 	readonly jsonWebServicesClientExtension: JSONWebServicesClientExtensionApiHelper;
 	readonly jsonWebServicesCompany: JSONWebServicesCompanyApiHelper;
@@ -146,8 +157,11 @@ export class ApiHelpers {
 	readonly jsonWebServicesMBApiHelper: JSONWebServicesMBApiHelper;
 	readonly jsonWebServicesOSBAsah: JSONWebServicesOSBAsahApiHelper;
 	readonly jsonWebServicesOSBFaro: JSONWebServicesOSBFaroApiHelper;
+	readonly jsonWebServicesResourcePermissionApiHelper: JSONWebServicesResourcePermissionApiHelper;
 	readonly jsonWebServicesSegmentsEntry: JSONWebServicesSegmentsEntryApiHelper;
 	readonly jsonWebServicesSiteNavigationMenu: JSONWebServicesSiteNavigationMenuApiHelper;
+	readonly jsonWebServicesStaging: JSONWebServicesStagingApiHelper;
+	readonly jsonWebServicesTeam: JSONWebServicesTeamApiHelper;
 	readonly jsonWebServicesUser: JSONWebServicesUserApiHelper;
 	readonly listTypeAdmin: ListTypeAdminApiHelper;
 	readonly notification: NotificationApiHelper;
@@ -161,11 +175,14 @@ export class ApiHelpers {
 		`test@liferay.com:test`
 	)}`;
 
-	constructor(page: Page) {
+	constructor(page: Page, baseUrl?: string) {
 		this.apiBuilder = new ApiBuilderHelper(this);
-		this.baseUrl = liferayConfig.environment.baseUrl + '/o/';
+		this.baseUrl = baseUrl
+			? baseUrl + '/o/'
+			: liferayConfig.environment.baseUrl + '/o/';
 		this.featureFlag = new FeatureFlagApiHelper(page);
 		this.dataEngine = new DataEngineApiHelper(this);
+		this.dynamicDataMapping = new DynamicDataMappingApiHelper(this);
 		this.headlessAdminAddress = new HeadlessAdminAddressApiHelper(this);
 		this.headlessAdminContent = new HeadlessAdminContentApiHelper(this);
 		this.headlessAdminTaxonomy = new HeadlessAdminTaxonomyApiHelper(this);
@@ -198,8 +215,15 @@ export class ApiHelpers {
 		this.headlessSite = new HeadlessSiteApiHelper(this);
 		this.jsonWebServicesAnnouncementsEntryApiHelper =
 			new JSONWebServicesAnnouncementsEntryApiHelper(this);
+		this.jsonWebServicesAssetDisplayPageEntry =
+			new JSONWebServicesAssetDisplayPageEntryApiHelper(this);
 		this.jsonWebServicesAssetListEntry =
 			new JSONWebServicesAssetListEntryApiHelper(this);
+		this.jsonWebServicesCalendar = new JSONWebServicesCalendarApiHelper(
+			this
+		);
+		this.jsonWebServicesCalendarResource =
+			new JSONWebServicesCalendarResourceApiHelper(this);
 		this.jsonWebServicesClassName = new JSONWebServicesClassNameApiHelper(
 			this
 		);
@@ -228,10 +252,14 @@ export class ApiHelpers {
 		this.jsonWebServicesMBApiHelper = new JSONWebServicesMBApiHelper(this);
 		this.jsonWebServicesOSBFaro = new JSONWebServicesOSBFaroApiHelper(this);
 		this.jsonWebServicesOSBAsah = new JSONWebServicesOSBAsahApiHelper(this);
+		this.jsonWebServicesResourcePermissionApiHelper =
+			new JSONWebServicesResourcePermissionApiHelper(this);
 		this.jsonWebServicesSegmentsEntry =
 			new JSONWebServicesSegmentsEntryApiHelper(this);
 		this.jsonWebServicesSiteNavigationMenu =
 			new JSONWebServicesSiteNavigationMenuApiHelper(this);
+		this.jsonWebServicesStaging = new JSONWebServicesStagingApiHelper(this);
+		this.jsonWebServicesTeam = new JSONWebServicesTeamApiHelper(this);
 		this.jsonWebServicesUser = new JSONWebServicesUserApiHelper(this);
 		this.listTypeAdmin = new ListTypeAdminApiHelper(this);
 		this.notification = new NotificationApiHelper(this);
@@ -314,8 +342,13 @@ export class ApiHelpers {
 		});
 	}
 
-	async delete(url: string, headers?: any) {
+	async delete<T>(
+		url: string,
+		{data, failOnStatusCode, headers}: RequestOptions<T> = {}
+	) {
 		return this.page.request.delete(url, {
+			data,
+			failOnStatusCode: failOnStatusCode || false,
 			headers: {
 				...(await getHeader(this.page)),
 				...(headers || {}),
@@ -391,8 +424,8 @@ export class ApiHelpers {
 export class DataApiHelpers extends ApiHelpers {
 	readonly data: TDataApiHelpersData[];
 
-	constructor(page: Page) {
-		super(page);
+	constructor(page: Page, baseUrl?: string) {
+		super(page, baseUrl);
 
 		this.data = [];
 	}
@@ -446,23 +479,23 @@ export class DataApiHelpers extends ApiHelpers {
 				await this.notification.deleteNotificationTemplate(item.id);
 			}
 			else if (item.type === 'objectAction') {
-				const objectActionApiClient =
-					await this.buildRestClient(ObjectActionApi);
-				await objectActionApiClient.deleteObjectAction(item.id);
+				const objectActionAPIClient =
+					await this.buildRestClient(ObjectActionAPI);
+				await objectActionAPIClient.deleteObjectAction(item.id);
 			}
 			else if (item.type === 'objectDefinition') {
-				const objectDefinitionApiClient =
-					await this.buildRestClient(ObjectDefinitionApi);
-				await objectDefinitionApiClient.deleteObjectDefinition(item.id);
+				const objectDefinitionAPIClient =
+					await this.buildRestClient(ObjectDefinitionAPI);
+				await objectDefinitionAPIClient.deleteObjectDefinition(item.id);
 			}
 			else if (item.type === 'objectFolder') {
 				const objectFolderRESTClient =
-					await this.buildRestClient(ObjectFolderApi);
+					await this.buildRestClient(ObjectFolderAPI);
 				await objectFolderRESTClient.deleteObjectFolder(item.id);
 			}
 			else if (item.type === 'objectRelationship') {
 				const objectRelationshipRESTClient = await this.buildRestClient(
-					ObjectRelationshipApi
+					ObjectRelationshipAPI
 				);
 				await objectRelationshipRESTClient.deleteObjectRelationship(
 					item.id
@@ -505,6 +538,11 @@ export class DataApiHelpers extends ApiHelpers {
 					item.id
 				);
 			}
+			else if (item.type === 'price-list') {
+				await this.headlessCommerceAdminPricing.deletePriceList(
+					item.id
+				);
+			}
 			else if (item.type === 'product') {
 				await this.headlessCommerceAdminCatalog.deleteProduct(item.id);
 			}
@@ -531,6 +569,11 @@ export class DataApiHelpers extends ApiHelpers {
 				await this.headlessAdminUser.deleteRoleUserAccountAssociation(
 					roleId,
 					userId
+				);
+			}
+			else if (item.type === 'shipment') {
+				await this.headlessCommerceAdminShipment.deleteShipment(
+					item.id
 				);
 			}
 			else if (item.type === 'site') {
@@ -565,6 +608,13 @@ export class DataApiHelpers extends ApiHelpers {
 			}
 			else if (item.type === 'userGroup') {
 				await this.headlessAdminUser.deleteUserGroup(item.id);
+			}
+			else if (item.type === 'userGroupUserAccountAssociation') {
+				const [userGroupId, ...userIds] = item.id.split('_');
+				await this.headlessAdminUser.deleteUserGroupUsers(
+					userGroupId,
+					userIds
+				);
 			}
 			else if (item.type === 'warehouse') {
 				await this.headlessCommerceAdminInventoryApiHelper.deleteWarehouse(

@@ -12,6 +12,7 @@ import com.liferay.account.service.AccountEntryUserRelLocalService;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.object.configuration.ObjectConfiguration;
 import com.liferay.object.constants.ObjectActionKeys;
+import com.liferay.object.constants.ObjectEntryFolderConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.exception.ObjectEntryCountException;
@@ -65,7 +66,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
-import com.liferay.portal.test.rule.FeatureFlags;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
@@ -95,7 +96,7 @@ import org.junit.runner.RunWith;
 /**
  * @author Marco Leo
  */
-@FeatureFlags("LPD-34594")
+@FeatureFlag("LPD-34594")
 @RunWith(Arquillian.class)
 public class ObjectEntryServiceTest {
 
@@ -168,6 +169,9 @@ public class ObjectEntryServiceTest {
 		Assert.assertNotNull(
 			_objectEntryService.addObjectEntry(
 				0, _objectDefinition.getObjectDefinitionId(),
+				ObjectEntryFolderConstants.
+					PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+				null,
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", RandomStringUtils.randomAlphabetic(5)
 				).build(),
@@ -183,7 +187,9 @@ public class ObjectEntryServiceTest {
 				"permission for ", _objectDefinition.getResourceName(), " "),
 			() -> _objectEntryService.addObjectEntry(
 				0, _objectDefinition.getObjectDefinitionId(),
-				Collections.emptyMap(),
+				ObjectEntryFolderConstants.
+					PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+				null, Collections.emptyMap(),
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _guestUser.getUserId())));
 
@@ -196,7 +202,9 @@ public class ObjectEntryServiceTest {
 				"permission for ", _objectDefinition.getResourceName(), " "),
 			() -> _objectEntryService.addObjectEntry(
 				0, _objectDefinition.getObjectDefinitionId(),
-				Collections.emptyMap(),
+				ObjectEntryFolderConstants.
+					PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+				null, Collections.emptyMap(),
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _user.getUserId())));
 
@@ -214,6 +222,9 @@ public class ObjectEntryServiceTest {
 		Assert.assertNotNull(
 			_objectEntryService.addObjectEntry(
 				0, _objectDefinition.getObjectDefinitionId(),
+				ObjectEntryFolderConstants.
+					PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+				null,
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", RandomStringUtils.randomAlphabetic(5)
 				).build(),
@@ -232,6 +243,9 @@ public class ObjectEntryServiceTest {
 		Assert.assertNotNull(
 			_objectEntryService.addObjectEntry(
 				0, _objectDefinition.getObjectDefinitionId(),
+				ObjectEntryFolderConstants.
+					PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+				null,
 				HashMapBuilder.<String, Serializable>put(
 					"firstName", RandomStringUtils.randomAlphabetic(5)
 				).build(),
@@ -264,7 +278,10 @@ public class ObjectEntryServiceTest {
 			HashMapBuilder.<Long, ObjectEntry>put(
 				rootNode.getPrimaryKey(),
 				_objectEntryService.addObjectEntry(
-					0, rootNode.getPrimaryKey(), Collections.emptyMap(),
+					0, rootNode.getPrimaryKey(),
+					ObjectEntryFolderConstants.
+						PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+					null, Collections.emptyMap(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(), _adminUser.getUserId()))
 			).build();
@@ -276,6 +293,9 @@ public class ObjectEntryServiceTest {
 				node.getPrimaryKey(),
 				_objectEntryService.addObjectEntry(
 					0, node.getPrimaryKey(),
+					ObjectEntryFolderConstants.
+						PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+					null,
 					HashMapBuilder.<String, Serializable>put(
 						() -> {
 							Edge edge = node.getEdge();
@@ -337,6 +357,9 @@ public class ObjectEntryServiceTest {
 			Assert.assertNotNull(
 				_objectEntryService.addObjectEntry(
 					0, node.getPrimaryKey(),
+					ObjectEntryFolderConstants.
+						PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+					null,
 					HashMapBuilder.<String, Serializable>put(
 						() -> {
 							Edge edge = node.getEdge();
@@ -376,7 +399,9 @@ public class ObjectEntryServiceTest {
 				_rootObjectDefinition.getResourceName(), " "),
 			() -> _objectEntryService.addObjectEntry(
 				0, _rootObjectDefinition.getObjectDefinitionId(),
-				Collections.emptyMap(),
+				ObjectEntryFolderConstants.
+					PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+				null, Collections.emptyMap(),
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _user.getUserId())));
 	}
@@ -698,7 +723,7 @@ public class ObjectEntryServiceTest {
 				_objectDefinition);
 
 		AccountEntry accountEntry = _accountEntryLocalService.addAccountEntry(
-			TestPropsValues.getUserId(),
+			StringPool.BLANK, TestPropsValues.getUserId(),
 			AccountConstants.PARENT_ACCOUNT_ENTRY_ID_DEFAULT, "account", null,
 			null, null, null, null,
 			AccountConstants.ACCOUNT_ENTRY_TYPE_BUSINESS,
@@ -708,6 +733,8 @@ public class ObjectEntryServiceTest {
 		ObjectEntry objectEntry = _objectEntryLocalService.addObjectEntry(
 			TestPropsValues.getUserId(), 0,
 			_objectDefinition.getObjectDefinitionId(),
+			ObjectEntryFolderConstants.PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+			null,
 			HashMapBuilder.<String, Serializable>put(
 				"r_relationship_accountEntryId",
 				accountEntry.getAccountEntryId()
@@ -792,7 +819,8 @@ public class ObjectEntryServiceTest {
 
 		_objectEntryService.addObjectEntry(
 			0, _objectDefinition.getObjectDefinitionId(),
-			Collections.emptyMap(),
+			ObjectEntryFolderConstants.PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+			null, Collections.emptyMap(),
 			ServiceContextTestUtil.getServiceContext(
 				TestPropsValues.getGroupId(), _adminUser.getUserId()));
 
@@ -803,7 +831,9 @@ public class ObjectEntryServiceTest {
 		try {
 			ObjectEntry objectEntry = _objectEntryService.addObjectEntry(
 				0, _objectDefinition.getObjectDefinitionId(),
-				Collections.emptyMap(),
+				ObjectEntryFolderConstants.
+					PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+				null, Collections.emptyMap(),
 				ServiceContextTestUtil.getServiceContext(
 					TestPropsValues.getGroupId(), _guestUser.getUserId()));
 
@@ -818,7 +848,9 @@ public class ObjectEntryServiceTest {
 					" has been reached and will no longer be accepted"),
 				() -> _objectEntryService.addObjectEntry(
 					0, _objectDefinition.getObjectDefinitionId(),
-					Collections.emptyMap(),
+					ObjectEntryFolderConstants.
+						PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+					null, Collections.emptyMap(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(), _guestUser.getUserId())));
 
@@ -838,7 +870,9 @@ public class ObjectEntryServiceTest {
 			Assert.assertNotNull(
 				_objectEntryService.addObjectEntry(
 					0, _objectDefinition.getObjectDefinitionId(),
-					Collections.emptyMap(),
+					ObjectEntryFolderConstants.
+						PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+					null, Collections.emptyMap(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(), _guestUser.getUserId())));
 
@@ -851,7 +885,9 @@ public class ObjectEntryServiceTest {
 					" has been reached and will no longer be accepted"),
 				() -> _objectEntryService.addObjectEntry(
 					0, _objectDefinition.getObjectDefinitionId(),
-					Collections.emptyMap(),
+					ObjectEntryFolderConstants.
+						PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+					null, Collections.emptyMap(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(), _guestUser.getUserId())));
 
@@ -887,7 +923,8 @@ public class ObjectEntryServiceTest {
 
 		ObjectEntry objectEntry = _objectEntryService.addObjectEntry(
 			0, _objectDefinition.getObjectDefinitionId(),
-			Collections.emptyMap(),
+			ObjectEntryFolderConstants.PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+			null, Collections.emptyMap(),
 			ServiceContextTestUtil.getServiceContext(
 				TestPropsValues.getGroupId(), _guestUser.getUserId()));
 
@@ -906,7 +943,9 @@ public class ObjectEntryServiceTest {
 			Assert.assertNotNull(
 				_objectEntryService.addObjectEntry(
 					0, _objectDefinition.getObjectDefinitionId(),
-					Collections.emptyMap(),
+					ObjectEntryFolderConstants.
+						PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+					null, Collections.emptyMap(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(), _guestUser.getUserId())));
 
@@ -919,7 +958,9 @@ public class ObjectEntryServiceTest {
 					" has been reached and will no longer be accepted"),
 				() -> _objectEntryService.addObjectEntry(
 					0, _objectDefinition.getObjectDefinitionId(),
-					Collections.emptyMap(),
+					ObjectEntryFolderConstants.
+						PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+					null, Collections.emptyMap(),
 					ServiceContextTestUtil.getServiceContext(
 						TestPropsValues.getGroupId(), _guestUser.getUserId())));
 
@@ -934,6 +975,8 @@ public class ObjectEntryServiceTest {
 	private ObjectEntry _addObjectEntry(User user) throws Exception {
 		return _objectEntryLocalService.addObjectEntry(
 			user.getUserId(), 0, _objectDefinition.getObjectDefinitionId(),
+			ObjectEntryFolderConstants.PARENT_OBJECT_ENTRY_FOLDER_ID_DEFAULT,
+			null,
 			HashMapBuilder.<String, Serializable>put(
 				"firstName", RandomStringUtils.randomAlphabetic(5)
 			).put(

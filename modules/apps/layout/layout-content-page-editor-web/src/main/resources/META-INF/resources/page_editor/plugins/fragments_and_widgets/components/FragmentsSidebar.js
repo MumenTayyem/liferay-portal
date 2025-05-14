@@ -6,6 +6,7 @@
 import {ClayButtonWithIcon} from '@clayui/button';
 import {ClayDropDownWithItems} from '@clayui/drop-down';
 import {
+	MarketplaceButton,
 	SearchForm,
 	SearchResultsMessage,
 	isNullOrUndefined,
@@ -129,6 +130,7 @@ const normalizeFragmentEntry = (fragmentEntry) => ({
 export default function FragmentsSidebar() {
 	const fragments = useSelector((state) => state.fragments);
 	const widgets = useSelector((state) => state.widgets);
+	const permissions = useSelector((state) => state.permissions);
 
 	const loadWidgets = useLoadWidgets();
 
@@ -286,12 +288,39 @@ export default function FragmentsSidebar() {
 							/>
 						}
 					/>
+
+					{Liferay.FeatureFlags['LPD-34938'] &&
+					permissions.VIEW_MARKETPLACE ? (
+						<MarketplaceButton
+							body={Liferay.Language.get(
+								'we-are-excited-to-share-that-marketplace-is-now-part-of-page-builder'
+							)}
+							fragmentPortletNamespace={
+								config.fragmentPortletNamespace
+							}
+							fragmentsImportURL={config.fragmentsImportURL}
+							heading={Liferay.Language.get(
+								'marketplace-is-now-in-page-builder'
+							)}
+							isMarketplaceButtonVisited={
+								config.isMarketplaceButtonVisited
+							}
+							permissions={{
+								installFreeApps:
+									permissions.INSTALL_FREE_BUNDLED_APPS_MARKETPLACE,
+								purchaseAndInstallPaidApps:
+									permissions.PURCHASE_AND_INSTALL_PAID_APPS_MARKETPLACE,
+							}}
+							portletNamespace={config.portletNamespace}
+						/>
+					) : null}
 				</div>
 
 				{searchValue ? (
 					<SearchResultsPanel
 						filteredTabs={filteredTabs}
 						loading={loadingWidgets}
+						searchValue={searchValue}
 					/>
 				) : (
 					<TabsPanel

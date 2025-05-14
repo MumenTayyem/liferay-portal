@@ -5,22 +5,16 @@
 
 package com.liferay.headless.admin.site.dto.v1_0;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFilter;
-import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
 
 import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLName;
 import com.liferay.portal.vulcan.util.ObjectMapperUtil;
-
-import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 
@@ -55,49 +49,7 @@ public class PageElement implements Serializable {
 		return ObjectMapperUtil.unsafeReadValue(PageElement.class, json);
 	}
 
-	@Schema(description = "The page element's definition.")
-	@Valid
-	public Object getDefinition() {
-		if (_definitionSupplier != null) {
-			definition = _definitionSupplier.get();
-
-			_definitionSupplier = null;
-		}
-
-		return definition;
-	}
-
-	public void setDefinition(Object definition) {
-		this.definition = definition;
-
-		_definitionSupplier = null;
-	}
-
-	@JsonIgnore
-	public void setDefinition(
-		UnsafeSupplier<Object, Exception> definitionUnsafeSupplier) {
-
-		_definitionSupplier = () -> {
-			try {
-				return definitionUnsafeSupplier.get();
-			}
-			catch (RuntimeException runtimeException) {
-				throw runtimeException;
-			}
-			catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		};
-	}
-
-	@GraphQLField(description = "The page element's definition.")
-	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Object definition;
-
-	@JsonIgnore
-	private Supplier<Object> _definitionSupplier;
-
-	@Schema(
+	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The page element's external reference code. Unique within the site."
 	)
 	public String getExternalReferenceCode() {
@@ -142,7 +94,56 @@ public class PageElement implements Serializable {
 	@JsonIgnore
 	private Supplier<String> _externalReferenceCodeSupplier;
 
-	@Schema(description = "A list of the page elements this page element has.")
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "The page element's definition."
+	)
+	@Valid
+	public PageElementDefinition getPageElementDefinition() {
+		if (_pageElementDefinitionSupplier != null) {
+			pageElementDefinition = _pageElementDefinitionSupplier.get();
+
+			_pageElementDefinitionSupplier = null;
+		}
+
+		return pageElementDefinition;
+	}
+
+	public void setPageElementDefinition(
+		PageElementDefinition pageElementDefinition) {
+
+		this.pageElementDefinition = pageElementDefinition;
+
+		_pageElementDefinitionSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setPageElementDefinition(
+		UnsafeSupplier<PageElementDefinition, Exception>
+			pageElementDefinitionUnsafeSupplier) {
+
+		_pageElementDefinitionSupplier = () -> {
+			try {
+				return pageElementDefinitionUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(description = "The page element's definition.")
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected PageElementDefinition pageElementDefinition;
+
+	@JsonIgnore
+	private Supplier<PageElementDefinition> _pageElementDefinitionSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "A list of the page elements this page element has."
+	)
 	@Valid
 	public PageElement[] getPageElements() {
 		if (_pageElementsSupplier != null) {
@@ -186,7 +187,7 @@ public class PageElement implements Serializable {
 	@JsonIgnore
 	private Supplier<PageElement[]> _pageElementsSupplier;
 
-	@Schema(
+	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The parent's page element's external reference code. Unique within the site."
 	)
 	public String getParentExternalReferenceCode() {
@@ -236,7 +237,7 @@ public class PageElement implements Serializable {
 	private Supplier<String> _parentExternalReferenceCodeSupplier;
 
 	@DecimalMin("0")
-	@Schema(
+	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The 0-based position this page element occupies with respect to its siblings (0 for first child, 1 for second child, ...). If not specified when creating a page element the page element will be added at the last valid position."
 	)
 	public Integer getPosition() {
@@ -281,62 +282,6 @@ public class PageElement implements Serializable {
 	@JsonIgnore
 	private Supplier<Integer> _positionSupplier;
 
-	@JsonGetter("type")
-	@Schema(
-		description = "The page element's type (collection, collection item, column, container, drop zone, form, form step, form step container, fragment, fragment composition, fragment drop zone, row, widget or widget section)."
-	)
-	@Valid
-	public Type getType() {
-		if (_typeSupplier != null) {
-			type = _typeSupplier.get();
-
-			_typeSupplier = null;
-		}
-
-		return type;
-	}
-
-	@JsonIgnore
-	public String getTypeAsString() {
-		Type type = getType();
-
-		if (type == null) {
-			return null;
-		}
-
-		return type.toString();
-	}
-
-	public void setType(Type type) {
-		this.type = type;
-
-		_typeSupplier = null;
-	}
-
-	@JsonIgnore
-	public void setType(UnsafeSupplier<Type, Exception> typeUnsafeSupplier) {
-		_typeSupplier = () -> {
-			try {
-				return typeUnsafeSupplier.get();
-			}
-			catch (RuntimeException runtimeException) {
-				throw runtimeException;
-			}
-			catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		};
-	}
-
-	@GraphQLField(
-		description = "The page element's type (collection, collection item, column, container, drop zone, form, form step, form step container, fragment, fragment composition, fragment drop zone, row, widget or widget section)."
-	)
-	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected Type type;
-
-	@JsonIgnore
-	private Supplier<Type> _typeSupplier;
-
 	@Override
 	public boolean equals(Object object) {
 		if (this == object) {
@@ -364,29 +309,6 @@ public class PageElement implements Serializable {
 
 		sb.append("{");
 
-		Object definition = getDefinition();
-
-		if (definition != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"definition\": ");
-
-			if (definition instanceof Map) {
-				sb.append(
-					JSONFactoryUtil.createJSONObject((Map<?, ?>)definition));
-			}
-			else if (definition instanceof String) {
-				sb.append("\"");
-				sb.append(_escape((String)definition));
-				sb.append("\"");
-			}
-			else {
-				sb.append(definition);
-			}
-		}
-
 		String externalReferenceCode = getExternalReferenceCode();
 
 		if (externalReferenceCode != null) {
@@ -401,6 +323,19 @@ public class PageElement implements Serializable {
 			sb.append(_escape(externalReferenceCode));
 
 			sb.append("\"");
+		}
+
+		PageElementDefinition pageElementDefinition =
+			getPageElementDefinition();
+
+		if (pageElementDefinition != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"pageElementDefinition\": ");
+
+			sb.append(String.valueOf(pageElementDefinition));
 		}
 
 		PageElement[] pageElements = getPageElements();
@@ -453,76 +388,17 @@ public class PageElement implements Serializable {
 			sb.append(position);
 		}
 
-		Type type = getType();
-
-		if (type != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"type\": ");
-
-			sb.append("\"");
-
-			sb.append(type);
-
-			sb.append("\"");
-		}
-
 		sb.append("}");
 
 		return sb.toString();
 	}
 
-	@Schema(
-		accessMode = Schema.AccessMode.READ_ONLY,
+	@io.swagger.v3.oas.annotations.media.Schema(
+		accessMode = io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY,
 		defaultValue = "com.liferay.headless.admin.site.dto.v1_0.PageElement",
 		name = "x-class-name"
 	)
 	public String xClassName;
-
-	@GraphQLName("Type")
-	public static enum Type {
-
-		COLLECTION("Collection"), COLLECTION_ITEM("CollectionItem"),
-		COLUMN("Column"), CONTAINER("Container"), DROP_ZONE("DropZone"),
-		FORM("Form"), FORM_STEP("FormStep"),
-		FORM_STEP_CONTAINER("FormStepContainer"), FRAGMENT("Fragment"),
-		FRAGMENT_COMPOSITION("FragmentComposition"),
-		FRAGMENT_DROP_ZONE("FragmentDropZone"), ROW("Row"), WIDGET("Widget");
-
-		@JsonCreator
-		public static Type create(String value) {
-			if ((value == null) || value.equals("")) {
-				return null;
-			}
-
-			for (Type type : values()) {
-				if (Objects.equals(type.getValue(), value)) {
-					return type;
-				}
-			}
-
-			throw new IllegalArgumentException("Invalid enum value: " + value);
-		}
-
-		@JsonValue
-		public String getValue() {
-			return _value;
-		}
-
-		@Override
-		public String toString() {
-			return _value;
-		}
-
-		private Type(String value) {
-			_value = value;
-		}
-
-		private final String _value;
-
-	}
 
 	private static String _escape(Object object) {
 		return StringUtil.replace(

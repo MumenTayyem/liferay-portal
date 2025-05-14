@@ -1,0 +1,82 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2025 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+import {openModal, openToast} from 'frontend-js-components-web';
+import {sub} from 'frontend-js-web';
+
+import {postScopeScopeKeyObjectEntryFolder} from '../../../services/api';
+import CreationModalContent, {
+	AssetLibrary,
+} from '../../components/modal/CreationModalContent';
+
+export type FolderData = {
+	action: 'createFolder';
+	assetLibraries: AssetLibrary[];
+	baseAssetLibraryViewURL: string;
+	baseFolderViewURL: string;
+};
+
+export default function createFolderAction(
+	data: FolderData,
+	additionalProps: {parentObjectEntryFolderExternalReferenceCode: string},
+	loadData?: () => {}
+) {
+	openModal({
+		center: true,
+		contentComponent: ({closeModal}: {closeModal: () => void}) =>
+			CreationModalContent({
+				...data,
+				closeModal,
+				onSubmit: async ({groupId, name: title}) => {
+					const {
+						data: folderData,
+						errorMessage,
+						success,
+					} = await postScopeScopeKeyObjectEntryFolder<{
+						id: string;
+						scopeKey: string;
+						title: string;
+					}>(
+						groupId,
+						title,
+						additionalProps.parentObjectEntryFolderExternalReferenceCode
+					);
+
+					if (success) {
+						loadData?.();
+
+						closeModal();
+
+						const {
+							id: folderId,
+							scopeKey: spaceName,
+							title: folderName,
+						} = folderData || {};
+
+						openToast({
+							message: sub(
+								Liferay.Language.get(
+									'x-was-created-successfully-to-x-space'
+								),
+								[
+									`<a href="${data.baseFolderViewURL}${folderId}" class="alert-link lead"><strong>${folderName}</strong></a>`,
+									`<a href="${data.baseAssetLibraryViewURL}${groupId}" class="alert-link lead"><strong>${spaceName}</strong></a>`,
+								]
+							),
+							type: 'success',
+						});
+					}
+					else {
+						openToast({
+							message: errorMessage,
+							type: 'danger',
+						});
+					}
+				},
+				title: Liferay.Language.get('new-folder'),
+			}),
+		size: 'sm',
+	});
+}

@@ -87,15 +87,11 @@ const getVisibleFields = ({
 const Head = ({
 	fields,
 	items,
-	selectItems,
 	selectable,
-	selectedItemsKey,
-	selectedItemsValue,
 	selectionType,
 }: {
 	fields: Array<Field>;
 	items: Array<any>;
-	selectItems: Function;
 	selectable?: boolean;
 	selectedItemsKey: string;
 	selectedItemsValue: any;
@@ -122,46 +118,6 @@ const Head = ({
 								</ClayTableCell>
 							);
 						}
-
-						const title =
-							items.length !== selectedItemsValue.length
-								? Liferay.Language.get('select-items')
-								: Liferay.Language.get('clear-selection');
-
-						return (
-							<ClayTableCell
-								className="cell-select-item"
-								key="select"
-								scope="col"
-								textValue={title}
-								width="51px"
-							>
-								<ClayCheckbox
-									checked={!!selectedItemsValue.length}
-									indeterminate={
-										!!selectedItemsValue.length &&
-										items.length !==
-											selectedItemsValue.length
-									}
-									name="table-head-selector"
-									onChange={() => {
-										if (
-											selectedItemsValue.length ===
-											items.length
-										) {
-											return selectItems([]);
-										}
-
-										return selectItems(
-											items.map(
-												(item) => item[selectedItemsKey]
-											)
-										);
-									}}
-									title={title}
-								/>
-							</ClayTableCell>
-						);
 					}
 
 					return (
@@ -186,7 +142,7 @@ const Body = ({
 	itemInlineChanges,
 	items,
 	itemsActions,
-	selectItems,
+	onItemSelectionChange,
 	selectable,
 	selectedItemsKey,
 	selectedItemsValue,
@@ -200,13 +156,15 @@ const Body = ({
 	itemInlineChanges?: Array<any>;
 	items: Array<any>;
 	itemsActions: Array<IItemsActions>;
-	selectItems: Function;
+	onItemSelectionChange: Function;
 	selectable?: boolean;
 	selectedItemsKey: string;
 	selectedItemsValue: any;
 	selectionType?: string;
 }) => {
-	const {itemsChanges, updateItem} = useContext(FrontendDataSetContext);
+	const {allItemsSelectedActive, itemsChanges, updateItem} = useContext(
+		FrontendDataSetContext
+	);
 
 	const SelectionComponent =
 		selectionType === 'multiple' ? ClayCheckbox : ClayRadio;
@@ -282,6 +240,7 @@ const Body = ({
 													{!item.editable && (
 														<SelectionComponent
 															checked={
+																allItemsSelectedActive ||
 																!!selectedItemsValue.find(
 																	(
 																		element: any
@@ -295,7 +254,9 @@ const Body = ({
 																)
 															}
 															onChange={() =>
-																selectItems(id)
+																onItemSelectionChange(
+																	item
+																)
 															}
 															title={Liferay.Language.get(
 																'select-item'
@@ -606,6 +567,7 @@ function CellRenderer({
 		customDataRenderers,
 		customRenderers,
 		loadData,
+		onItemsChange,
 		openSidePanel,
 	}: IFrontendDataSetContext = useContext(FrontendDataSetContext);
 	const [{modifiedFields}] = useContext(ViewsContext) as any;
@@ -662,6 +624,7 @@ function CellRenderer({
 						itemData={itemData}
 						itemId={itemId}
 						loadData={loadData}
+						onItemsChange={onItemsChange}
 						openSidePanel={openSidePanel}
 						options={field}
 						rootPropertyName={rootPropertyName}
@@ -706,12 +669,13 @@ function getVisibleFieldsMap(
 const Table = ({
 	items = [],
 	itemsActions,
+	onItemSelectionChange,
 	schema,
 }: {
 	items: Array<any>;
 	itemsActions: Array<IItemsActions>;
+	onItemSelectionChange: Function;
 	schema: ITableSchema;
-	style: string;
 }) => {
 	const {
 		appURL,
@@ -721,7 +685,6 @@ const Table = ({
 		nestedItemsKey,
 		nestedItemsReferenceKey,
 		portletId,
-		selectItems,
 		selectable,
 		selectedItemsKey = 'id',
 		selectedItemsValue,
@@ -858,7 +821,6 @@ const Table = ({
 				<Head
 					fields={schema.fields as Array<Field>}
 					items={items}
-					selectItems={selectItems}
 					selectable={selectable}
 					selectedItemsKey={selectedItemsKey}
 					selectedItemsValue={selectedItemsValue}
@@ -871,7 +833,7 @@ const Table = ({
 					itemInlineChanges={itemsChanges}
 					items={items}
 					itemsActions={itemsActions}
-					selectItems={selectItems}
+					onItemSelectionChange={onItemSelectionChange}
 					selectable={selectable}
 					selectedItemsKey={selectedItemsKey}
 					selectedItemsValue={selectedItemsValue}

@@ -7,6 +7,7 @@ package com.liferay.headless.commerce.delivery.catalog.resource.v1_0.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.commerce.product.model.CPDefinition;
+import com.liferay.commerce.product.model.CProduct;
 import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.service.CPDefinitionLocalService;
 import com.liferay.commerce.product.test.util.CPTestUtil;
@@ -95,6 +96,29 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 	}
 
 	@Override
+	protected Product testGetChannelProductByFriendlyUrlPath_addProduct()
+		throws Exception {
+
+		return _addCPDefinition(randomProduct());
+	}
+
+	@Override
+	protected Long testGetChannelProductByFriendlyUrlPath_getChannelId()
+		throws Exception {
+
+		return _commerceChannel.getCommerceChannelId();
+	}
+
+	@Override
+	protected String testGetChannelProductByFriendlyUrlPath_getFriendlyUrlPath()
+		throws Exception {
+
+		return _addCPDefinition(
+			randomProduct()
+		).getSlug();
+	}
+
+	@Override
 	protected Product testGetChannelProductsPage_addProduct(
 			Long channelId, Product product)
 		throws Exception {
@@ -112,6 +136,30 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 		throws Exception {
 
 		return _commerceChannel.getCommerceChannelId();
+	}
+
+	@Override
+	protected Product testGraphQLGetChannelProductByFriendlyUrlPath_addProduct()
+		throws Exception {
+
+		return _addCPDefinition(randomProduct());
+	}
+
+	@Override
+	protected Long testGraphQLGetChannelProductByFriendlyUrlPath_getChannelId()
+		throws Exception {
+
+		return _commerceChannel.getCommerceChannelId();
+	}
+
+	@Override
+	protected String
+			testGraphQLGetChannelProductByFriendlyUrlPath_getFriendlyUrlPath()
+		throws Exception {
+
+		return _addCPDefinition(
+			randomProduct()
+		).getSlug();
 	}
 
 	@Override
@@ -165,6 +213,15 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 				productId = cpDefinition2.getCProductId();
 				productType = cpDefinition2.getProductTypeName();
 				shortDescription = product.getShortDescription();
+				slug = cpDefinition2.getURL(
+					LocaleUtil.toLanguageId(siteDefaultLocale));
+
+				setExternalReferenceCode(
+					() -> {
+						CProduct cProduct = cpDefinition2.getCProduct();
+
+						return cProduct.getExternalReferenceCode();
+					});
 			}
 		};
 	}
@@ -197,6 +254,13 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 				modifiedDate = cpDefinition2.getModifiedDate();
 				productId = cpDefinition2.getCProductId();
 				productType = cpDefinition2.getProductTypeName();
+
+				setExternalReferenceCode(
+					() -> {
+						CProduct cProduct = cpDefinition2.getCProduct();
+
+						return cProduct.getExternalReferenceCode();
+					});
 			}
 		};
 	}

@@ -50,14 +50,14 @@ public class ObjectEntryFolderLocalServiceWrapper
 	@Override
 	public com.liferay.object.model.ObjectEntryFolder addObjectEntryFolder(
 			String externalReferenceCode, long userId, long groupId,
-			long parentObjectEntryFolderId,
+			long parentObjectEntryFolderId, String description,
 			java.util.Map<java.util.Locale, String> labelMap, String name,
 			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryFolderLocalService.addObjectEntryFolder(
 			externalReferenceCode, userId, groupId, parentObjectEntryFolderId,
-			labelMap, name, serviceContext);
+			description, labelMap, name, serviceContext);
 	}
 
 	/**
@@ -124,6 +124,17 @@ public class ObjectEntryFolderLocalServiceWrapper
 
 		return _objectEntryFolderLocalService.deleteObjectEntryFolder(
 			objectEntryFolder);
+	}
+
+	@Override
+	public com.liferay.object.model.ObjectEntryFolder
+			deleteObjectEntryFolderByExternalReferenceCode(
+				String externalReferenceCode, long groupId, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectEntryFolderLocalService.
+			deleteObjectEntryFolderByExternalReferenceCode(
+				externalReferenceCode, groupId, companyId);
 	}
 
 	/**
@@ -249,6 +260,16 @@ public class ObjectEntryFolderLocalServiceWrapper
 			objectEntryFolderId);
 	}
 
+	@Override
+	public com.liferay.object.model.ObjectEntryFolder
+		fetchObjectEntryFolderByExternalReferenceCode(
+			String externalReferenceCode, long groupId, long companyId) {
+
+		return _objectEntryFolderLocalService.
+			fetchObjectEntryFolderByExternalReferenceCode(
+				externalReferenceCode, groupId, companyId);
+	}
+
 	/**
 	 * Returns the object entry folder matching the UUID and group.
 	 *
@@ -305,6 +326,17 @@ public class ObjectEntryFolderLocalServiceWrapper
 			objectEntryFolderId);
 	}
 
+	@Override
+	public com.liferay.object.model.ObjectEntryFolder
+			getObjectEntryFolderByExternalReferenceCode(
+				String externalReferenceCode, long groupId, long companyId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _objectEntryFolderLocalService.
+			getObjectEntryFolderByExternalReferenceCode(
+				externalReferenceCode, groupId, companyId);
+	}
+
 	/**
 	 * Returns the object entry folder matching the UUID and group.
 	 *
@@ -338,6 +370,16 @@ public class ObjectEntryFolderLocalServiceWrapper
 		getObjectEntryFolders(int start, int end) {
 
 		return _objectEntryFolderLocalService.getObjectEntryFolders(start, end);
+	}
+
+	@Override
+	public java.util.List<com.liferay.object.model.ObjectEntryFolder>
+		getObjectEntryFolders(
+			long groupId, long companyId, long parentObjectEntryFolderId,
+			int start, int end) {
+
+		return _objectEntryFolderLocalService.getObjectEntryFolders(
+			groupId, companyId, parentObjectEntryFolderId, start, end);
 	}
 
 	/**
@@ -388,6 +430,14 @@ public class ObjectEntryFolderLocalServiceWrapper
 		return _objectEntryFolderLocalService.getObjectEntryFoldersCount();
 	}
 
+	@Override
+	public int getObjectEntryFoldersCount(
+		long groupId, long companyId, long parentObjectEntryFolderId) {
+
+		return _objectEntryFolderLocalService.getObjectEntryFoldersCount(
+			groupId, companyId, parentObjectEntryFolderId);
+	}
+
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -412,13 +462,14 @@ public class ObjectEntryFolderLocalServiceWrapper
 	@Override
 	public com.liferay.object.model.ObjectEntryFolder updateObjectEntryFolder(
 			long userId, long objectEntryFolderId,
-			long parentObjectEntryFolderId,
-			java.util.Map<java.util.Locale, String> labelMap, String name)
+			long parentObjectEntryFolderId, String description,
+			java.util.Map<java.util.Locale, String> labelMap, String name,
+			com.liferay.portal.kernel.service.ServiceContext serviceContext)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _objectEntryFolderLocalService.updateObjectEntryFolder(
-			userId, objectEntryFolderId, parentObjectEntryFolderId, labelMap,
-			name);
+			userId, objectEntryFolderId, parentObjectEntryFolderId, description,
+			labelMap, name, serviceContext);
 	}
 
 	/**

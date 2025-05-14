@@ -19,11 +19,15 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.Portlet;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.UserGroup;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.portlet.LiferayPortletRequest;
 import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
@@ -44,6 +48,7 @@ import com.liferay.portal.search.web.internal.search.bar.portlet.SearchBarPortle
 import com.liferay.portal.search.web.internal.search.bar.portlet.configuration.SearchBarPortletInstanceConfiguration;
 import com.liferay.portal.search.web.internal.search.bar.portlet.display.context.SearchBarPortletDisplayContext;
 import com.liferay.portal.search.web.internal.search.bar.portlet.helper.SearchBarPrecedenceHelper;
+import com.liferay.portal.search.web.internal.util.DisplayContextHelperUtil;
 import com.liferay.portal.search.web.portlet.shared.search.PortletSharedSearchRequest;
 import com.liferay.portal.search.web.portlet.shared.search.PortletSharedSearchResponse;
 import com.liferay.portal.search.web.search.request.SearchSettings;
@@ -60,12 +65,13 @@ public class SearchBarPortletDisplayContextFactory {
 
 	public SearchBarPortletDisplayContextFactory(
 			LayoutLocalService layoutLocalService, Portal portal,
-			RenderRequest renderRequest)
+			RenderRequest renderRequest, UserLocalService userLocalService)
 		throws ConfigurationException {
 
 		_layoutLocalService = layoutLocalService;
 		_portal = portal;
 		_renderRequest = renderRequest;
+		_userLocalService = userLocalService;
 
 		_searchBarPortletInstanceConfiguration =
 			ConfigurationProviderUtil.getPortletInstanceConfiguration(
@@ -245,14 +251,10 @@ public class SearchBarPortletDisplayContextFactory {
 			searchBarPortletInstanceConfiguration,
 		ThemeDisplay themeDisplay) {
 
-		long displayStyleGroupId =
-			searchBarPortletInstanceConfiguration.displayStyleGroupId();
-
-		if (displayStyleGroupId <= 0) {
-			displayStyleGroupId = themeDisplay.getScopeGroupId();
-		}
-
-		return displayStyleGroupId;
+		return DisplayContextHelperUtil.getDisplayStyleGroupId(
+			searchBarPortletInstanceConfiguration.
+				displayStyleGroupExternalReferenceCode(),
+			themeDisplay);
 	}
 
 	protected HttpServletRequest getHttpServletRequest(
@@ -349,11 +351,33 @@ public class SearchBarPortletDisplayContextFactory {
 		Layout layout = fetchLayoutByFriendlyURL(
 			themeDisplay.getScopeGroupId(), _slashify(destinationString));
 
-		if (layout == null) {
-			return null;
+		if (layout != null) {
+			return getLayoutFriendlyURL(layout, themeDisplay);
 		}
 
-		return getLayoutFriendlyURL(layout, themeDisplay);
+		Group scopeGroup = themeDisplay.getScopeGroup();
+
+		User user = _userLocalService.fetchUserById(scopeGroup.getClassPK());
+
+		if (user == null) {
+			user = themeDisplay.getUser();
+		}
+
+		for (UserGroup userGroup : user.getUserGroups()) {
+			try {
+				layout = fetchLayoutByFriendlyURL(
+					userGroup.getGroupId(), _slashify(destinationString));
+			}
+			catch (PortalException portalException) {
+				throw new RuntimeException(portalException);
+			}
+
+			if (layout != null) {
+				return getLayoutFriendlyURL(layout, themeDisplay);
+			}
+		}
+
+		return null;
 	}
 
 	private String _getKeywordsParameterName(
@@ -558,5 +582,6 @@ public class SearchBarPortletDisplayContextFactory {
 	private final RenderRequest _renderRequest;
 	private final SearchBarPortletInstanceConfiguration
 		_searchBarPortletInstanceConfiguration;
+	private final UserLocalService _userLocalService;
 
 }

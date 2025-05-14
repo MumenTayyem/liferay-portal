@@ -168,14 +168,15 @@ public class LayoutTypeContentPerformanceTest {
 					null, TestPropsValues.getUserId(), _group.getGroupId(),
 					LayoutPageTemplateConstants.
 						PARENT_LAYOUT_PAGE_TEMPLATE_COLLECTION_ID_DEFAULT,
-					"Page Template Collection", StringPool.BLANK,
+					null, "Page Template Collection", StringPool.BLANK,
 					LayoutPageTemplateCollectionTypeConstants.BASIC,
 					_serviceContext);
 
 		return _layoutPageTemplateEntryLocalService.addLayoutPageTemplateEntry(
 			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			layoutPageTemplateCollection.getLayoutPageTemplateCollectionId(),
-			"Page Template One", LayoutPageTemplateEntryTypeConstants.BASIC, 0,
+			null, "Page Template One",
+			LayoutPageTemplateEntryTypeConstants.BASIC, 0,
 			WorkflowConstants.STATUS_APPROVED, _serviceContext);
 	}
 

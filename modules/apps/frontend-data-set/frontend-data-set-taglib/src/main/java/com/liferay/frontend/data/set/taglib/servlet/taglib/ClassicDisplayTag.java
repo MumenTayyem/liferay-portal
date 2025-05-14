@@ -8,7 +8,6 @@ package com.liferay.frontend.data.set.taglib.servlet.taglib;
 import com.liferay.frontend.data.set.model.FDSSortItem;
 import com.liferay.frontend.data.set.model.FDSSortItemList;
 import com.liferay.frontend.data.set.taglib.internal.servlet.ServletContextUtil;
-import com.liferay.frontend.data.set.view.FDSViewSerializer;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.CreationMenu;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.petra.string.StringBundler;
@@ -88,7 +87,6 @@ public class ClassicDisplayTag extends BaseDisplayTag {
 			}
 
 			_setActiveViewSettingsJSON();
-			_setDataSetDisplayViewsContext();
 		}
 		catch (Exception exception) {
 			_log.error(exception);
@@ -178,6 +176,10 @@ public class ClassicDisplayTag extends BaseDisplayTag {
 		return _showSearch;
 	}
 
+	public boolean isShowSelectAll() {
+		return _showSelectAll;
+	}
+
 	public void setActionParameterName(String actionParameterName) {
 		_actionParameterName = actionParameterName;
 	}
@@ -226,8 +228,6 @@ public class ClassicDisplayTag extends BaseDisplayTag {
 
 	@Override
 	public void setPageContext(PageContext pageContext) {
-		_fdsViewSerializer = ServletContextUtil.getFDSViewSerializer();
-
 		super.setPageContext(pageContext);
 
 		setServletContext(ServletContextUtil.getServletContext());
@@ -266,6 +266,10 @@ public class ClassicDisplayTag extends BaseDisplayTag {
 		_showSearch = showSearch;
 	}
 
+	public void setShowSelectAll(boolean showSelectAll) {
+		_showSelectAll = showSelectAll;
+	}
+
 	public void setStyle(String style) {
 		_style = style;
 	}
@@ -282,10 +286,8 @@ public class ClassicDisplayTag extends BaseDisplayTag {
 		_contextParams = new HashMap<>();
 		_creationMenu = new CreationMenu();
 		_dataProviderKey = null;
-		_dataSetDisplayViewsContext = null;
 		_deltaParam = null;
 		_fdsSortItemList = new FDSSortItemList();
-		_fdsViewSerializer = null;
 		_formId = null;
 		_formName = null;
 		_nestedItemsKey = null;
@@ -297,6 +299,7 @@ public class ClassicDisplayTag extends BaseDisplayTag {
 		_showManagementBar = true;
 		_showPagination = true;
 		_showSearch = true;
+		_showSelectAll = false;
 		_style = "default";
 	}
 
@@ -351,11 +354,11 @@ public class ClassicDisplayTag extends BaseDisplayTag {
 			).put(
 				"showSearch", _showSearch
 			).put(
+				"showSelectAll", _showSelectAll
+			).put(
 				"sorts", _fdsSortItemList
 			).put(
 				"style", _toNullOrObject(_style)
-			).put(
-				"views", _dataSetDisplayViewsContext
 			).build());
 	}
 
@@ -370,11 +373,6 @@ public class ClassicDisplayTag extends BaseDisplayTag {
 			ServletContextUtil.getFDSSettingsNamespace(
 				httpServletRequest, getId()),
 			"activeViewSettingsJSON");
-	}
-
-	private void _setDataSetDisplayViewsContext() {
-		_dataSetDisplayViewsContext = _fdsViewSerializer.serialize(
-			getId(), PortalUtil.getLocale(getRequest()));
 	}
 
 	private Object _toNullOrObject(Object object) {
@@ -396,10 +394,8 @@ public class ClassicDisplayTag extends BaseDisplayTag {
 	private Map<String, String> _contextParams = new HashMap<>();
 	private CreationMenu _creationMenu = new CreationMenu();
 	private String _dataProviderKey;
-	private Object _dataSetDisplayViewsContext;
 	private String _deltaParam;
 	private FDSSortItemList _fdsSortItemList = new FDSSortItemList();
-	private FDSViewSerializer _fdsViewSerializer;
 	private String _formId;
 	private String _formName;
 	private String _nestedItemsKey;
@@ -411,6 +407,7 @@ public class ClassicDisplayTag extends BaseDisplayTag {
 	private boolean _showManagementBar = true;
 	private boolean _showPagination = true;
 	private boolean _showSearch = true;
+	private boolean _showSelectAll;
 	private String _style = "default";
 
 }

@@ -33,7 +33,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -124,6 +123,8 @@ public class UIItemsBuilder {
 					Constants.CANCEL_CHECKOUT)
 			).setParameter(
 				"fileEntryId", _fileEntry.getFileEntryId()
+			).setParameter(
+				"folderId", _fileEntry.getFolderId()
 			).buildString()
 		).setKey(
 			DLUIItemKeys.CANCEL_CHECKOUT
@@ -138,6 +139,8 @@ public class UIItemsBuilder {
 				"/document_library/edit_file_entry", Constants.CHECKIN)
 		).setParameter(
 			"fileEntryId", _fileEntry.getFileEntryId()
+		).setParameter(
+			"folderId", _fileEntry.getFolderId()
 		).buildPortletURL();
 
 		if (!_versioningStrategy.isOverridable()) {
@@ -172,6 +175,8 @@ public class UIItemsBuilder {
 					"/document_library/edit_file_entry", Constants.CHECKOUT)
 			).setParameter(
 				"fileEntryId", _fileEntry.getFileEntryId()
+			).setParameter(
+				"folderId", _fileEntry.getFolderId()
 			).buildString()
 		).setIcon(
 			"lock"
@@ -914,16 +919,6 @@ public class UIItemsBuilder {
 
 	public boolean isViewOriginalFileActionAvailable() {
 		if (_fileShortcut != null) {
-			return true;
-		}
-
-		return false;
-	}
-
-	public boolean isViewUsagesActionAvailable() {
-		if (FeatureFlagManagerUtil.isEnabled(
-				_themeDisplay.getCompanyId(), "LPD-36446")) {
-
 			return true;
 		}
 

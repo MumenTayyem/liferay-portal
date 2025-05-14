@@ -26,6 +26,7 @@ export enum EFilterType {
 }
 
 export enum ESelectionFilterSourceType {
+	ITEM_PROXY = 'ITEM_PROXY',
 	OBJECT_PICKLIST = 'OBJECT_PICKLIST',
 	API_REST_APPLICATION = 'API_REST_APPLICATION',
 }
@@ -54,6 +55,7 @@ export interface IDataSet {
 			method: string;
 		};
 	};
+	active: boolean;
 	additionalAPIURLParameters?: string;
 	creationActionsOrder?: string;
 	defaultItemsPerPage: number;
@@ -134,7 +136,7 @@ export interface IFilterTypeProps {
 		Header: JSXElementConstructor<any>;
 	};
 	availableFieldsFilter: (field: IField) => boolean;
-	displayType: string;
+	displayType: (filter?: IFilter) => string;
 	fdsViewRelationship: string;
 	fdsViewRelationshipId: string;
 	label: string;
@@ -154,7 +156,9 @@ export interface IListTypeEntry {
 }
 
 export interface IOrderable {
+	active: boolean;
 	dateCreated: string;
+	externalReferenceCode: string;
 	id: number;
 }
 

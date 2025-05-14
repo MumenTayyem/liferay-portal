@@ -24,6 +24,7 @@ create table Address (
 	street1 VARCHAR(255) null,
 	street2 VARCHAR(255) null,
 	street3 VARCHAR(255) null,
+	subtype VARCHAR(75) null,
 	validationDate DATE null,
 	validationStatus INTEGER,
 	zip VARCHAR(75) null,
@@ -97,6 +98,7 @@ create table AssetCategory (
 	description TEXT null,
 	vocabularyId LONG,
 	lastPublishDate DATE null,
+	status INTEGER,
 	primary key (categoryId, ctCollectionId)
 );
 
@@ -159,6 +161,17 @@ create table AssetTag (
 	primary key (tagId, ctCollectionId)
 );
 
+create table AssetTagGroupRel (
+	mvccVersion LONG default 0 not null,
+	ctCollectionId LONG default 0 not null,
+	uuid_ VARCHAR(75) null,
+	assetTagGroupRelId LONG not null,
+	groupId LONG,
+	companyId LONG,
+	tagId LONG,
+	primary key (assetTagGroupRelId, ctCollectionId)
+);
+
 create table AssetVocabulary (
 	mvccVersion LONG default 0 not null,
 	ctCollectionId LONG default 0 not null,
@@ -177,7 +190,19 @@ create table AssetVocabulary (
 	settings_ STRING null,
 	visibilityType INTEGER,
 	lastPublishDate DATE null,
+	status INTEGER,
 	primary key (vocabularyId, ctCollectionId)
+);
+
+create table AssetVocabularyGroupRel (
+	mvccVersion LONG default 0 not null,
+	ctCollectionId LONG default 0 not null,
+	uuid_ VARCHAR(75) null,
+	assetVocabularyGroupRelId LONG not null,
+	groupId LONG,
+	companyId LONG,
+	vocabularyId LONG,
+	primary key (assetVocabularyGroupRelId, ctCollectionId)
 );
 
 create table BrowserTracker (
@@ -890,6 +915,7 @@ create table Organization_ (
 	statusListTypeId LONG,
 	comments STRING null,
 	logoId LONG,
+	status INTEGER,
 	primary key (organizationId, ctCollectionId)
 );
 
@@ -1248,6 +1274,7 @@ create table Role_ (
 	description TEXT null,
 	type_ INTEGER,
 	subtype VARCHAR(75) null,
+	status INTEGER,
 	primary key (roleId, ctCollectionId)
 );
 
@@ -1398,6 +1425,7 @@ create table SystemEvent (
 	userId LONG,
 	userName VARCHAR(75) null,
 	createDate DATE null,
+	classExternalReferenceCode VARCHAR(1000) null,
 	classNameId LONG,
 	classPK LONG,
 	classUuid VARCHAR(75) null,
