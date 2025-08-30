@@ -5378,8 +5378,6 @@ public class BundleSiteInitializer implements SiteInitializer {
 			addCPDefinitionsR,
 			_dependsOn(addOrUpdateLayoutsR, addOrUpdateObjectEntriesR)
 		).put(
-			addDepotEntriesR, _dependsOn()
-		).put(
 			addExpandoValuesR,
 			_dependsOn(
 				addOrUpdateBlogPostingsR, addOrUpdateJournalArticlesR,
@@ -5514,7 +5512,10 @@ public class BundleSiteInitializer implements SiteInitializer {
 			setPLOEntriesR, _dependsOn()
 		).put(
 			updateLayoutSetsR, _dependsOn(addOrUpdateLayoutsR)
-		).build();
+		)
+			.put(
+				addDepotEntriesR, _dependsOn(addOrUpdateDepotEntriesR)
+			).build();
 	}
 
 	private List<R> _dependsOn(R... rArray) {
