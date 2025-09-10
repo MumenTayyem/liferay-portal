@@ -1,4 +1,4 @@
-clarity-custom-element-distributor-details {
+clarity-solution-custom-element-distributor-details {
 	margin: 0 auto;
 	max-width: 1280px;
 	padding: 2rem;
@@ -17,14 +17,6 @@ clarity-custom-element-distributor-details {
 		&.react:hover {
 			filter: drop-shadow(0 0 2em #61dafbaa);
 		}
-	}
-
-	.row {
-
-	}
-
-	.col {
-		
 	}
 }
 

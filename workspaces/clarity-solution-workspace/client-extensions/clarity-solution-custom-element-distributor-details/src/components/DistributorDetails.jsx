@@ -3,18 +3,18 @@ import ClayAlert from '@clayui/alert';
 import ClayButton from '@clayui/button';
 
 const DistributorDetails = () => {
-    const [selected, setSelected] = useState(null);
+    const [selectedDistributor, setSelectedDistributor] = useState(null);
 
     useEffect(() => {
-        Liferay.on('selectDistributor', (dist) => {
-            setSelected(dist);
+        Liferay.on('selectDistributor', (distributor) => {
+            setSelectedDistributor(distributor);
         });
     }, []);
 
-    if (!selected) {
+    if (!selectedDistributor) {
         return (
             <ClayAlert displayType="info" title="Info:">
-                Please select a distributor from the table.
+                Select a distributor from the table, please.
             </ClayAlert>
         );
     }
@@ -22,9 +22,10 @@ const DistributorDetails = () => {
     return (
         <div class="row">
             <div class="col">
-                <h2>{selected.name}</h2>
+                <h2>{selectedDistributor.name}</h2>
+                
                 <p>
-                    Location: {selected.city}, {selected.state}
+                    Location: {selectedDistributor.city}, {selectedDistributor.state}
                 </p>
             </div>
             
