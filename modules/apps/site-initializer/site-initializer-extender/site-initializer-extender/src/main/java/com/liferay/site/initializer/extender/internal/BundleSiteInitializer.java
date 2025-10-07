@@ -1769,18 +1769,18 @@ public class BundleSiteInitializer implements SiteInitializer {
 	}
 
 	private void _addOrUpdateDDMStructures(
-			long groupId, String path,
-			ServiceContext serviceContext,
+			long groupId, String path, ServiceContext serviceContext,
 			Map<String, String> stringUtilReplaceValues)
 		throws Exception {
 
 		Set<String> resourcePaths = null;
 
-		if (groupId == 0){
+		if (groupId == 0) {
 			groupId = serviceContext.getScopeGroupId();
 			resourcePaths = _servletContext.getResourcePaths(
 				"/site-initializer/ddm-structures");
-		} else{
+		}
+		else {
 			resourcePaths = _servletContext.getResourcePaths(path);
 		}
 
@@ -2037,8 +2037,11 @@ public class BundleSiteInitializer implements SiteInitializer {
 						depotEntry.getDepotEntryId(),
 					serviceContext.getScopeGroupId());
 
-				_addOrUpdateDDMStructures((group != null) ? group.getGroupId() :
-					depotEntry.getGroupId(),resourcePath + "ddm-structures",serviceContext,stringUtilReplaceValues);
+				_addOrUpdateDDMStructures(
+					(group != null) ? group.getGroupId() :
+						depotEntry.getGroupId(),
+					resourcePath + "ddm-structures", serviceContext,
+					stringUtilReplaceValues);
 				_addOrUpdateDocuments(
 					null,
 					(group != null) ? group.getGroupId() :
@@ -5170,8 +5173,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 				serviceContext, stringUtilReplaceValues));
 		R addOrUpdateDDMStructuresR = new R(
 			"addOrUpdateDDMStructures",
-			() -> _addOrUpdateDDMStructures(0,"",
-				serviceContext, stringUtilReplaceValues));
+			() -> _addOrUpdateDDMStructures(
+				0, "", serviceContext, stringUtilReplaceValues));
 		R addOrUpdateDDMTemplatesR = new R(
 			"addOrUpdateDDMTemplates",
 			() -> _addOrUpdateDDMTemplates(
