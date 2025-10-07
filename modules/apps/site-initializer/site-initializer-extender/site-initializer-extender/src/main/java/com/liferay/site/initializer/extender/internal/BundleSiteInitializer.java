@@ -1769,12 +1769,20 @@ public class BundleSiteInitializer implements SiteInitializer {
 	}
 
 	private void _addOrUpdateDDMStructures(
+			long groupId, String path,
 			ServiceContext serviceContext,
 			Map<String, String> stringUtilReplaceValues)
 		throws Exception {
 
-		Set<String> resourcePaths = _servletContext.getResourcePaths(
-			"/site-initializer/ddm-structures");
+		Set<String> resourcePaths = null;
+
+		if (groupId == 0){
+			groupId = serviceContext.getScopeGroupId();
+			resourcePaths = _servletContext.getResourcePaths(
+				"/site-initializer/ddm-structures");
+		} else{
+			resourcePaths = _servletContext.getResourcePaths(path);
+		}
 
 		if (SetUtil.isEmpty(resourcePaths)) {
 			return;
@@ -1782,14 +1790,13 @@ public class BundleSiteInitializer implements SiteInitializer {
 
 		for (String resourcePath : resourcePaths) {
 			_defaultDDMStructureHelper.addOrUpdateDDMStructures(
-				serviceContext.getUserId(), serviceContext.getScopeGroupId(),
+				serviceContext.getUserId(), groupId,
 				_portal.getClassNameId(JournalArticle.class), _classLoader,
 				resourcePath, serviceContext);
 		}
 
 		List<DDMStructure> ddmStructures =
-			_ddmStructureLocalService.getStructures(
-				serviceContext.getScopeGroupId());
+			_ddmStructureLocalService.getStructures(groupId);
 
 		for (DDMStructure ddmStructure : ddmStructures) {
 			stringUtilReplaceValues.put(
@@ -2030,6 +2037,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 						depotEntry.getDepotEntryId(),
 					serviceContext.getScopeGroupId());
 
+				_addOrUpdateDDMStructures((group != null) ? group.getGroupId() :
+					depotEntry.getGroupId(),resourcePath + "ddm-structures",serviceContext,stringUtilReplaceValues);
 				_addOrUpdateDocuments(
 					null,
 					(group != null) ? group.getGroupId() :
@@ -5161,7 +5170,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 				serviceContext, stringUtilReplaceValues));
 		R addOrUpdateDDMStructuresR = new R(
 			"addOrUpdateDDMStructures",
-			() -> _addOrUpdateDDMStructures(
+			() -> _addOrUpdateDDMStructures(0,"",
 				serviceContext, stringUtilReplaceValues));
 		R addOrUpdateDDMTemplatesR = new R(
 			"addOrUpdateDDMTemplates",

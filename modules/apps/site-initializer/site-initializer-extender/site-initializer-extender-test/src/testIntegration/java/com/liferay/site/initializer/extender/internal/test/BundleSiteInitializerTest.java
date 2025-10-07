@@ -1333,6 +1333,16 @@ public class BundleSiteInitializerTest {
 		Assert.assertTrue(ddmStructure.hasField("aField"));
 	}
 
+	private void _assertDepotEntryDDMStructure(long groupId){
+		DDMStructure ddmStructure = _ddmStructureLocalService.fetchStructure(
+			groupId,
+			_portal.getClassNameId(JournalArticle.class.getName()),
+			"Test Depot Entry 1 DDM Structure Name");
+
+		Assert.assertNotNull(ddmStructure);
+		Assert.assertTrue(ddmStructure.hasField("aField"));
+	}
+
 	private void _assertDDMTemplate1() {
 		DDMTemplate ddmTemplate = _ddmTemplateLocalService.fetchTemplate(
 			_group.getGroupId(),
@@ -1514,6 +1524,7 @@ public class BundleSiteInitializerTest {
 			depotEntries.get(
 				0
 			).getGroupId());
+		_assertDepotEntryDDMStructure(depotEntries.get(0).getGroupId());
 	}
 
 	private void _assertDepotEntries2() throws Exception {
