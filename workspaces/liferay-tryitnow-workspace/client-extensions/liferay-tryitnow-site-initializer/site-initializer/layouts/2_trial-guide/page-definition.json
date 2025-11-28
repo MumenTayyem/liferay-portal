@@ -4,20 +4,12 @@
 			{
 				"definition": {
 					"fragmentStyle": {
+						"borderWidth": "0",
 						"marginTop": "4"
 					},
 					"indexed": true,
 					"layout": {
-						"borderWidth": 0,
-						"marginBottom": 0,
-						"marginLeft": 0,
-						"marginRight": 0,
 						"marginTop": 2,
-						"opacity": 100,
-						"paddingBottom": 0,
-						"paddingLeft": 0,
-						"paddingRight": 0,
-						"paddingTop": 0,
 						"widthType": "Fixed"
 					}
 				},
@@ -26,10 +18,11 @@
 						"definition": {
 							"fragment": {
 								"key": "dialect-text",
-								"siteKey": "[$GROUP_KEY$]"
+								"siteKey": "Guest"
 							},
 							"fragmentConfig": {
-								"textType": "text-paragraph"
+								"textType": "text-paragraph",
+								"truncateText": false
 							},
 							"fragmentFields": [
 								{
@@ -59,20 +52,12 @@
 				"definition": {
 					"customCSS": ".[$FRAGMENT_CLASS$] p a:hover {\n    color:#187474 !important;\n}",
 					"fragmentStyle": {
+						"borderWidth": "0",
 						"marginTop": "4"
 					},
 					"indexed": true,
 					"layout": {
-						"borderWidth": 0,
-						"marginBottom": 0,
-						"marginLeft": 0,
-						"marginRight": 0,
 						"marginTop": 2,
-						"opacity": 100,
-						"paddingBottom": 0,
-						"paddingLeft": 0,
-						"paddingRight": 0,
-						"paddingTop": 0,
 						"widthType": "Fixed"
 					}
 				},
@@ -80,46 +65,18 @@
 					{
 						"definition": {
 							"fragment": {
-								"key": "tryitnow-trial-guide-accordion",
-								"siteKey": "[$GROUP_KEY$]"
+								"key": "tryitnow-trial-guide-step",
+								"siteKey": "Guest"
 							},
 							"fragmentConfig": {
-								"panelId": "1"
+								"debugEnabled": false,
+								"displayToasts": false,
+								"stepNumber": 1
 							},
 							"fragmentFields": [
-								{
-									"id": "txt-time-to-read",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "1 min"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-header",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "Introduction"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-step",
-									"value": {
-										"fragmentLink": {
-										}
-									}
-								}
 							],
-							"indexed": true
+							"indexed": true,
+							"name": "Step 1"
 						},
 						"pageElements": [
 							{
@@ -217,51 +174,18 @@
 					{
 						"definition": {
 							"fragment": {
-								"key": "tryitnow-trial-guide-accordion",
-								"siteKey": "[$GROUP_KEY$]"
+								"key": "tryitnow-trial-guide-step",
+								"siteKey": "Guest"
 							},
 							"fragmentConfig": {
-								"panelId": "2"
+								"debugEnabled": false,
+								"displayToasts": false,
+								"stepNumber": 2
 							},
 							"fragmentFields": [
-								{
-									"id": "txt-time-to-read",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "3 min"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-header",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "Activating Users"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-step",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "2"
-											}
-										}
-									}
-								}
 							],
-							"indexed": true
+							"indexed": true,
+							"name": "Step 2"
 						},
 						"pageElements": [
 							{
@@ -359,46 +283,18 @@
 					{
 						"definition": {
 							"fragment": {
-								"key": "tryitnow-trial-guide-accordion",
-								"siteKey": "[$GROUP_KEY$]"
+								"key": "tryitnow-trial-guide-step",
+								"siteKey": "Guest"
 							},
 							"fragmentConfig": {
-								"panelId": "3"
+								"debugEnabled": false,
+								"displayToasts": false,
+								"stepNumber": 3
 							},
 							"fragmentFields": [
-								{
-									"id": "txt-time-to-read",
-									"value": {
-										"fragmentLink": {
-										}
-									}
-								},
-								{
-									"id": "txt-header",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "You as a Customer"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-step",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "3"
-											}
-										}
-									}
-								}
 							],
-							"indexed": true
+							"indexed": true,
+							"name": "Step 3"
 						},
 						"pageElements": [
 							{
@@ -471,7 +367,7 @@
 																		},
 																		"text": {
 																			"value_i18n": {
-																				"en_US": "For this portion of the Prebuilt Trial, you will <a href=\"/web/[$GROUP_KEY$]/sign-in\" rel=\"noopener noreferrer\" target=\"\">log in</a>&nbsp;as Customer Carl."
+																				"en_US": "For this portion of the Prebuilt Trial, you will <a href=\"/web/Guest/sign-in\" rel=\"noopener noreferrer\" target=\"\">log in</a>&nbsp;as Customer Carl."
 																			}
 																		}
 																	}
@@ -554,7 +450,7 @@
 																						},
 																						"text": {
 																							"value_i18n": {
-																								"en_US": "<ol>\n\t<li><a href=\"/web/[$GROUP_KEY$]/sign-in\">Log in</a> to Clarity as Customer Carl.</li>\n\t<li>From the Home Page, click <em><a href=\"/web/[$GROUP_KEY$]/view-tickets\" rel=\"noopener noreferrer\" target=\"\">View My Tickets</a></em>.</li>\n\t<li>You should see an empty list of tickets.</li>\n</ol>\n"
+																								"en_US": "<ol>\n\t<li><a href=\"/web/Guest/sign-in\">Log in</a> to Clarity as Customer Carl.</li>\n\t<li>From the Home Page, click <em><a href=\"/web/Guest/view-tickets\" rel=\"noopener noreferrer\" target=\"\">View My Tickets</a></em>.</li>\n\t<li>You should see an empty list of tickets.</li>\n</ol>\n"
 																							}
 																						}
 																					}
@@ -590,7 +486,7 @@
 																						},
 																						"text": {
 																							"value_i18n": {
-																								"en_US": "<ol>\n\t<li>Click the <em>New Ticket</em> button at the top right of the page to create a ticket.</li>\n\t<li>A new form will appear where you can add the following info:\n\t<ul>\n\t\t<li><em>Subject:</em> Add a subject. E.g., “Requesting help with my glasses order.”.</li>\n\t\t<li><em>Description:</em> Add a description. E.g., “I can’t find the tracking information for my order.“.</li>\n\t\t<li><em>Related Ticket:</em> Leave this empty.</li>\n\t\t<li><em>Attachment:</em> You can leave this empty or add an example of an attachment. For an example attachment, go to <a href=\"/web/[$GROUP_KEY$]/attachments\" rel=\"noopener noreferrer\" target=\"\">Learning &gt; Attachments</a> in the top menu, and click the folder named <em>Attachments</em>, then download one of the files. You will need to click on the icon with an <em>i</em> to toggle the <em>Info Panel</em> where the <em>Download</em> button is. Upload this file to the ticket.\n\t\t<ul>\n\t\t\t<li>Don’t upload anything new or person from your own device.</li>\n\t\t</ul>\n\t\t</li>\n\t</ul>\n\t</li>\n\t<li>After adding any desired info, click <em>Submit</em>.</li>\n</ol>\n"
+																								"en_US": "<ol>\n\t<li>Click the <em>New Ticket</em> button at the top right of the page to create a ticket.</li>\n\t<li>A new form will appear where you can add the following info:\n\t<ul>\n\t\t<li><em>Subject:</em> Add a subject. E.g., “Requesting help with my glasses order.”.</li>\n\t\t<li><em>Description:</em> Add a description. E.g., “I can’t find the tracking information for my order.“.</li>\n\t\t<li><em>Related Ticket:</em> Leave this empty.</li>\n\t\t<li><em>Attachment:</em> You can leave this empty or add an example of an attachment. For an example attachment, go to <a href=\"/web/Guest/attachments\" rel=\"noopener noreferrer\" target=\"\">Learning &gt; Attachments</a> in the top menu, and click the folder named <em>Attachments</em>, then download one of the files. You will need to click on the icon with an <em>i</em> to toggle the <em>Info Panel</em> where the <em>Download</em> button is. Upload this file to the ticket.\n\t\t<ul>\n\t\t\t<li>Don’t upload anything new or person from your own device.</li>\n\t\t</ul>\n\t\t</li>\n\t</ul>\n\t</li>\n\t<li>After adding any desired info, click <em>Submit</em>.</li>\n</ol>\n"
 																							}
 																						}
 																					}
@@ -626,7 +522,7 @@
 																						},
 																						"text": {
 																							"value_i18n": {
-																								"en_US": "<ol>\n\t<li>Click the top menu in <em><a href=\"/web/[$GROUP_KEY$]/view-tickets\">View Tickets</a></em> to see the list again.</li><li>Click either the <em>Number</em> or the <em>Title</em> of your new ticket to view its details. This is a <a href=\"https://learn.liferay.com/web/guest/w/dxp/site-building/displaying-content/using-display-page-templates/publishing-content-with-display-pages\" target=\"_blank\">Display Page Template</a> that maps to and displays each ticket's specific data. You’ll learn more about this later as the Clarity Admin.</li>\n\t<li>As a Clarity Customer, you can see the ticket’s:&nbsp;\n\t<ul>\n\t\t<li>Subject and status <em>(Open, In Progress, Blocked, Closed)</em></li>\n\t\t<li>Full description</li>\n\t\t<li>Assignee and any related tickets</li>\n\t\t<li>Downloadable attachments</li>\n\t</ul>\n\t</li>\n\t<li>You can use the “back” button at the left to return to the complete ticket list.</li>\n</ol>\n"
+																								"en_US": "<ol>\n\t<li>Click the top menu in <em><a href=\"/web/Guest/view-tickets\">View Tickets</a></em> to see the list again.</li><li>Click either the <em>Number</em> or the <em>Title</em> of your new ticket to view its details. This is a <a href=\"https://learn.liferay.com/web/guest/w/dxp/site-building/displaying-content/using-display-page-templates/publishing-content-with-display-pages\" target=\"_blank\">Display Page Template</a> that maps to and displays each ticket's specific data. You’ll learn more about this later as the Clarity Admin.</li>\n\t<li>As a Clarity Customer, you can see the ticket’s:&nbsp;\n\t<ul>\n\t\t<li>Subject and status <em>(Open, In Progress, Blocked, Closed)</em></li>\n\t\t<li>Full description</li>\n\t\t<li>Assignee and any related tickets</li>\n\t\t<li>Downloadable attachments</li>\n\t</ul>\n\t</li>\n\t<li>You can use the “back” button at the left to return to the complete ticket list.</li>\n</ol>\n"
 																							}
 																						}
 																					}
@@ -675,12 +571,19 @@
 														"definition": {
 															"fragment": {
 																"key": "tryitnow-signin-login-helper",
-																"siteKey": "[$GROUP_KEY$]"
+																"siteKey": "Guest"
 															},
 															"fragmentConfig": {
 																"person": "carl"
 															},
 															"fragmentFields": [
+																{
+																	"id": "password",
+																	"value": {
+																		"fragmentLink": {
+																		}
+																	}
+																},
 																{
 																	"id": "txtSummary",
 																	"value": {
@@ -690,6 +593,13 @@
 																},
 																{
 																	"id": "password-zmjj",
+																	"value": {
+																		"fragmentLink": {
+																		}
+																	}
+																},
+																{
+																	"id": "email",
 																	"value": {
 																		"fragmentLink": {
 																		}
@@ -729,51 +639,18 @@
 					{
 						"definition": {
 							"fragment": {
-								"key": "tryitnow-trial-guide-accordion",
-								"siteKey": "[$GROUP_KEY$]"
+								"key": "tryitnow-trial-guide-step",
+								"siteKey": "Guest"
 							},
 							"fragmentConfig": {
-								"panelId": "4"
+								"debugEnabled": false,
+								"displayToasts": false,
+								"stepNumber": 4
 							},
 							"fragmentFields": [
-								{
-									"id": "txt-time-to-read",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "5 min"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-header",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "You as a Customer Support Representative"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-step",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "4"
-											}
-										}
-									}
-								}
 							],
-							"indexed": true
+							"indexed": true,
+							"name": "Step 4"
 						},
 						"pageElements": [
 							{
@@ -846,7 +723,7 @@
 																		},
 																		"text": {
 																			"value_i18n": {
-																				"en_US": "<p dir=\"ltr\">Log out of Carl’s account, then <a href=\"/web/[$GROUP_KEY$]/sign-in\" rel=\"noopener noreferrer\" target=\"\">sign in</a> as Support Sam. Because Support Sam has the Customer Support Representative role, you now have access to additional ticket management functionality.<br />\nCheck that <em>View Tickets</em> in the top navigation now has two additional sub-options: <em>Admin View</em> and <em>Tickets Dashboard</em>.</p>\n"
+																				"en_US": "<p dir=\"ltr\">Log out of Carl’s account, then <a href=\"/web/Guest/sign-in\" rel=\"noopener noreferrer\" target=\"\">sign in</a> as Support Sam. Because Support Sam has the Customer Support Representative role, you now have access to additional ticket management functionality.<br />\nCheck that <em>View Tickets</em> in the top navigation now has two additional sub-options: <em>Admin View</em> and <em>Tickets Dashboard</em>.</p>\n"
 																			}
 																		}
 																	}
@@ -917,7 +794,7 @@
 																						},
 																						"text": {
 																							"value_i18n": {
-																								"en_US": "<p dir=\"ltr\">The <em><a href=\"/web/[$GROUP_KEY$]/admin-tickets\" target=\"_self\">Admin View</a></em> page includes the default View that gets generated when a <a href=\"http://learn.liferay.com/w/dxp/building-applications/objects\" target=\"_blank\">New Object</a> is created, you’ll learn more about this later as the Clarity Admin. As a Customer Support Rep., here you can: <em>Create</em>, <em>Read</em>, <em>Update</em>, and <em>Delete</em> Tickets.</p>\n\n<ol>\n\t<li>Click on any <em>Ticket ID</em> to see its details.</li>\n\t<li>Next, return to the <em>Admin View</em> and click the three vertical dots besides one of the existing tickets.</li>\n\t<li>Click <em>Assign Ticket to Me</em> to assign the ticket to yourself.</li>\n\t<li>Make sure the list refreshes. You should see <em>M2H8 Support</em> in the <em>User to J3Y7 Ticket</em> column. Leave at least one ticket unassigned.</li>\n</ol>\n"
+																								"en_US": "<p dir=\"ltr\">The <em><a href=\"/web/Guest/admin-tickets\" target=\"_self\">Admin View</a></em> page includes the default View that gets generated when a <a href=\"http://learn.liferay.com/w/dxp/building-applications/objects\" target=\"_blank\">New Object</a> is created, you’ll learn more about this later as the Clarity Admin. As a Customer Support Rep., here you can: <em>Create</em>, <em>Read</em>, <em>Update</em>, and <em>Delete</em> Tickets.</p>\n\n<ol>\n\t<li>Click on any <em>Ticket ID</em> to see its details.</li>\n\t<li>Next, return to the <em>Admin View</em> and click the three vertical dots besides one of the existing tickets.</li>\n\t<li>Click <em>Assign Ticket to Me</em> to assign the ticket to yourself.</li>\n\t<li>Make sure the list refreshes. You should see <em>M2H8 Support</em> in the <em>User to J3Y7 Ticket</em> column. Leave at least one ticket unassigned.</li>\n</ol>\n"
 																							}
 																						}
 																					}
@@ -953,7 +830,7 @@
 																						},
 																						"text": {
 																							"value_i18n": {
-																								"en_US": "<ol>\n\t<li>Click the <em><a href=\"/web/[$GROUP_KEY$]/tickets-dashboard\" rel=\"noopener noreferrer\" target=\"_self\">Tickets Dashboard</a></em> link under View Tickets. This page includes more advanced ticket management options. For instance, here you can change the status of tickets using similar functionality as a standard ticketing tool. You’ll learn more about this later as the Clarity Admin.</li>\n\t<li>Click and drag a ticket from the <em>Open</em> column to <em>In-Progress</em>.</li>\n\t<li>Try to move the ticket from <em>In-Progress</em> back to <em>Open</em>. You will see a red message that prevents you from doing this. That’s because we’ve restricted certain status movements in the <em>Ticket</em> Object. We’ll discuss this more later.</li>\n<li>You can also assign the ticket to yourself by expanding one of the unassigned tickets and clicking the <em>Assign to Me</em> button.</li>\n<li>If you've created a ticket with the Customer role previously, there will be a notification in your profile image at the top of the page. You can press the icon and then <em>Notifications</em> to see that you as the Customer Support Rep. are receiving a new notification when a ticket is created.</li>\n</ol>\n"
+																								"en_US": "<ol>\n\t<li>Click the <em><a href=\"/web/Guest/tickets-dashboard\" rel=\"noopener noreferrer\" target=\"_self\">Tickets Dashboard</a></em> link under View Tickets. This page includes more advanced ticket management options. For instance, here you can change the status of tickets using similar functionality as a standard ticketing tool. You’ll learn more about this later as the Clarity Admin.</li>\n\t<li>Click and drag a ticket from the <em>Open</em> column to <em>In-Progress</em>.</li>\n\t<li>Try to move the ticket from <em>In-Progress</em> back to <em>Open</em>. You will see a red message that prevents you from doing this. That’s because we’ve restricted certain status movements in the <em>Ticket</em> Object. We’ll discuss this more later.</li>\n<li>You can also assign the ticket to yourself by expanding one of the unassigned tickets and clicking the <em>Assign to Me</em> button.</li>\n<li>If you've created a ticket with the Customer role previously, there will be a notification in your profile image at the top of the page. You can press the icon and then <em>Notifications</em> to see that you as the Customer Support Rep. are receiving a new notification when a ticket is created.</li>\n</ol>\n"
 																							}
 																						}
 																					}
@@ -1030,12 +907,19 @@
 														"definition": {
 															"fragment": {
 																"key": "tryitnow-signin-login-helper",
-																"siteKey": "[$GROUP_KEY$]"
+																"siteKey": "Guest"
 															},
 															"fragmentConfig": {
 																"person": "sam"
 															},
 															"fragmentFields": [
+																{
+																	"id": "password",
+																	"value": {
+																		"fragmentLink": {
+																		}
+																	}
+																},
 																{
 																	"id": "txtSummary",
 																	"value": {
@@ -1057,6 +941,13 @@
 																},
 																{
 																	"id": "password-qjja",
+																	"value": {
+																		"fragmentLink": {
+																		}
+																	}
+																},
+																{
+																	"id": "email",
 																	"value": {
 																		"fragmentLink": {
 																		}
@@ -1094,51 +985,18 @@
 					{
 						"definition": {
 							"fragment": {
-								"key": "tryitnow-trial-guide-accordion",
-								"siteKey": "[$GROUP_KEY$]"
+								"key": "tryitnow-trial-guide-step",
+								"siteKey": "Guest"
 							},
 							"fragmentConfig": {
-								"panelId": "5"
+								"debugEnabled": false,
+								"displayToasts": false,
+								"stepNumber": 5
 							},
 							"fragmentFields": [
-								{
-									"id": "txt-time-to-read",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "30 min"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-header",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "You As a Clarity Admin, Part I: Understanding Objects"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-step",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "5"
-											}
-										}
-									}
-								}
 							],
-							"indexed": true
+							"indexed": true,
+							"name": "Step 5"
 						},
 						"pageElements": [
 							{
@@ -1211,7 +1069,7 @@
 																		},
 																		"text": {
 																			"value_i18n": {
-																				"en_US": "<p>Log out of Support Sam's account, then <a href=\"/web/[$GROUP_KEY$]/sign-in\" rel=\"noopener noreferrer\" target=\"\">sign in</a> as Admin Adam to gain access to all the power of Liferay SaaS.<br />\nWe'll start by explaining our Ticket object, which was built with <a href=\"http://learn.liferay.com/w/dxp/building-applications/objects\" rel=\"noopener noreferrer\" target=\"_blank\">Liferay Objects</a>. Liferay Objects provide easily configurable development capabilities in the Liferay UI.</p>\n"
+																				"en_US": "<p>Log out of Support Sam's account, then <a href=\"/web/Guest/sign-in\" rel=\"noopener noreferrer\" target=\"\">sign in</a> as Admin Adam to gain access to all the power of Liferay SaaS.<br />\nWe'll start by explaining our Ticket object, which was built with <a href=\"http://learn.liferay.com/w/dxp/building-applications/objects\" rel=\"noopener noreferrer\" target=\"_blank\">Liferay Objects</a>. Liferay Objects provide easily configurable development capabilities in the Liferay UI.</p>\n"
 																			}
 																		}
 																	}
@@ -1367,12 +1225,19 @@
 														"definition": {
 															"fragment": {
 																"key": "tryitnow-signin-login-helper",
-																"siteKey": "[$GROUP_KEY$]"
+																"siteKey": "Guest"
 															},
 															"fragmentConfig": {
 																"person": "adam"
 															},
 															"fragmentFields": [
+																{
+																	"id": "password",
+																	"value": {
+																		"fragmentLink": {
+																		}
+																	}
+																},
 																{
 																	"id": "password-qskq",
 																	"value": {
@@ -1382,6 +1247,13 @@
 																},
 																{
 																	"id": "txtSummary",
+																	"value": {
+																		"fragmentLink": {
+																		}
+																	}
+																},
+																{
+																	"id": "email",
 																	"value": {
 																		"fragmentLink": {
 																		}
@@ -1431,51 +1303,18 @@
 					{
 						"definition": {
 							"fragment": {
-								"key": "tryitnow-trial-guide-accordion",
-								"siteKey": "[$GROUP_KEY$]"
+								"key": "tryitnow-trial-guide-step",
+								"siteKey": "Guest"
 							},
 							"fragmentConfig": {
-								"panelId": "6"
+								"debugEnabled": false,
+								"displayToasts": false,
+								"stepNumber": 6
 							},
 							"fragmentFields": [
-								{
-									"id": "txt-time-to-read",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "25 min"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-header",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "You as a Clarity Admin, Part II: Building Pages with No-Code"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-step",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "6"
-											}
-										}
-									}
-								}
 							],
-							"indexed": true
+							"indexed": true,
+							"name": "Step 6"
 						},
 						"pageElements": [
 							{
@@ -1676,7 +1515,7 @@
 																						},
 																						"text": {
 																							"value_i18n": {
-																								"en_US": "<ol>\n\t<li>Back on the <a href=\"/web/[$GROUP_KEY$]/view-tickets\">Ticket List</a> page, click on a ticket, then click the <em>Edit Page</em> icon (represented by a Pencil icon) at the top right icons' menu, then click <em>Edit Display Page Template</em> to see how this <a href=\"https://learn.liferay.com/web/guest/w/dxp/site-building/displaying-content/using-display-page-templates/publishing-content-with-display-pages\" rel=\"noopener noreferrer\" target=\"_blank\">Display Page Template</a> was created. (Note: You can also edit this page by going to <em>[Design &gt; Page Templates &gt; Display Page Templates]</em> and selecting <em>Ticket DPT</em>.).</li>\n\t<li>Check how the different fragments have been dragged, dropped, and mapped to the main fields of the <em>Ticket</em> Object <em>(Subject, Date, Status, etc.).</em></li>\n\t<li>Check specific configurations for certain fields:\n\t<ul>\n\t\t<li>For the <em>Attachment</em>, find one <a href=\"https://learn.liferay.com/web/guest/w/dxp/site-building/displaying-content/using-information-templates\" rel=\"noopener noreferrer\" target=\"_blank\">Info Template</a>, mapped to an HTML fragment where we show the attachment information by calling the Headless layer of our Ticket object through the <em><a href=\"https://learn.liferay.com/web/guest/w/dxp/site-building/creating-pages/page-fragments-and-widgets/using-widgets/styling-widgets/creating-a-widget-template#calling-headless-apis-in-the-template-editor\" rel=\"noopener noreferrer\" target=\"_blank\">restClient</a></em> object, an easy way of injecting headless resources into templates.</li>\n\t\t<li>For the <em>Related ticket</em>, we're using a <a href=\"https://learn.liferay.com/w/dxp/site-building/displaying-content/additional-content-display-options/displaying-collections\" rel=\"noopener noreferrer\" target=\"_blank\">Collection Display Fragment</a>, which is mapped to an auto-generated collection called <em>J3Y7 Ticket to J3Y7 Tickets (Parent)</em>. Thanks to this collection, it's very easy to list all the information of a related object that has a relationship with our main object.</li>\n\t</ul>\n\t</li>\n</ol>\n\n<p>Remember, always create a Display Page Template for each of your objects and mark it as the default one, so Liferay DXP can show it when showing the details of an Object in its Display Page URL.</p>\n"
+																								"en_US": "<ol>\n\t<li>Back on the <a href=\"/web/Guest/view-tickets\">Ticket List</a> page, click on a ticket, then click the <em>Edit Page</em> icon (represented by a Pencil icon) at the top right icons' menu, then click <em>Edit Display Page Template</em> to see how this <a href=\"https://learn.liferay.com/web/guest/w/dxp/site-building/displaying-content/using-display-page-templates/publishing-content-with-display-pages\" rel=\"noopener noreferrer\" target=\"_blank\">Display Page Template</a> was created. (Note: You can also edit this page by going to <em>[Design &gt; Page Templates &gt; Display Page Templates]</em> and selecting <em>Ticket DPT</em>.).</li>\n\t<li>Check how the different fragments have been dragged, dropped, and mapped to the main fields of the <em>Ticket</em> Object <em>(Subject, Date, Status, etc.).</em></li>\n\t<li>Check specific configurations for certain fields:\n\t<ul>\n\t\t<li>For the <em>Attachment</em>, find one <a href=\"https://learn.liferay.com/web/guest/w/dxp/site-building/displaying-content/using-information-templates\" rel=\"noopener noreferrer\" target=\"_blank\">Info Template</a>, mapped to an HTML fragment where we show the attachment information by calling the Headless layer of our Ticket object through the <em><a href=\"https://learn.liferay.com/web/guest/w/dxp/site-building/creating-pages/page-fragments-and-widgets/using-widgets/styling-widgets/creating-a-widget-template#calling-headless-apis-in-the-template-editor\" rel=\"noopener noreferrer\" target=\"_blank\">restClient</a></em> object, an easy way of injecting headless resources into templates.</li>\n\t\t<li>For the <em>Related ticket</em>, we're using a <a href=\"https://learn.liferay.com/w/dxp/site-building/displaying-content/additional-content-display-options/displaying-collections\" rel=\"noopener noreferrer\" target=\"_blank\">Collection Display Fragment</a>, which is mapped to an auto-generated collection called <em>J3Y7 Ticket to J3Y7 Tickets (Parent)</em>. Thanks to this collection, it's very easy to list all the information of a related object that has a relationship with our main object.</li>\n\t</ul>\n\t</li>\n</ol>\n\n<p>Remember, always create a Display Page Template for each of your objects and mark it as the default one, so Liferay DXP can show it when showing the details of an Object in its Display Page URL.</p>\n"
 																							}
 																						}
 																					}
@@ -1797,12 +1636,19 @@
 														"definition": {
 															"fragment": {
 																"key": "tryitnow-signin-login-helper",
-																"siteKey": "[$GROUP_KEY$]"
+																"siteKey": "Guest"
 															},
 															"fragmentConfig": {
 																"person": "adam"
 															},
 															"fragmentFields": [
+																{
+																	"id": "password",
+																	"value": {
+																		"fragmentLink": {
+																		}
+																	}
+																},
 																{
 																	"id": "txtSummary",
 																	"value": {
@@ -1826,6 +1672,13 @@
 																			"value_i18n": {
 																				"en_US": "m2h8.admin.adam@liferay.com"
 																			}
+																		}
+																	}
+																},
+																{
+																	"id": "email",
+																	"value": {
+																		"fragmentLink": {
 																		}
 																	}
 																},
@@ -1861,51 +1714,18 @@
 					{
 						"definition": {
 							"fragment": {
-								"key": "tryitnow-trial-guide-accordion",
-								"siteKey": "[$GROUP_KEY$]"
+								"key": "tryitnow-trial-guide-step",
+								"siteKey": "Guest"
 							},
 							"fragmentConfig": {
-								"panelId": "7"
+								"debugEnabled": false,
+								"displayToasts": false,
+								"stepNumber": 7
 							},
 							"fragmentFields": [
-								{
-									"id": "txt-time-to-read",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "15 min"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-header",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "You as a Clarity Admin, Part III: Client Extensions"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-step",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "7"
-											}
-										}
-									}
-								}
 							],
-							"indexed": true
+							"indexed": true,
+							"name": "Step 7"
 						},
 						"pageElements": [
 							{
@@ -2024,7 +1844,7 @@
 																						},
 																						"text": {
 																							"value_i18n": {
-																								"en_US": "<ol dir=\"ltr\">\n\t<li>Go to the <em><a href=\"/web/[$GROUP_KEY$]/tickets-dashboard\" rel=\"noopener noreferrer\" target=\"\">Dashboard View</a></em> and click on the <em>Edit Page</em> icon (represented by a Pencil icon) at the top right icons' menu</li>\n\t<li>You’ll notice that this page only has a single Widget called <em>Liferay Ticket Custom Element</em>. This is a Front End Client Extension that we implemented in React, then declared in Liferay DXP through our SaaS orchestrator, and now we can drag and drop it into pages. Let's explain it step by step:\n\t<ul>\n\t\t<li>In the <em>[Control Panel &gt; Applications &gt; Custom Apps &gt; Client Extensions]</em>, you can see that we have one Client Extension, the <em>Liferay Ticket Custom Element</em>.\n\t\t<ul>\n\t\t\t<li>Click on this Client Extension and check that there are URLs pointing to the code the Client Extension needs to run.</li>\n\t\t</ul>\n\t\t</li>\n\t\t<li>Once the Client Extension is available in Liferay DXP, you can drag and drop it on any page, like any other normal widget or fragment.</li>\n\t</ul>\n\t</li>\n\t<li>When it comes to extending Liferay DXP with JavaScript Advanced Frameworks, such as Angular, React, Vue, etc. everything is easy if you follow the Client Extensions path.</li>\n</ol>\n"
+																								"en_US": "<ol dir=\"ltr\">\n\t<li>Go to the <em><a href=\"/web/Guest/tickets-dashboard\" rel=\"noopener noreferrer\" target=\"\">Dashboard View</a></em> and click on the <em>Edit Page</em> icon (represented by a Pencil icon) at the top right icons' menu</li>\n\t<li>You’ll notice that this page only has a single Widget called <em>Liferay Ticket Custom Element</em>. This is a Front End Client Extension that we implemented in React, then declared in Liferay DXP through our SaaS orchestrator, and now we can drag and drop it into pages. Let's explain it step by step:\n\t<ul>\n\t\t<li>In the <em>[Control Panel &gt; Applications &gt; Custom Apps &gt; Client Extensions]</em>, you can see that we have one Client Extension, the <em>Liferay Ticket Custom Element</em>.\n\t\t<ul>\n\t\t\t<li>Click on this Client Extension and check that there are URLs pointing to the code the Client Extension needs to run.</li>\n\t\t</ul>\n\t\t</li>\n\t\t<li>Once the Client Extension is available in Liferay DXP, you can drag and drop it on any page, like any other normal widget or fragment.</li>\n\t</ul>\n\t</li>\n\t<li>When it comes to extending Liferay DXP with JavaScript Advanced Frameworks, such as Angular, React, Vue, etc. everything is easy if you follow the Client Extensions path.</li>\n</ol>\n"
 																							}
 																						}
 																					}
@@ -2109,12 +1929,19 @@
 														"definition": {
 															"fragment": {
 																"key": "tryitnow-signin-login-helper",
-																"siteKey": "[$GROUP_KEY$]"
+																"siteKey": "Guest"
 															},
 															"fragmentConfig": {
 																"person": "adam"
 															},
 															"fragmentFields": [
+																{
+																	"id": "password",
+																	"value": {
+																		"fragmentLink": {
+																		}
+																	}
+																},
 																{
 																	"id": "email-esno",
 																	"value": {
@@ -2136,6 +1963,13 @@
 																},
 																{
 																	"id": "txtSummary",
+																	"value": {
+																		"fragmentLink": {
+																		}
+																	}
+																},
+																{
+																	"id": "email",
 																	"value": {
 																		"fragmentLink": {
 																		}
@@ -2173,51 +2007,18 @@
 					{
 						"definition": {
 							"fragment": {
-								"key": "tryitnow-trial-guide-accordion",
-								"siteKey": "[$GROUP_KEY$]"
+								"key": "tryitnow-trial-guide-step",
+								"siteKey": "Guest"
 							},
 							"fragmentConfig": {
-								"panelId": "8"
+								"debugEnabled": false,
+								"displayToasts": false,
+								"stepNumber": 8
 							},
 							"fragmentFields": [
-								{
-									"id": "txt-time-to-read",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "10 min"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-header",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "You as a Clarity Admin, Part IV: Additional information"
-											}
-										}
-									}
-								},
-								{
-									"id": "txt-step",
-									"value": {
-										"fragmentLink": {
-										},
-										"text": {
-											"value_i18n": {
-												"en_US": "8"
-											}
-										}
-									}
-								}
 							],
-							"indexed": true
+							"indexed": true,
+							"name": "Step 8"
 						},
 						"pageElements": [
 							{
@@ -2333,7 +2134,7 @@
 																						},
 																						"text": {
 																							"value_i18n": {
-																								"en_US": "<p dir=\"ltr\">This Trial also includes an <a href=\"/web/[$GROUP_KEY$]/faq\">FAQ</a> page with an example of <a href=\"https://learn.liferay.com/w/dxp/content-authoring-and-management/web-content/web-content-structures/understanding-web-content-structures\" rel=\"noopener noreferrer\" target=\"_blank\">Structured Content</a> so you can see a typical way of creating content in Liferay DXP through Structured Content that can then be displayed in pages with out-of-the-box capabilities. A couple of things to highlight:</p>\n\n<ol dir=\"ltr\">\n\t<li>Structure: the FAQ structure is defined in the site. Just open the menu on the left side and locate <em>[Content &amp; Data &gt; Web Content]</em>, then the Structures tab.\n\t<ul>\n\t\t<li>You will find a simple structure with two fields, <em>Question</em> and <em>Answer</em>.&nbsp;</li>\n\t</ul>\n\t</li>\n\t<li>In the other tab, <a href=\"https://learn.liferay.com/w/dxp/content-authoring-and-management/web-content/web-content-templates/creating-web-content-templates\" rel=\"noopener noreferrer\" target=\"_blank\">Templates</a>, you can create templates using <em>FreeMarker</em> to control how to display a given Web Content.\n\t<ul>\n\t\t<li>In this Trial, however, we are using a Collection Display Fragment to display the content on the page. This way, we are maximizing the use of low-code and no code capabilities by just dragging, dropping and mapping fragments to our FAQ’s structure fields.</li>\n\t<li>Take a look at the FAQ page to understand how this was built.</li>\n\t</ul>\n\t</li>\n\t<li>Back in <em>[Content & Data &gt; Web Content]</em>, you should find a folder with all the FAQs. Feel free to look at one as an example to see all the different things you can define on a single piece of web content in the right panel when in <em>Edit</em> mode, like: metadata, templates, categorization, schedule, search settings, and related assets.&nbsp;\n\t<ul>\n\t\t<li>You can find related information in our documentation for <a href=\"https://learn.liferay.com/w/dxp/content-authoring-and-management/web-content/web-content-articles/adding-a-basic-web-content-article\" rel=\"noopener noreferrer\" target=\"_blank\">Web Content</a>.<br />\n\t\t </li>\n\t</ul>\n\t</li>\n</ol>\n"
+																								"en_US": "<p dir=\"ltr\">This Trial also includes an <a href=\"/web/Guest/faq\">FAQ</a> page with an example of <a href=\"https://learn.liferay.com/w/dxp/content-authoring-and-management/web-content/web-content-structures/understanding-web-content-structures\" rel=\"noopener noreferrer\" target=\"_blank\">Structured Content</a> so you can see a typical way of creating content in Liferay DXP through Structured Content that can then be displayed in pages with out-of-the-box capabilities. A couple of things to highlight:</p>\n\n<ol dir=\"ltr\">\n\t<li>Structure: the FAQ structure is defined in the site. Just open the menu on the left side and locate <em>[Content &amp; Data &gt; Web Content]</em>, then the Structures tab.\n\t<ul>\n\t\t<li>You will find a simple structure with two fields, <em>Question</em> and <em>Answer</em>.&nbsp;</li>\n\t</ul>\n\t</li>\n\t<li>In the other tab, <a href=\"https://learn.liferay.com/w/dxp/content-authoring-and-management/web-content/web-content-templates/creating-web-content-templates\" rel=\"noopener noreferrer\" target=\"_blank\">Templates</a>, you can create templates using <em>FreeMarker</em> to control how to display a given Web Content.\n\t<ul>\n\t\t<li>In this Trial, however, we are using a Collection Display Fragment to display the content on the page. This way, we are maximizing the use of low-code and no code capabilities by just dragging, dropping and mapping fragments to our FAQ’s structure fields.</li>\n\t<li>Take a look at the FAQ page to understand how this was built.</li>\n\t</ul>\n\t</li>\n\t<li>Back in <em>[Content & Data &gt; Web Content]</em>, you should find a folder with all the FAQs. Feel free to look at one as an example to see all the different things you can define on a single piece of web content in the right panel when in <em>Edit</em> mode, like: metadata, templates, categorization, schedule, search settings, and related assets.&nbsp;\n\t<ul>\n\t\t<li>You can find related information in our documentation for <a href=\"https://learn.liferay.com/w/dxp/content-authoring-and-management/web-content/web-content-articles/adding-a-basic-web-content-article\" rel=\"noopener noreferrer\" target=\"_blank\">Web Content</a>.<br />\n\t\t </li>\n\t</ul>\n\t</li>\n</ol>\n"
 																							}
 																						}
 																					}
@@ -2418,14 +2219,28 @@
 														"definition": {
 															"fragment": {
 																"key": "tryitnow-signin-login-helper",
-																"siteKey": "[$GROUP_KEY$]"
+																"siteKey": "Guest"
 															},
 															"fragmentConfig": {
 																"person": "adam"
 															},
 															"fragmentFields": [
 																{
+																	"id": "password",
+																	"value": {
+																		"fragmentLink": {
+																		}
+																	}
+																},
+																{
 																	"id": "txtSummary",
+																	"value": {
+																		"fragmentLink": {
+																		}
+																	}
+																},
+																{
+																	"id": "email",
 																	"value": {
 																		"fragmentLink": {
 																		}
@@ -2481,9 +2296,11 @@
 		"type": "Root"
 	},
 	"settings": {
+		"colorSchemeName": "01",
 		"masterPage": {
 			"key": "main-educational"
-		}
+		},
+		"themeName": "Dialect"
 	},
 	"version": 1.1
 }
